@@ -1,0 +1,42 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Пользователь. Наличие записи = доступ разрешён (allowlist).
+model User {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  telegramId BigInt   @unique
+  firstName  String?
+  username   String?
+  /// IANA-зона, в ней вычисляются повторы напоминаний.
+  timezone   String   @default("Europe/Kyiv")
+  isAdmin    Boolean  @default(false)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  notes Note[]
+}
+
+model Note {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  title     String   @default("")
+  content   String   @default("")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  /// В БД это GENERATED ALWAYS AS (...) STORED — задано в миграции вручную.
+  /// dbgenerated() повторяет выражение так, как его видит Prisma, чтобы migrate не находил расхождений.
+  search Unsupported("tsvector")? @default(dbgenerated("to_tsvector('russian'::regconfig, ((title || ' '::text) || content))"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@index([search], type: Gin)
+}

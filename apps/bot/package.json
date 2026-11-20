@@ -1,0 +1,21 @@
+{
+  "name": "@tgab/bot",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch --env-file=../../.env src/index.ts",
+    "start": "bun src/index.ts",
+    "check": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@grammyjs/auto-retry": "^2.0.2",
+    "@tgab/core": "workspace:*",
+    "@tgab/db": "workspace:*",
+    "grammy": "^1.46.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "typescript": "^6.0.3"
+  }
+}

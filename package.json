@@ -1,0 +1,22 @@
+{
+  "name": "tg-assistant-bot",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "bun --filter @tgab/web dev",
+    "dev:bot": "bun --filter @tgab/bot dev",
+    "build:web": "bun --filter @tgab/web build",
+    "check": "bun --filter '*' check",
+    "test": "bun test",
+    "db:generate": "bun --filter @tgab/db generate",
+    "db:migrate": "bun --filter @tgab/db migrate:dev",
+    "db:deploy": "bun --filter @tgab/db migrate:deploy",
+    "db:studio": "bun --filter @tgab/db studio",
+    "user:allow": "bun packages/db/scripts/allow-user.ts",
+    "postinstall": "bun --filter @tgab/db generate"
+  }
+}

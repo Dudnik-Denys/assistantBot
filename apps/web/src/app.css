@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/*
+ * Цвета и безопасные зоны берутся из Telegram (telegram-web-app.js выставляет
+ * --tg-theme-* и --tg-*-safe-area-inset-* на <html>). Фолбэки — для обычного браузера.
+ */
+@theme inline {
+	--color-tg-bg: var(--tg-theme-bg-color, #ffffff);
+	--color-tg-text: var(--tg-theme-text-color, #000000);
+	--color-tg-hint: var(--tg-theme-hint-color, #8e8e93);
+	--color-tg-link: var(--tg-theme-link-color, #2481cc);
+	--color-tg-button: var(--tg-theme-button-color, #2481cc);
+	--color-tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+	--color-tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f2f2f7);
+	--color-tg-section-bg: var(--tg-theme-section-bg-color, #ffffff);
+	--color-tg-separator: var(--tg-theme-section-separator-color, #e5e5ea);
+	--color-tg-destructive: var(--tg-theme-destructive-text-color, #e53935);
+
+	--spacing-safe-top: calc(
+		var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)
+	);
+	--spacing-safe-bottom: calc(
+		var(--tg-safe-area-inset-bottom, 0px) + var(--tg-content-safe-area-inset-bottom, 0px)
+	);
+	--spacing-safe-left: var(--tg-safe-area-inset-left, 0px);
+	--spacing-safe-right: var(--tg-safe-area-inset-right, 0px);
+
+	/* Поля страницы = обычный отступ + безопасная зона: pt-page-t, px-…, pb-page-b. */
+	--spacing-page-t: calc(0.75rem + var(--spacing-safe-top));
+	--spacing-page-b: calc(1rem + var(--spacing-safe-bottom));
+	--spacing-page-l: calc(1rem + var(--spacing-safe-left));
+	--spacing-page-r: calc(1rem + var(--spacing-safe-right));
+}

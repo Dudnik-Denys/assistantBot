@@ -1,0 +1,13 @@
+node_modules
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secrets
+.claude/settings.local.json
+*.log
+
+# Prisma
+packages/db/src/generated
