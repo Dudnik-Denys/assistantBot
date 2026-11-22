@@ -17,6 +17,18 @@ export interface TelegramIdentity {
 	username?: string | null;
 }
 
+/** Поля пользователя Telegram, одинаковые в initData Mini App и в апдейтах бота (`ctx.from`). */
+export interface TelegramUserFields {
+	id: number;
+	first_name?: string;
+	username?: string;
+}
+
+/** Пользователь Telegram (из initData или `ctx.from`) → `TelegramIdentity` для `authenticate`. */
+export function toTelegramIdentity(user: TelegramUserFields): TelegramIdentity {
+	return { telegramId: BigInt(user.id), firstName: user.first_name, username: user.username };
+}
+
 export function createUsersService(
 	db: PrismaClient,
 	opts: { adminTelegramId?: bigint | null } = {},

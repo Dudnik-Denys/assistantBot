@@ -1,4 +1,4 @@
-import type { UsersService } from '@tgab/core';
+import { toTelegramIdentity, type UsersService } from '@tgab/core';
 import type { MiddlewareFn } from 'grammy';
 import type { BotContext } from '#bot/context.ts';
 
@@ -9,11 +9,7 @@ import type { BotContext } from '#bot/context.ts';
 export function createAllowlist(users: UsersService): MiddlewareFn<BotContext> {
 	return async (ctx, next) => {
 		if (!ctx.from || ctx.from.is_bot) return;
-		const user = await users.authenticate({
-			telegramId: BigInt(ctx.from.id),
-			firstName: ctx.from.first_name,
-			username: ctx.from.username,
-		});
+		const user = await users.authenticate(toTelegramIdentity(ctx.from));
 		if (!user) {
 			if (ctx.chat?.type === 'private') {
 				await ctx.reply(

@@ -1,3 +1,4 @@
+import { TMA_AUTH_SCHEME } from '#lib/constants/auth.ts';
 import { HttpStatus } from '#lib/constants/http-status.ts';
 import { webApp } from '#lib/telegram.ts';
 
@@ -42,7 +43,7 @@ export class HttpClient {
 		const { method = 'GET', body, signal, fetchFn = fetch } = options;
 		const headers = new Headers();
 		const initData = webApp()?.initData;
-		if (initData) headers.set('Authorization', `tma ${initData}`);
+		if (initData) headers.set('Authorization', `${TMA_AUTH_SCHEME} ${initData}`);
 		if (body !== undefined) headers.set('Content-Type', 'application/json');
 
 		let res: Response;

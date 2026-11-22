@@ -43,7 +43,7 @@ paths:
 | Папка / файл | Что там |
 |---|---|
 | `utils/` | Чистые функции общего назначения: без состояния, без рун, без зависимостей от Svelte, SvelteKit, Telegram и нашего API. Один файл на тему (`linkify.ts`, `dates.ts`, `classes.ts`). Тестов здесь нет: место и подход к тестам web будут определены отдельно |
-| `constants/` | Только значения, без логики: справочники и списки, объявленные один раз (`http-status.ts` — `HttpStatus`, `sections.ts` — пункты меню). Объекты `as const`, а не `enum`. Константы предметной области, нужные и серверу, и боту (лимиты), — в `packages/core` |
+| `constants/` | Только значения, без логики: справочники, списки и таблицы соответствий, объявленные один раз (`http-status.ts` — `HttpStatus`, `sections.ts` — пункты меню, `error-statuses.server.ts` — ошибка → HTTP-код). Допустимы короткие функции-значения внутри таблицы (как `message` в `ERROR_STATUSES`), но не алгоритмы. Объекты `as const`, а не `enum`. Файл, который нужен только серверу (импортирует `@tgab/core` и т. п.), называется `*.server.ts` (`error-statuses.server.ts`): SvelteKit не даст импортировать его в браузерный код (ошибка сборки `server_only_import`). Константы предметной области, нужные и серверу, и боту (лимиты), — в `packages/core` |
 | `reactive/` | Классы с рунами (`.svelte.ts`) — состояние и эффекты, которые живут вместе с компонентом |
 | `http/`, `api.ts` | Запросы к API Mini App |
 | `server/` | Только серверный код |
@@ -59,8 +59,8 @@ paths:
 
 - Файлы маршрутов по ролям: `+page.svelte` — страница, `+layout.svelte` — обёртка, `+page.ts` / `+layout.ts` — `load` и настройки маршрута (`ssr`, `csr`, `prerender`), `+server.ts` — API-эндпоинт. Настройки маршрута экспортируются только из `+page.ts` / `+layout.ts`.
 - Приложение — SPA: `ssr = false` в корневом `+layout.ts` (данные требуют `initData`, которые есть только в браузере). Не включай SSR для отдельных страниц без причины.
-- Серверный код — только в `src/lib/server/`, `hooks.server.ts` и `+server.ts`. Клиентский код его не импортирует (SvelteKit запрещает импорт `lib/server` на клиенте — не обходи это).
-- Эндпоинты `+server.ts` тонкие: `requireUser`, вызов сервиса из `packages/core`, `Response.json(...)`, всё обёрнуто в `handleApi`. Хелпер `json` из `@sveltejs/kit` устарел (`@deprecated`) — не использовать.
+- Серверный код — только в `src/lib/server/`, `hooks.server.ts`, `+server.ts` и модулях `*.server.ts` (серверный файл в общей папке, например `constants/error-statuses.server.ts`). Клиентский код его не импортирует (SvelteKit запрещает импорт `lib/server` на клиенте — не обходи это).
+- Эндпоинты `+server.ts` тонкие: `requireUser`, вызов сервиса из `packages/core`, `Response.json(...)`, всё обёрнуто в `handleApi`. Ошибка превращается в HTTP-ответ только в `errorResponse` (`lib/server/http.ts`, его вызывают `handleApi` и хуки) по таблице `ERROR_STATUSES` (`lib/constants/error-statuses.server.ts`; новая доменная ошибка — строка в таблице, не новый `if`): не собирай `Response.json({ error }, …)` вручную — выбрасывай `HttpStatusError` (с `details` для доп. полей) или доменную ошибку core. Хелпер `json` из `@sveltejs/kit` устарел (`@deprecated`) — не использовать.
 - Переменные окружения объявляются в `src/env.ts` (`defineEnvVars`, в `schema` — zod-схемы; общие `optionalEnv` и `TelegramIdSchema` — из `@tgab/core/env`) и импортируются из `$app/env/private`; секреты — никогда в клиентский код.
 - Навигация «назад» на экране — только компонент `ui/BackButton` (`<BackButton onback={…} />`): он подключает системную кнопку Telegram и показывает ссылку в обычном браузере. `useBackButton` напрямую в страницах не вызывать.
 - Навигация — `goto` и обычные `<a href>`; данные, нужные до отрисовки страницы, — через `load`, а не `$effect` в компоненте, когда это возможно.
