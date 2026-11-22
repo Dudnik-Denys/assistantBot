@@ -1,8 +1,9 @@
 import type { __Entity__, PrismaClient } from '@tgab/db';
 import { assertId } from '../common/id.ts';
-import { ListQuerySchema } from '../common/list-query.ts';
 import { NotFoundError } from '../errors.ts';
-import { type __Entity__Dto, __Entity__InputSchema } from './schema.ts';
+import { __Entity__InputSchema } from '../schemas/__entities__/__entity__-input.ts';
+import { ListQuerySchema } from '../schemas/common/list-query.ts';
+import type { __Entity__Dto } from './types.ts';
 
 type __Entity__Row = Pick<__Entity__, 'id' | 'title' | 'createdAt' | 'updatedAt'>;
 

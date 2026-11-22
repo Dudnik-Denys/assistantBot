@@ -5,8 +5,8 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./env": "./src/env.ts",
-		"./notes/limits": "./src/notes/limits.ts"
+		"./env": "./src/schemas/env/variables.ts",
+		"./constants/notes": "./src/constants/notes.ts"
 	},
 	"scripts": {
 		"check": "tsc -p tsconfig.json"

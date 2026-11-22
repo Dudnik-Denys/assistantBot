@@ -1,7 +1,7 @@
 // Добавляет telegramId в allowlist: bun run user:allow <telegramId> [--admin]
 // .env подключает корневой скрипт `user:allow` (`bun --env-file=.env`).
 import { createPrismaClient } from '@tgab/db';
-import { DatabaseUrlSchema, TelegramIdSchema } from '../src/env.ts';
+import { DatabaseUrlSchema, TelegramIdSchema } from '../src/schemas/env/variables.ts';
 import { createUsersService } from '../src/users/service.ts';
 
 const [rawId, ...flags] = process.argv.slice(2);

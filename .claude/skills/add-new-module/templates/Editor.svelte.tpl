@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { __ENTITY___TITLE_MAX } from '@tgab/core/__entities__/limits';
+	import { __ENTITY___TITLE_MAX } from '@tgab/core/constants/__entities__';
 	import { goto } from '$app/navigation';
 	import { api, type __Entity__Dto } from '#lib/api.ts';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';

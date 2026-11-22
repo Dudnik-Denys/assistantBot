@@ -1,5 +1,4 @@
-/** Сколько первых слов запроса участвует в поиске: длинный запрос не раздувает tsquery. */
-export const SEARCH_WORDS_MAX = 10;
+import { SEARCH_WORDS_MAX } from '../constants/notes.ts';
 
 /**
  * Строит строку для to_tsquery с префиксным поиском по каждому слову:

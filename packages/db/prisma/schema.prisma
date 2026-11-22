@@ -15,7 +15,7 @@ model User {
   firstName  String?
   username   String?
   /// IANA-зона, в ней вычисляются повторы напоминаний. Значение по умолчанию — `DEFAULT_TIMEZONE`
-  /// в packages/core (users/schema.ts): его подставляет сервис при создании, в БД default нет.
+  /// в packages/core (constants/users.ts): его подставляет сервис при создании, в БД default нет.
   timezone   String
   isAdmin    Boolean  @default(false)
   createdAt  DateTime @default(now()) @db.Timestamptz(3)

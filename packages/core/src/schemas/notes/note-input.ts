@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from './limits.ts';
+import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from '../../constants/notes.ts';
 
+/** Ввод заметки (создание и изменение): хотя бы одно из полей непустое после обрезки пробелов. */
 export const NoteInputSchema = z
 	.object({
 		title: z.string().trim().max(NOTE_TITLE_MAX).default(''),
@@ -11,12 +12,3 @@ export const NoteInputSchema = z
 	});
 
 export type NoteInput = z.input<typeof NoteInputSchema>;
-
-/** Заметка в ответе API: даты — ISO-строки. */
-export interface NoteDto {
-	id: string;
-	title: string;
-	content: string;
-	createdAt: string;
-	updatedAt: string;
-}

@@ -1,10 +1,7 @@
 import type { PrismaClient, User } from '@tgab/db';
-import {
-	DEFAULT_TIMEZONE,
-	type TelegramIdentity,
-	type TelegramUserFields,
-	type UserDto,
-} from './schema.ts';
+import { DEFAULT_TIMEZONE } from '../constants/users.ts';
+import type { TelegramUserFields } from '../schemas/users/telegram-user.ts';
+import type { TelegramIdentity, UserDto } from './types.ts';
 
 export function toUserDto(user: User): UserDto {
 	return {

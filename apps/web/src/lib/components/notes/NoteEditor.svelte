@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from '@tgab/core/notes/limits';
+	import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from '@tgab/core/constants/notes';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { api, type NoteDto } from '#lib/api.ts';

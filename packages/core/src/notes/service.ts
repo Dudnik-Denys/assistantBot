@@ -1,9 +1,10 @@
 import { type Note, Prisma, type PrismaClient } from '@tgab/db';
 import { assertId } from '../common/id.ts';
-import { ListQuerySchema } from '../common/list-query.ts';
 import { NotFoundError } from '../errors.ts';
-import { type NoteDto, NoteInputSchema } from './schema.ts';
+import { ListQuerySchema } from '../schemas/common/list-query.ts';
+import { NoteInputSchema } from '../schemas/notes/note-input.ts';
 import { buildPrefixTsQuery } from './search.ts';
+import type { NoteDto } from './types.ts';
 
 type NoteRow = Pick<Note, 'id' | 'title' | 'content' | 'createdAt' | 'updatedAt'>;
 

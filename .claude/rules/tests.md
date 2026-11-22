@@ -3,7 +3,9 @@ paths:
   - tests/unit/**
   - tests/integration/**
   - tests/helpers/**
-  - tests/run.ts
+  - tests/run-tests.ts
+  - tests/schemas/**
+  - tests/constants/**
   - tests/package.json
   - tests/tsconfig.json
 ---
@@ -19,12 +21,15 @@ tests/
   unit/<модуль>/…           # без БД: чистая логика (схемы, расчёты, разбор данных)
   integration/<модуль>/…    # с настоящим Postgres: сервисы core
   e2e/<модуль>/…            # Playwright (появится позже) — правила в e2e.md
-  helpers/                  # общее: test-database.ts (тестовая БД), factories.ts (тестовые записи)
-  run.ts                    # запускалка для `bun run test:<тип>`
+  helpers/                  # test-database.ts (класс TestDatabase), factories.ts (тестовые записи),
+                            # test-env.ts (проверенный env тестов), commands.ts (spawnCommand)
+  schemas/                  # zod-схемы тестов: env.ts (TestEnvSchema), cli.ts (TestTypeSchema)
+  constants/                # константы тестов: test-database.ts (сервис, порт, имя БД), paths.ts
+  run-tests.ts              # запускалка для `bun run test:<тип>`
 ```
 
-- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders`, `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web).
-- Файл называется по тому, что проверяет: `tests/unit/notes/search.test.ts` → `packages/core/src/notes/search.ts`, `tests/integration/notes/service.test.ts` → `notes/service.ts`. Unit и integration — `*.test.ts` (e2e — `*.spec.ts`, см. `e2e.md`).
+- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders`, `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код core вне модулей — папкой по его месту в `src`: `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`).
+- Файл называется по тому, что проверяет: `tests/unit/notes/search.test.ts` → `packages/core/src/notes/search.ts`, `tests/unit/notes/note-input.test.ts` → `schemas/notes/note-input.ts`, `tests/integration/notes/service.test.ts` → `notes/service.ts`. Unit и integration — `*.test.ts` (e2e — `*.spec.ts`, см. `e2e.md`).
 - Новый модуль — новые папки `tests/unit/<модуль>/` и `tests/integration/<модуль>/`; в `package.json` ничего добавлять не нужно.
 
 ## Импорты
@@ -43,14 +48,14 @@ tests/
 ## Тестовая БД
 
 - Отдельный контейнер `postgres-test` (`docker-compose.yml`, профиль `test`): данные в памяти (`tmpfs`), после остановки ничего не остаётся, с рабочей базой не связан. `bun run test:integration` поднимает его и применяет миграции сам; в CI (переменная `CI`) базу даёт CI.
-- Адрес — `TEST_DATABASE_URL` или по умолчанию контейнер (`localhost:${POSTGRES_TEST_PORT:-5434}/tgab_test`). Имя базы обязано кончаться на `_test` — иначе `testDatabaseUrl()` откажется работать, чтобы не очистить рабочую базу.
-- В каждом файле: `const db = createTestDb()`, `beforeEach(() => resetDb(db))` (очистка всех таблиц), `afterAll(() => db.$disconnect())`. Тесты не зависят друг от друга и от порядка запуска.
+- Адрес — `TEST_DATABASE_URL` или по умолчанию контейнер (`localhost:${POSTGRES_TEST_PORT:-5434}/tgab_test`). Имя базы обязано кончаться на `_test` — иначе `TestDatabase.fromEnv()` откажется работать, чтобы не очистить рабочую базу. Переменные env тестов (`CI`, `TEST_DATABASE_URL`, `POSTGRES_TEST_PORT`) проверяются схемой `TestEnvSchema` (`helpers/test-env.ts`), значения контейнера — константы в `constants/test-database.ts` (совпадают с `docker-compose.yml`).
+- Тестовая БД — класс `TestDatabase` (`helpers/test-database.ts`): `fromEnv()` — адрес, `prepare()` — контейнер и миграции (вызывает запускалка), `createClient()`, `reset(db)` — очистка всех таблиц. В каждом файле: `const testDatabase = TestDatabase.fromEnv()`, `const db = testDatabase.createClient()`, `beforeEach(() => testDatabase.reset(db))`, `afterAll(() => db.$disconnect())`. Тесты не зависят друг от друга и от порядка запуска.
 - Данные — через фабрики из `helpers/factories.ts` (`createTestUser`, `createTestNote`): они создают записи через сервисы core. Новая сущность — новая фабрика там же, а не `db.x.create` в каждом тесте.
 - Остановить контейнер: `docker compose --profile test stop`.
 
 ## Оформление
 
-- `describe` — имя проверяемой функции или метода (`describe('list', …)`); `test` — ожидаемое поведение по-русски (`test('чужая заметка — NotFoundError, а не доступ', …)`).
+- `describe` — имя проверяемой функции или метода (`describe('list', …)`); `test` — ожидаемое поведение по-русски, **обезличенно, в именном стиле**: с заглавной буквы, с отглагольного существительного, а не с глагола — `test('Отклонение пустой заметки', …)`, `test('Выброс NotFoundError для чужой заметки вместо доступа к ней', …)`, `test('Возврат null для незнакомого пользователя без создания записи', …)`. Не «отклоняет…», «возвращает…», не «чужая заметка — NotFoundError». Значения из констант подставляются в описание шаблонной строкой: `` test(`Ограничение заголовка ${NOTE_TITLE_MAX} символами включительно`, …) ``.
 - Ожидание отказа промиса — с `await`: `await expect(promise).rejects.toThrow(NotFoundError)`.
 - Числа и значения со смыслом — константами в начале файла (`ADMIN_TELEGRAM_ID`), значения по умолчанию — из core (`DEFAULT_TIMEZONE`), а не повтором литерала.
 

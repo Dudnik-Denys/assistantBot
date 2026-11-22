@@ -92,6 +92,8 @@ bun run format               # автоисправление: форматир�
 bun run build:web && bun --cwd apps/web start   # продакшен-сборка web
 ```
 
+Проверки после изменений (линтер, типы, тесты, `verify-server` / `verify-ui`) основной агент сам не прогоняет — поручает их субагенту `verifier` (`.claude/agents/verifier.md`), указывая режим (`server`, `ui`, `all`, `unit`, `integration`) и при необходимости модуль; в основной контекст возвращается только короткий отчёт. Модель: для `unit` и `integration` — вызывать с `model: haiku` (механический прогон и пересказ вывода), для `server`, `ui`, `all` — модель по умолчанию из файла субагента (`sonnet`): там есть ревью кода по правилам. `bun run format` запускает основной агент — субагент файлы не меняет.
+
 Детали каркаса:
 
 - SvelteKit 3: конфиг kit — в `vite.config.ts` (`svelte.config.js` нет); алиас `#lib/*` (а не `$lib`) с явным расширением: `#lib/api.ts`, `#lib/components/X.svelte`. Env-переменные объявляются в `apps/web/src/env.ts` (`defineEnvVars`) и импортируются из `$app/env/private`; `.env` читается из корня монорепо (`env.dir`).

@@ -1,8 +1,5 @@
-import { z } from 'zod';
 import { NotFoundError } from '../errors.ts';
-
-/** id записи в БД: UUID (модели используют `uuid(7)`). */
-export const IdSchema = z.uuid();
+import { IdSchema } from '../schemas/common/id.ts';
 
 /**
  * id не в формате UUID → `NotFoundError(notFoundMessage)` до запроса в БД:

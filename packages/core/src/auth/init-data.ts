@@ -1,9 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { INIT_DATA_MAX_AGE_SECONDS } from '../constants/auth.ts';
 import { InitDataError } from '../errors.ts';
-import { type TelegramUser, TelegramUserSchema } from '../users/schema.ts';
-
-/** Сколько живут initData: старше — отклоняются (защита от повторного использования). */
-export const INIT_DATA_MAX_AGE_SECONDS = 24 * 60 * 60;
+import { type TelegramUser, TelegramUserSchema } from '../schemas/users/telegram-user.ts';
 
 export interface ValidatedInitData {
 	user: TelegramUser;
