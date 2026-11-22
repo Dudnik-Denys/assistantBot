@@ -8,6 +8,11 @@ node_modules
 .claude/settings.local.json
 *.log
 
+# Сборка и генерация SvelteKit. Prettier берёт игнор только из корневого .gitignore
+# (вложенные не читает), поэтому они указаны здесь, а не только в apps/web/.gitignore
+**/.svelte-kit
+apps/*/build
+
 # Prisma
 packages/db/src/generated
 

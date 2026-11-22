@@ -25,7 +25,7 @@
 
 ## Форматирование и линтинг
 
-- Biome — форматтер и линтер для всего, кроме `.svelte` (конфиг `biome.json`, правила `recommended`). Prettier с `prettier-plugin-svelte`, `prettier-plugin-tailwindcss` (порядок классов) и `@ianvs/prettier-plugin-sort-imports` (порядок импортов: пакеты → `#lib` → относительные, как у Biome) — только для `.svelte` (конфиг `.prettierrc.json`). Markdown не форматируется ни тем, ни другим.
+- Biome — форматтер и линтер для всего, кроме `.svelte` (конфиг `biome.json`, правила `recommended`). Prettier с `prettier-plugin-svelte`, `prettier-plugin-tailwindcss` (порядок классов) и `@ianvs/prettier-plugin-sort-imports` (порядок импортов: пакеты → `#lib` → относительные, как у Biome) — только для `.svelte` (конфиг — ключ `"prettier"` в корневом `package.json`; отдельного `.prettierignore` нет, Prettier пропускает то, что в корневом `.gitignore`). Markdown не форматируется ни тем, ни другим.
 - Стиль общий для обоих: табы, одинарные кавычки, запятые в конце многострочных списков, ширина строки 100.
 - После изменений запускай `bun run format`, перед коммитом — `bun run lint` (вместе с `bun run check` и `bun test`). Предупреждения линтера исправляй, а не отключай; отключение правила — только с комментарием-причиной (`// biome-ignore lint/...: причина`).
 
