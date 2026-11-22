@@ -1,26 +1,26 @@
 {
-  "name": "@tgab/db",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "scripts": {
-    "generate": "prisma generate",
-    "migrate:dev": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy",
-    "studio": "prisma studio",
-    "check": "tsc -p tsconfig.json"
-  },
-  "dependencies": {
-    "@prisma/adapter-pg": "7.10.1",
-    "@prisma/client": "7.10.1"
-  },
-  "devDependencies": {
-    "@types/bun": "1.4.4",
-    "dotenv": "^17.2.0",
-    "prisma": "7.10.1",
-    "typescript": "^6.0.3"
-  }
+	"name": "@tgab/db",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"generate": "prisma generate",
+		"migrate:dev": "prisma migrate dev",
+		"migrate:deploy": "prisma migrate deploy",
+		"studio": "prisma studio",
+		"check": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@prisma/adapter-pg": "7.10.1",
+		"@prisma/client": "7.10.1"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.4",
+		"dotenv": "^17.2.0",
+		"prisma": "7.10.1",
+		"typescript": "^6.0.3"
+	}
 }

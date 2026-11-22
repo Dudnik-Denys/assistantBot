@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-`tgAssistantBot` — Telegram-бот с Mini App для ежедневных рутинных задач. Пользователи — автор, друзья и родственники (закрытый круг, не публичный сервис); у каждого свои данные. Есть каркас монорепо, Mini App с заметками (`apps/web`, `packages/core`, `packages/db`) и минимальный бот (`apps/bot`: `/start`, `/id`, allowlist); остальные функции MVP, воркер и сервис погоды ещё не начаты. Линтера пока нет.
+`tgAssistantBot` — Telegram-бот с Mini App для ежедневных рутинных задач. Пользователи — автор, друзья и родственники (закрытый круг, не публичный сервис); у каждого свои данные. Есть каркас монорепо, Mini App с заметками (`apps/web`, `packages/core`, `packages/db`) и минимальный бот (`apps/bot`: `/start`, `/id`, allowlist); остальные функции MVP, воркер и сервис погоды ещё не начаты. Форматирование и линтинг: Biome (всё, кроме `.svelte`) и Prettier с `prettier-plugin-svelte` (только `.svelte`).
 
 ## Функции MVP
 
@@ -21,8 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Слой | Выбор |
 |---|---|
 | Рантайм и пакеты | Bun, монорепо на Bun workspaces |
-| Бот | grammY (выбран вместо GramIO из-за зрелости и объёма информации) |
-| Mini App + API | SvelteKit + Svelte 5 (`adapter-node`, серверная часть — это API) + Tailwind CSS v4. Правила вёрстки — `.claude/rules/ui.md` |
+| Бот | grammY (выбран вместо GramIO из-за зрелости и объёма информации). Структура (роутеры, middleware, клавиатуры) и правила — `.claude/rules/bot.md` |
+| Mini App + API | SvelteKit + Svelte 5 (`adapter-node`, серверная часть — это API) + Tailwind CSS v4. Правила вёрстки, дизайн-токены (цвета и размеры — только переменные) и структура компонентов — `.claude/rules/ui.md`; руны и практики Svelte/SvelteKit по официальной документации — `.claude/rules/svelte.md` |
 | БД | PostgreSQL + Prisma |
 | Фоновые задачи | BullMQ + Redis |
 | Погода | Отдельный сервис на Python: FastAPI, пакеты через uv |
@@ -42,7 +42,7 @@ packages/core  # общая логика (services) и типы
 packages/db    # схема Prisma, миграции, клиент
 ```
 
-Принципы:
+Принципы (общие правила кода — DRY, ответственность модулей, ООП/SOLID, именование — в `.claude/rules/code.md`):
 
 - Логика живёт в `packages/core`; хендлеры бота и эндпоинты SvelteKit — тонкие слои над ней.
 - Бот и воркер — отдельные процессы, не внутри SvelteKit. Бот получает обновления через long polling (`bot.start()` grammY) и в разработке, и в продакшене: при закрытом круге пользователей webhook не даёт выигрыша, а polling не требует публичного HTTPS-эндпоинта для бота. Переход на webhook (`webhookCallback`) — только при необходимости горизонтального масштабирования; хендлеры от способа получения обновлений не зависят. Polling допускает только один запущенный экземпляр бота на токен.
@@ -84,6 +84,8 @@ bun run dev:web              # Mini App + API на http://localhost:5173
 bun run dev:bot              # бот (long polling, bun --watch)
 bun run check                # типы во всех пакетах (tsc / svelte-check)
 bun test                     # тесты (bun:test, файлы *.test.ts)
+bun run lint                 # проверка: Biome (TS, JSON, CSS) + Prettier --check (.svelte)
+bun run format               # автоисправление: форматирование, безопасные фиксы Biome, порядок импортов
 bun run build:web && bun --cwd apps/web start   # продакшен-сборка web
 ```
 
@@ -91,12 +93,13 @@ bun run build:web && bun --cwd apps/web start   # продакшен-сборк�
 
 - SvelteKit 3: конфиг kit — в `vite.config.ts` (`svelte.config.js` нет); алиас `#lib/*` (а не `$lib`) с явным расширением: `#lib/api.ts`, `#lib/components/X.svelte`. Env-переменные объявляются в `apps/web/src/env.ts` (`defineEnvVars`) и импортируются из `$app/env/private`; `.env` читается из корня монорепо (`env.dir`).
 - Mini App — SPA (`ssr = false`): данные требуют `initData`, которые есть только в браузере. API — `/api/*`, авторизация в `hooks.server.ts` по заголовку `Authorization: tma <initData>`. В `vite dev` при заданном `DEV_TELEGRAM_ID` запросы без заголовка идут от имени этого пользователя — можно открыть приложение в обычном браузере.
+- Бот: `apps/bot/src/index.ts` только запускает, `bot.ts` (`createBot(deps)`) собирает middleware и роутеры (`Composer` grammY) по папкам `middlewares/`, `routers/`, `keyboards/`, `constants/`; алиас `#bot/*` с явным расширением; env — zod-схема в `env.ts`. Подробно — `.claude/rules/bot.md`.
 - Prisma 7: генератор `prisma-client` в `packages/db/src/generated` (не в git), подключение через `@prisma/adapter-pg`, конфиг — `packages/db/prisma.config.ts`.
 - `Note.search` — generated-колонка `tsvector`, выражение дописано в миграцию вручную; в схеме оно продублировано в `@default(dbgenerated(...))` ровно в том виде, как его интроспектирует Prisma, иначе `migrate dev` создаёт миграцию `DROP DEFAULT`. Поиск — `to_tsquery` с префиксами слов плюс `ILIKE` по подстроке (для ссылок).
 
 ## Окружение
 
-- Разработка ведётся на macOS (Apple Silicon, arm64) и на домашнем ПК; код синхронизируется через git, `.env` на каждой машине свой (шаблон — `.env.example`). На маке Docker — через OrbStack (или Docker Desktop).
+- Разработка ведётся на macOS (Apple Silicon, arm64) и на домашнем ПК; код синхронизируется через git, `.env` на каждой машине свой (переменные описаны в `README.md`, раздел «Переменные окружения»; локальный `.env.example` в git не входит). Новая переменная окружения — сразу в таблицу README (и в `apps/web/src/env.ts` или `apps/bot/src/env.ts`, где она читается). На маке Docker — через OrbStack (или Docker Desktop).
 - Локально Postgres и Redis запускаются в контейнерах через `docker compose`, а `web`, `bot`, `worker` — напрямую через `bun` (hot reload), сервис погоды — через `uv run`. Полный compose со всеми сервисами — для проверки перед деплоем.
 - Продакшен-образы собираются под amd64 в GitHub Actions, а не на маке; локальная сборка x86-образа — `docker buildx --platform linux/amd64`.
 - Для разработки нужен отдельный бот (второй токен от BotFather) и HTTPS-туннель (`cloudflared` или ngrok) для локального открытия Mini App.

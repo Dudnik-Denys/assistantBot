@@ -6,8 +6,8 @@ import { defineConfig } from 'prisma/config';
 config({ path: path.resolve(import.meta.dirname, '../../.env'), quiet: true });
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  migrations: { path: 'prisma/migrations' },
-  // Не env(): `prisma generate` (postinstall, CI) должен работать без БД.
-  datasource: { url: process.env.DATABASE_URL ?? '' },
+	schema: 'prisma/schema.prisma',
+	migrations: { path: 'prisma/migrations' },
+	// Не env(): `prisma generate` (postinstall, CI) должен работать без БД.
+	datasource: { url: process.env.DATABASE_URL ?? '' },
 });

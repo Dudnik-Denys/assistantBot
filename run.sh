@@ -30,8 +30,7 @@ command -v docker >/dev/null || fail "Не найден docker (OrbStack или 
 
 # --- .env ------------------------------------------------------------------
 if [ ! -f .env ]; then
-	cp .env.example .env
-	fail "Создан .env из .env.example — заполните BOT_TOKEN и запустите снова."
+	fail "Нет файла .env. Создайте его в корне репозитория по разделу «Переменные окружения» в README.md (обязателен BOT_TOKEN) и запустите снова."
 fi
 env_value() { grep -E "^$1=" .env | tail -1 | cut -d= -f2-; }
 [ -n "$(env_value BOT_TOKEN)" ] || fail "В .env не задан BOT_TOKEN"

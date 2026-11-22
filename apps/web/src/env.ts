@@ -1,24 +1,20 @@
 import { defineEnvVars } from '@sveltejs/kit/env';
+import { optionalEnv, TelegramIdSchema } from '@tgab/core/env';
+import { z } from 'zod';
 
-const optional = (value: string | undefined) => (value ? value : undefined);
-const telegramId = (value: string | undefined) => {
-	if (!value) return undefined;
-	if (!/^\d+$/.test(value)) throw new Error('ожидается числовой telegramId');
-	return BigInt(value);
-};
-
+// schema принимает zod-схемы напрямую (Standard Schema); ошибки показывает SvelteKit при старте.
 export const variables = defineEnvVars({
 	DATABASE_URL: { description: 'Строка подключения к Postgres' },
 	BOT_TOKEN: {
-		schema: optional,
-		description: 'Токен бота: им проверяется подпись initData Mini App'
+		schema: optionalEnv(z.string()),
+		description: 'Токен бота: им проверяется подпись initData Mini App',
 	},
 	ADMIN_TELEGRAM_ID: {
-		schema: telegramId,
-		description: 'telegramId автора; создаётся как админ при первом входе'
+		schema: optionalEnv(TelegramIdSchema),
+		description: 'telegramId автора; создаётся как админ при первом входе',
 	},
 	DEV_TELEGRAM_ID: {
-		schema: telegramId,
-		description: 'Только в dev: вход из обычного браузера от имени этого telegramId'
-	}
+		schema: optionalEnv(TelegramIdSchema),
+		description: 'Только в dev: вход из обычного браузера от имени этого telegramId',
+	},
 });

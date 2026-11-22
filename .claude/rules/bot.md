@@ -1,0 +1,52 @@
+---
+paths:
+  - "apps/bot/**"
+---
+
+# Бот (grammY)
+
+Следуй официальной документации grammY: https://grammy.dev (раздел про большие проекты — https://grammy.dev/advanced/structuring). Общие принципы кода — в `code.md`. Структура навеяна учебным проектом на aiogram (https://github.com/mahenzon/demo-tg-bot): роутеры, middleware, клавиатуры по папкам; aiogram `Router` в grammY — `Composer`.
+
+## Структура `apps/bot/src`
+
+| Папка / файл | Что там |
+|---|---|
+| `index.ts` | Только запуск — единственное место, где читается `env` и создаются БД и сервисы из `packages/core`: вызывает `createBot(deps)`, `setMyCommands(COMMAND_MENU)`, корректная остановка, `bot.start()` |
+| `bot.ts` | `createBot(deps)` — собирает бота: плагины API, middleware и роутеры в нужном порядке, `bot.catch`. Бота не запускает. Всё внешнее (токен, сервисы, настройки) — в `BotDeps` |
+| `context.ts` | Тип `BotContext` (поля, которые добавляют middleware, например `user`) |
+| `env.ts` | zod-схема `EnvSchema` переменных окружения; при ошибке бот не стартует и перечисляет все проблемы. Общие схемы — из `@tgab/core/env`: `optionalEnv(…)` для необязательных (пустая строка = не задано), `TelegramIdSchema` для telegramId. Новая переменная — в схему и сразу в таблицу README |
+| `errors.ts` | `handleBotError` — единственное место, где разбираются ошибки (`GrammyError`, `HttpError`, остальные) |
+| `middlewares/` | Промежуточные обработчики для всех апдейтов: логирование, allowlist, в будущем ограничение частоты |
+| `routers/` | Обработчики: один файл — одна команда или один раздел (`commands/start.ts`, `counters.ts`). `routers/index.ts` — какие роутеры и в каком порядке подключаются |
+| `keyboards/` | Функции, которые строят клавиатуры (`InlineKeyboard`, `Keyboard`). Данные для кнопок получают аргументами |
+| `constants/` | Значения без логики: имена команд (`BotCommand`) и меню (`COMMAND_MENU`), префиксы данных кнопок. Объекты `as const`, не `enum` |
+
+Импорты внутри бота — через алиас `#bot/…` с явным расширением (`#bot/routers/index.ts`); относительные пути не используются.
+
+## Роутеры
+
+- Роутер — `Composer<BotContext>`. Без зависимостей — экспортируется готовым (`export const idRouter = new Composer<BotContext>()`); если нужны сервисы или настройки — фабрика `createXRouter(deps)`, зависимости аргументами, не глобальным импортом `env`.
+- Порядок подключения задаётся в одном месте (`bot.ts` и `routers/index.ts`) и важен: лог → `publicRouter` (доступно всем, например `/id`) → allowlist → `createPrivateRouter` (только для своих). Новый раздел — в `createPrivateRouter`, если нет причины открыть его всем. Обработчик «всё остальное» (если появится) подключается последним.
+- Обработчики тонкие: разобрать апдейт, вызвать сервис из `packages/core` (с `ctx.user.id`), ответить. Бизнес-логика, запросы к БД и форматы хранения — в `packages/core`, общие с Mini App.
+- Имена команд — только из `BotCommand` (`bot.command(BotCommand.Start, …)`), не строками. Новая команда — в `BotCommand` и, если её видно пользователю, в `COMMAND_MENU`.
+
+## Как добавить команду или раздел
+
+1. Имя команды — в `BotCommand`; видимую пользователю — ещё и в `COMMAND_MENU` (описание по-русски).
+2. Роутер — `routers/commands/<команда>.ts` для одиночной команды или `routers/<раздел>.ts` для раздела с несколькими командами и кнопками (например, `counters.ts`).
+3. Нужен сервис из `packages/core` — добавь его в `RouterDeps` (`routers/index.ts`) и `BotDeps`, создай в `index.ts` и передай в `createBot`; роутер делай фабрикой `createXRouter(deps)`.
+4. Подключи роутер в `createPrivateRouter` (или в `publicRouter`, если команда нужна до входа).
+5. Клавиатуры раздела — `keyboards/<раздел>.ts`, префиксы данных кнопок — в `constants/`.
+6. `bun run format`, `bun run lint`, `bun run check`; бота сам не запускай (он читает `.env`) — дай пользователю список ручных проверок в Telegram.
+
+## Данные и проверки
+
+- Всё, что пришло от пользователя (текст, данные кнопок), проверяется zod-схемой до передачи в сервис. Схема, общая с API Mini App, — в `packages/core`; только боту нужная — рядом с роутером.
+- Данные inline-кнопок (`callback_data`, до 64 байт) — с префиксом раздела из `constants/` (`counter:inc:<id>`), разбираются схемой; обработчики подписываются через `callbackQuery` с префиксом. На каждый `callback_query` отвечать `ctx.answerCallbackQuery()`.
+- Тексты с разметкой — `parse_mode: 'HTML'`; пользовательские строки в HTML экранировать.
+
+## Ошибки и лимиты
+
+- Ошибки не глушатся в обработчиках: они уходят в `bot.catch` → `handleBotError`. Ловить локально — только чтобы ответить пользователю понятным текстом (например, `NotFoundError` из core).
+- Повторы при 429 и сбоях сети делает `@grammyjs/auto-retry` (подключён в `bot.ts`); вручную `retry_after` не обрабатывать.
+- Получение обновлений — только long polling (`bot.start()`), один экземпляр на токен (см. CLAUDE.md). Webhook-файлы не заводить без решения о переходе.

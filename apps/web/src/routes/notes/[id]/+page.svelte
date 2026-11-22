@@ -1,39 +1,14 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { api, type NoteDto } from '#lib/api.ts';
-	import Message from '#lib/components/Message.svelte';
-	import NoteEditor from '#lib/components/NoteEditor.svelte';
-	import Screen from '#lib/components/Screen.svelte';
-	import { useBackButton } from '#lib/telegram.ts';
+	import NoteEditor from '#lib/components/notes/NoteEditor.svelte';
+	import Screen from '#lib/components/ui/layout/Screen.svelte';
 	import type { PageProps } from './$types';
 
-	let { params }: PageProps = $props();
-
-	let note = $state<NoteDto | null>(null);
-	let error = $state<string | null>(null);
-
-	$effect(() => {
-		const id = params.id;
-		note = null;
-		error = null;
-		api.notes
-			.get(id)
-			.then((n) => (note = n))
-			.catch((e: unknown) => (error = e instanceof Error ? e.message : String(e)));
-	});
-
-	// Пока заметка не загружена, «Назад» просто возвращает к списку.
-	$effect(() => (note ? undefined : useBackButton(() => goto('/notes'))));
+	let { data }: PageProps = $props();
 </script>
 
 <Screen>
-	{#if error}
-		<Message title="Не удалось открыть заметку">{error}</Message>
-	{:else if !note}
-		<Message title="Загрузка…" />
-	{:else}
-		{#key note.id}
-			<NoteEditor {note} />
-		{/key}
-	{/if}
+	<!-- key: при переходе между заметками редактор пересоздаётся с новой локальной копией -->
+	{#key data.note.id}
+		<NoteEditor note={data.note} />
+	{/key}
 </Screen>

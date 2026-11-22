@@ -1,0 +1,6 @@
+# Prettier форматирует только .svelte; всё остальное — Biome (biome.json).
+node_modules
+.svelte-kit
+build
+packages/db/src/generated
+bun.lock

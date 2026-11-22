@@ -1,36 +1,16 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
-	import { api, ApiError } from '#lib/api.ts';
-	import Message from '#lib/components/Message.svelte';
-	import Screen from '#lib/components/Screen.svelte';
+	import Message from '#lib/components/ui/feedback/Message.svelte';
+	import NavigationProgress from '#lib/components/ui/feedback/NavigationProgress.svelte';
+	import Screen from '#lib/components/ui/layout/Screen.svelte';
 	import { initTelegram } from '#lib/telegram.ts';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { data, children }: LayoutProps = $props();
 
-	type State =
-		| { kind: 'loading' }
-		| { kind: 'ready' }
-		| { kind: 'denied'; telegramId?: string }
-		| { kind: 'error'; message: string };
-
-	let state = $state<State>({ kind: 'loading' });
-
-	$effect(() => {
-		initTelegram();
-		api
-			.me()
-			.then(() => (state = { kind: 'ready' }))
-			.catch((e: unknown) => {
-				if (e instanceof ApiError && e.status === 403) {
-					const id = e.body.telegramId;
-					state = { kind: 'denied', telegramId: typeof id === 'string' ? id : undefined };
-				} else {
-					state = { kind: 'error', message: e instanceof Error ? e.message : String(e) };
-				}
-			});
-	});
+	// ready() — после первой отрисовки: до этого Telegram показывает свой индикатор загрузки.
+	$effect(() => initTelegram());
 </script>
 
 <svelte:head>
@@ -38,19 +18,21 @@
 	<title>Ассистент</title>
 </svelte:head>
 
-{#if state.kind === 'ready'}
+<NavigationProgress />
+
+{#if data.access.kind === 'ready'}
 	{@render children()}
 {:else}
 	<Screen>
-		{#if state.kind === 'loading'}
-			<Message title="Загрузка…" />
-		{:else if state.kind === 'denied'}
+		{#if data.access.kind === 'denied'}
 			<Message title="Нет доступа">
 				Попросите администратора добавить ваш Telegram ID
-				{#if state.telegramId}<b class="font-mono text-tg-text select-all">{state.telegramId}</b>{/if}
+				{#if data.access.telegramId}<b class="font-mono text-tg-text select-all">
+						{data.access.telegramId}
+					</b>{/if}
 			</Message>
 		{:else}
-			<Message title="Не удалось открыть приложение">{state.message}</Message>
+			<Message title="Не удалось открыть приложение">{data.access.message}</Message>
 		{/if}
 	</Screen>
 {/if}

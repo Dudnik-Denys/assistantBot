@@ -1,22 +1,31 @@
 {
-  "name": "tg-assistant-bot",
-  "private": true,
-  "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "dev:web": "bun --filter @tgab/web dev",
-    "dev:bot": "bun --filter @tgab/bot dev",
-    "build:web": "bun --filter @tgab/web build",
-    "check": "bun --filter '*' check",
-    "test": "bun test",
-    "db:generate": "bun --filter @tgab/db generate",
-    "db:migrate": "bun --filter @tgab/db migrate:dev",
-    "db:deploy": "bun --filter @tgab/db migrate:deploy",
-    "db:studio": "bun --filter @tgab/db studio",
-    "user:allow": "bun packages/db/scripts/allow-user.ts",
-    "postinstall": "bun --filter @tgab/db generate"
-  }
+	"name": "tg-assistant-bot",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev:web": "bun --filter @tgab/web dev",
+		"dev:bot": "bun --filter @tgab/bot dev",
+		"build:web": "bun --filter @tgab/web build",
+		"check": "bun --filter '*' check",
+		"test": "bun test",
+		"db:generate": "bun --filter @tgab/db generate",
+		"db:migrate": "bun --filter @tgab/db migrate:dev",
+		"db:deploy": "bun --filter @tgab/db migrate:deploy",
+		"db:studio": "bun --filter @tgab/db studio",
+		"user:allow": "bun --env-file=.env packages/core/scripts/allow-user.ts",
+		"postinstall": "bun --filter @tgab/db generate",
+		"lint": "biome check . && prettier --check \"**/*.svelte\"",
+		"format": "biome check --write . && prettier --write \"**/*.svelte\""
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.8",
+		"@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+		"prettier": "^3.10.1",
+		"prettier-plugin-svelte": "^4.2.0",
+		"prettier-plugin-tailwindcss": "^0.8.1"
+	}
 }

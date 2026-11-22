@@ -32,6 +32,8 @@
 	"dependencies": {
 		"@tgab/core": "workspace:*",
 		"@tgab/db": "workspace:*",
+		"clsx": "^2.1.1",
+		"tailwind-merge": "^3.7.1",
 		"zod": "^4.6.7"
 	}
 }

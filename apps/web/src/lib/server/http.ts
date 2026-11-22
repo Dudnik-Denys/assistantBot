@@ -1,19 +1,20 @@
-import { json } from '@sveltejs/kit';
 import { ForbiddenError, NotFoundError } from '@tgab/core';
 import type { User } from '@tgab/db';
 import { z } from 'zod';
+import { HttpStatus } from '#lib/constants/http-status.ts';
 
-export class ApiError extends Error {
+/** Ответ с заданным HTTP-кодом и текстом для пользователя; `handleApi` превращает его в JSON. */
+export class HttpStatusError extends Error {
 	constructor(
 		readonly status: number,
-		message: string
+		message: string,
 	) {
 		super(message);
 	}
 }
 
 export function requireUser(locals: App.Locals): User {
-	if (!locals.user) throw new ApiError(401, 'Не авторизован');
+	if (!locals.user) throw new HttpStatusError(HttpStatus.Unauthorized, 'Не авторизован');
 	return locals.user;
 }
 
@@ -22,13 +23,20 @@ export async function handleApi(fn: () => Promise<Response>): Promise<Response> 
 	try {
 		return await fn();
 	} catch (e) {
-		if (e instanceof ApiError) return json({ error: e.message }, { status: e.status });
-		if (e instanceof NotFoundError) return json({ error: e.message }, { status: 404 });
-		if (e instanceof ForbiddenError) return json({ error: e.message }, { status: 403 });
+		if (e instanceof HttpStatusError)
+			return Response.json({ error: e.message }, { status: e.status });
+		if (e instanceof NotFoundError)
+			return Response.json({ error: e.message }, { status: HttpStatus.NotFound });
+		if (e instanceof ForbiddenError)
+			return Response.json({ error: e.message }, { status: HttpStatus.Forbidden });
 		if (e instanceof z.ZodError) {
-			return json({ error: e.issues[0]?.message ?? 'Некорректные данные' }, { status: 400 });
+			return Response.json(
+				{ error: e.issues[0]?.message ?? 'Некорректные данные' },
+				{ status: HttpStatus.BadRequest },
+			);
 		}
-		if (e instanceof SyntaxError) return json({ error: 'Некорректный JSON' }, { status: 400 });
+		if (e instanceof SyntaxError)
+			return Response.json({ error: 'Некорректный JSON' }, { status: HttpStatus.BadRequest });
 		throw e;
 	}
 }

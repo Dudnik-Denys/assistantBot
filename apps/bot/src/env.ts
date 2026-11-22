@@ -1,20 +1,24 @@
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Не задана переменная окружения ${name}`);
-  return value;
-}
+import { optionalEnv, TelegramIdSchema } from '@tgab/core/env';
+import { z } from 'zod';
 
-function telegramId(name: string): bigint | null {
-  const value = process.env[name];
-  if (!value) return null;
-  if (!/^\d+$/.test(value)) throw new Error(`${name}: ожидается числовой telegramId`);
-  return BigInt(value);
-}
+const EnvSchema = z.object({
+	BOT_TOKEN: z.string().min(1),
+	DATABASE_URL: z.string().min(1),
+	/** Автор: при первом входе становится админом. */
+	ADMIN_TELEGRAM_ID: optionalEnv(TelegramIdSchema),
+	/** HTTPS-адрес Mini App; если задан, /start показывает кнопку открытия. */
+	MINI_APP_URL: optionalEnv(z.url({ protocol: /^https$/ })),
+});
 
-export const env = {
-  BOT_TOKEN: required('BOT_TOKEN'),
-  DATABASE_URL: required('DATABASE_URL'),
-  ADMIN_TELEGRAM_ID: telegramId('ADMIN_TELEGRAM_ID'),
-  /** HTTPS-адрес Mini App; если задан, /start показывает кнопку открытия. */
-  MINI_APP_URL: process.env.MINI_APP_URL || null,
-};
+/** Переменные окружения бота; при ошибке бот не стартует и перечисляет все проблемы сразу. */
+export const env = parseEnv();
+
+function parseEnv(): z.infer<typeof EnvSchema> {
+	const result = EnvSchema.safeParse(process.env);
+	if (!result.success) {
+		throw new Error(
+			`Некорректные переменные окружения (см. README, «Переменные окружения»):\n${z.prettifyError(result.error)}`,
+		);
+	}
+	return result.data;
+}
