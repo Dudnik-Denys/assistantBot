@@ -1,4 +1,3 @@
-import type { NoteInput } from '@tgab/core';
 import { HttpStatus } from '#lib/constants/http-status.ts';
 import { handleApi, readJson, requireUser } from '#lib/server/http.ts';
 import { notes } from '#lib/server/services.ts';
@@ -10,7 +9,7 @@ export const GET: RequestHandler = ({ locals, params }) =>
 export const PUT: RequestHandler = ({ locals, params, request }) =>
 	handleApi(async () => {
 		const user = requireUser(locals);
-		const note = await notes.update(user.id, params.id, (await readJson(request)) as NoteInput);
+		const note = await notes.update(user.id, params.id, await readJson(request));
 		return Response.json(note);
 	});
 

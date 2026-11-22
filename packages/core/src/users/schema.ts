@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Часовой пояс нового пользователя (IANA). Единственный источник: в БД значения по умолчанию нет. */
+export const DEFAULT_TIMEZONE = 'Europe/Kyiv';
+
 /**
  * Пользователь Telegram из initData Mini App (https://core.telegram.org/bots/webapps#webappuser).
  * Берём только нужные поля; остальные (`is_premium`, `photo_url`…) отбрасываются.

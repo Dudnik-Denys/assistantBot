@@ -1,8 +1,8 @@
 import { type Note, Prisma, type PrismaClient } from '@tgab/db';
 import { assertId } from '../common/id.ts';
-import { type ListQuery, ListQuerySchema } from '../common/list-query.ts';
+import { ListQuerySchema } from '../common/list-query.ts';
 import { NotFoundError } from '../errors.ts';
-import { type NoteDto, type NoteInput, NoteInputSchema } from './schema.ts';
+import { type NoteDto, NoteInputSchema } from './schema.ts';
 import { buildPrefixTsQuery } from './search.ts';
 
 type NoteRow = Pick<Note, 'id' | 'title' | 'content' | 'createdAt' | 'updatedAt'>;
@@ -26,10 +26,14 @@ function escapeLike(text: string): string {
 	return text.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
-/** Все методы принимают userId явно и работают только с заметками этого пользователя. */
+/**
+ * Все методы принимают userId явно и работают только с заметками этого пользователя.
+ * Ввод снаружи (`query`, `input`) — `unknown`: его проверяет схема здесь, вызывающему коду
+ * не нужно приводить тип (`as NoteInput`). Тип ввода для клиента — `NoteInput`.
+ */
 export function createNotesService(db: PrismaClient) {
 	return {
-		async list(userId: string, query: ListQuery = {}): Promise<NoteDto[]> {
+		async list(userId: string, query: unknown = {}): Promise<NoteDto[]> {
 			const { q, limit } = ListQuerySchema.parse(query);
 			if (!q) {
 				const rows = await db.note.findMany({
@@ -70,13 +74,13 @@ export function createNotesService(db: PrismaClient) {
 			return toNoteDto(note);
 		},
 
-		async create(userId: string, input: NoteInput): Promise<NoteDto> {
+		async create(userId: string, input: unknown): Promise<NoteDto> {
 			const data = NoteInputSchema.parse(input);
 			const note = await db.note.create({ data: { ...data, userId }, select });
 			return toNoteDto(note);
 		},
 
-		async update(userId: string, id: string, input: NoteInput): Promise<NoteDto> {
+		async update(userId: string, id: string, input: unknown): Promise<NoteDto> {
 			assertId(id, NOT_FOUND);
 			const data = NoteInputSchema.parse(input);
 			const { count } = await db.note.updateMany({ where: { id, userId }, data });

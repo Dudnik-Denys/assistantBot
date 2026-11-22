@@ -1,8 +1,8 @@
 import type { __Entity__, PrismaClient } from '@tgab/db';
 import { assertId } from '../common/id.ts';
-import { type ListQuery, ListQuerySchema } from '../common/list-query.ts';
+import { ListQuerySchema } from '../common/list-query.ts';
 import { NotFoundError } from '../errors.ts';
-import { type __Entity__Dto, type __Entity__Input, __Entity__InputSchema } from './schema.ts';
+import { type __Entity__Dto, __Entity__InputSchema } from './schema.ts';
 
 type __Entity__Row = Pick<__Entity__, 'id' | 'title' | 'createdAt' | 'updatedAt'>;
 
@@ -19,10 +19,13 @@ export function to__Entity__Dto(row: __Entity__Row): __Entity__Dto {
 	};
 }
 
-/** Все методы принимают userId явно и работают только с записями этого пользователя. */
+/**
+ * Все методы принимают userId явно и работают только с записями этого пользователя.
+ * Ввод снаружи (`query`, `input`) — `unknown`: его проверяет схема здесь, без `as` у вызывающего.
+ */
 export function create__Entities__Service(db: PrismaClient) {
 	return {
-		async list(userId: string, query: ListQuery = {}): Promise<__Entity__Dto[]> {
+		async list(userId: string, query: unknown = {}): Promise<__Entity__Dto[]> {
 			const { q, limit } = ListQuerySchema.parse(query);
 			// Поиск по подстроке. Если нужен полнотекстовый — см. notes/service.ts ($queryRaw + tsvector).
 			const rows = await db.__entity__.findMany({
@@ -41,13 +44,13 @@ export function create__Entities__Service(db: PrismaClient) {
 			return to__Entity__Dto(row);
 		},
 
-		async create(userId: string, input: __Entity__Input): Promise<__Entity__Dto> {
+		async create(userId: string, input: unknown): Promise<__Entity__Dto> {
 			const data = __Entity__InputSchema.parse(input);
 			const row = await db.__entity__.create({ data: { ...data, userId }, select });
 			return to__Entity__Dto(row);
 		},
 
-		async update(userId: string, id: string, input: __Entity__Input): Promise<__Entity__Dto> {
+		async update(userId: string, id: string, input: unknown): Promise<__Entity__Dto> {
 			assertId(id, NOT_FOUND);
 			const data = __Entity__InputSchema.parse(input);
 			const { count } = await db.__entity__.updateMany({ where: { id, userId }, data });

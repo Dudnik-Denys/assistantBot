@@ -1,5 +1,10 @@
 import type { PrismaClient, User } from '@tgab/db';
-import type { TelegramIdentity, TelegramUserFields, UserDto } from './schema.ts';
+import {
+	DEFAULT_TIMEZONE,
+	type TelegramIdentity,
+	type TelegramUserFields,
+	type UserDto,
+} from './schema.ts';
 
 export function toUserDto(user: User): UserDto {
 	return {
@@ -39,7 +44,12 @@ export function createUsersService(
 			}
 			if (opts.adminTelegramId != null && identity.telegramId === opts.adminTelegramId) {
 				return db.user.create({
-					data: { telegramId: identity.telegramId, isAdmin: true, ...profile },
+					data: {
+						telegramId: identity.telegramId,
+						isAdmin: true,
+						timezone: DEFAULT_TIMEZONE,
+						...profile,
+					},
 				});
 			}
 			return null;
@@ -52,7 +62,7 @@ export function createUsersService(
 		async allow(telegramId: bigint, { isAdmin = false } = {}): Promise<User> {
 			return db.user.upsert({
 				where: { telegramId },
-				create: { telegramId, isAdmin },
+				create: { telegramId, isAdmin, timezone: DEFAULT_TIMEZONE },
 				update: isAdmin ? { isAdmin } : {},
 			});
 		},

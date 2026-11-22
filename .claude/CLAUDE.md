@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Рантайм и пакеты | Bun, монорепо на Bun workspaces |
 | Бот | grammY (выбран вместо GramIO из-за зрелости и объёма информации). Структура (роутеры, middleware, клавиатуры) и правила — `.claude/rules/bot.md` |
 | Mini App + API | SvelteKit + Svelte 5 (`adapter-node`, серверная часть — это API) + Tailwind CSS v4. Правила вёрстки, дизайн-токены (цвета и размеры — только переменные) и структура компонентов — `.claude/rules/ui.md`; руны и практики Svelte/SvelteKit по официальной документации — `.claude/rules/svelte.md` |
-| БД | PostgreSQL + Prisma |
+| БД | PostgreSQL + Prisma. Модели, миграции, сырой SQL — `.claude/rules/db.md` |
 | Фоновые задачи | BullMQ + Redis |
 | Погода | Отдельный сервис на Python: FastAPI, пакеты через uv |
 | CI | GitHub Actions; Docker-образы в GHCR |
