@@ -4,14 +4,16 @@
 	"type": "module",
 	"workspaces": [
 		"apps/*",
-		"packages/*"
+		"packages/*",
+		"tests"
 	],
 	"scripts": {
 		"dev:web": "bun --filter @tgab/web dev",
 		"dev:bot": "bun --filter @tgab/bot dev",
 		"build:web": "bun --filter @tgab/web build",
 		"check": "bun --filter '*' check",
-		"test": "bun test",
+		"test:unit": "bun tests/run.ts unit",
+		"test:integration": "bun tests/run.ts integration",
 		"db:generate": "bun --filter @tgab/db generate",
 		"db:migrate": "bun --filter @tgab/db migrate:dev",
 		"db:deploy": "bun --filter @tgab/db migrate:deploy",

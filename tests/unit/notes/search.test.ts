@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { buildPrefixTsQuery } from './search.ts';
+import { buildPrefixTsQuery } from '#core/notes/search.ts';
 
 test('buildPrefixTsQuery', () => {
 	expect(buildPrefixTsQuery('Погода  Киев')).toBe('погода:* & киев:*');

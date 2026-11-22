@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { createHmac } from 'node:crypto';
-import { InitDataError } from '../errors.ts';
-import { validateInitData } from './init-data.ts';
+import { validateInitData } from '#core/auth/init-data.ts';
+import { InitDataError } from '#core/errors.ts';
 
 const TOKEN = '123456:TEST-token';
 

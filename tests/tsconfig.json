@@ -1,0 +1,9 @@
+{
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		// Алиас для тестов: `#core/notes/search.ts` → packages/core/src/notes/search.ts.
+		// Через `paths`, а не `imports` в package.json: путь за пределы пакета (`../`) там запрещён.
+		"paths": { "#core/*": ["../packages/core/src/*"] }
+	},
+	"include": ["."]
+}

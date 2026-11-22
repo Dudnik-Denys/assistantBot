@@ -40,7 +40,8 @@
 - [ ] Импорты через `#bot/…`.
 
 ## Завершение
-- [ ] Тесты схемы и чистых функций.
-- [ ] `bun run format`, `lint`, `check`, `test`, `build:web` проходят.
+- [ ] `tests/unit/<модуль>/` — схема и чистые функции; `tests/integration/<модуль>/` — все методы сервиса, чужие записи, неверный id, некорректный ввод.
+- [ ] Фабрика тестовых записей — в `tests/helpers/factories.ts`.
+- [ ] `bun run format`, `lint`, `check`, `test:unit`, `test:integration`, `build:web` проходят.
 - [ ] CLAUDE.md обновлён.
 - [ ] Пользователю выдан список ручных проверок.

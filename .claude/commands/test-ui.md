@@ -1,6 +1,6 @@
 ---
 description: Проверки Mini App — компоненты, страницы, стили, сборка
-allowed-tools: Bash(bun run *), Bash(bun --filter *), Bash(bun test *), Bash(bunx biome *), Bash(bunx prettier *), Bash(git status *), Bash(git diff *)
+allowed-tools: Bash(bun run *), Bash(bun --filter *), Bash(bunx biome *), Bash(bunx prettier *), Bash(git status *), Bash(git diff *)
 ---
 
 Прогони проверки клиентской части Mini App (`apps/web/src`: `routes/` кроме `routes/api/`, `lib/components/`, `lib/reactive/`, `lib/utils/`, `lib/constants/`, клиентские модули `lib/*.ts`, `app.css`).
@@ -10,7 +10,7 @@ allowed-tools: Bash(bun run *), Bash(bun --filter *), Bash(bun test *), Bash(bun
 1. Формат и порядок импортов в компонентах: `bunx prettier --check "apps/web/src/**/*.svelte"`
 2. Линтер и формат TS/CSS: `bunx biome check apps/web/src`
 3. Типы и предупреждения компилятора Svelte (включая доступность): `bun --filter @tgab/web check`
-4. Тесты: `bun test apps/web`
+4. Unit-тесты: `bun run test:unit` (тесты web — в `tests/unit/<модуль>/`, см. `.claude/rules/tests.md`)
 5. Продакшен-сборка (ошибки Vite, Tailwind, импортов): `bun run build:web`
 
 Затем:

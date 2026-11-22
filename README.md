@@ -49,6 +49,8 @@ packages/db    # схема Prisma, миграции, клиент
 | `MINI_APP_URL` | нет | — | HTTPS-адрес Mini App (в разработке — адрес туннеля). Если задан, `/start` показывает кнопку «Открыть приложение». Адрес с `http://` бот не примет и не запустится: Telegram открывает Mini App только по HTTPS. |
 | `DEV_TELEGRAM_ID` | нет | — | Только для `vite dev`: открывать Mini App в обычном браузере от имени этого Telegram ID (он должен быть в allowlist). |
 | `POSTGRES_PORT` | нет | `5432` | Порт Postgres на хосте. Если занят — поменяйте его и порт в `DATABASE_URL`. |
+| `POSTGRES_TEST_PORT` | нет | `5434` | Порт временного Postgres для интеграционных тестов (контейнер `postgres-test`, данные в памяти). |
+| `TEST_DATABASE_URL` | нет | контейнер `postgres-test` | Своя тестовая БД вместо контейнера. Имя базы обязано кончаться на `_test`: тесты очищают все таблицы. |
 | `REDIS_PORT` | нет | `6379` | Порт Redis на хосте. |
 | `REDIS_URL` | нет | `redis://localhost:6379` | Redis для будущего воркера напоминаний. |
 
@@ -72,7 +74,8 @@ bun run dev:web         # Mini App + API на http://localhost:5173
 bun run dev:bot         # бот
 bun run db:deploy       # применить миграции
 bun run check           # проверка типов
-bun test                # тесты
+bun run test:unit [модуль]         # unit-тесты (без БД)
+bun run test:integration [модуль]  # интеграционные тесты (нужен Docker: поднимут временный Postgres)
 bun run lint            # линтер и формат (Biome + Prettier для .svelte)
 bun run format          # автоисправление формата
 ```

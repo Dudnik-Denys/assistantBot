@@ -1,12 +1,12 @@
 ---
-name: add-new-section
-description: Добавление нового раздела Mini App tgAssistantBot (счётчики, напоминания, вакансии…) по образцу заметок — модель Prisma и миграция, схема и сервис в packages/core, API SvelteKit, клиент, страницы списка и редактора, компоненты, пункт главного меню, тесты. Использовать, когда нужно сделать новый раздел или новую сущность с CRUD; вызывается и как /add-new-section <раздел>.
-argument-hint: "<раздел, например: счётчики>"
+name: add-new-module
+description: Добавление нового модуля (раздела) Mini App tgAssistantBot (счётчики, напоминания, вакансии…) по образцу заметок — модель Prisma и миграция, схема и сервис в packages/core, API SvelteKit, клиент, страницы списка и редактора, компоненты, пункт главного меню, unit- и интеграционные тесты. Использовать, когда нужно сделать новый модуль, раздел или сущность с CRUD; вызывается и как /add-new-module <модуль>.
+argument-hint: "<модуль, например: счётчики>"
 ---
 
-# add-new-section
+# add-new-module
 
-Добавь новый раздел приложения: `$ARGUMENTS`
+Добавь новый модуль приложения: `$ARGUMENTS`
 
 Эталон — раздел «Заметки». Перед началом прочитай его код, чтобы повторить актуальные решения, а не только шаблоны: `packages/core/src/notes/`, `apps/web/src/routes/api/notes/`, `apps/web/src/routes/notes/`, `apps/web/src/lib/components/notes/`.
 
@@ -52,14 +52,14 @@ argument-hint: "<раздел, например: счётчики>"
 8. **Страницы** — `templates/list-page.svelte.tpl` → `routes/__entities__/+page.svelte`; `templates/new-page.svelte.tpl` → `routes/__entities__/new/+page.svelte`; `templates/item-page.ts.tpl` и `templates/item-page.svelte.tpl` → `routes/__entities__/[id]/+page.ts` и `+page.svelte`.
 9. **Пункт меню** — в `apps/web/src/lib/constants/sections.ts`: `{ href: resolve('/__entities__'), title: '__Title__', description: '…', icon: '…' }`.
 10. **Бот (если нужен)** — по `.claude/rules/bot.md`, раздел «Как добавить команду или раздел»: имена в `BotCommand` и `COMMAND_MENU`, роутер `apps/bot/src/routers/__entities__.ts` (фабрика `create__Entities__Router(deps)` с сервисом из `packages/core`), сервис — в `RouterDeps`/`BotDeps` и `index.ts`, подключение в `createPrivateRouter`, клавиатуры — `keyboards/__entities__.ts`, префикс кнопок — в `constants/`. Логика — тот же сервис, что у API, без дублирования.
-11. **Тесты** — `bun:test` рядом с кодом (`*.test.ts`): как минимум схема (валидные и невалидные данные, граничные значения) и чистые функции раздела. Сервисы с БД тестами пока не покрываем — в проекте нет тестовой БД.
+11. **Тесты** — по `.claude/rules/tests.md`: `tests/unit/__entities__/` — схема ввода (валидные и невалидные данные, граничные значения) и чистые функции модуля; `tests/integration/__entities__/service.test.ts` — каждый метод сервиса, включая чужие записи (`NotFoundError`), неверный id и некорректный ввод (образец — `tests/integration/notes/service.test.ts`). Фабрика `createTest__Entity__` — в `tests/helpers/factories.ts`.
 12. **Документация** — в `.claude/CLAUDE.md` обнови «Project status» и при необходимости архитектуру.
 
 Полный список того, что легко забыть, — `checklist.md`. Пройди его перед завершением.
 
 ## 4. Проверка
 
-- `bun run format`, затем `bun run lint`, `bun run check`, `bun test`, `bun run build:web` — всё должно проходить.
+- `bun run format`, затем `bun run lint`, `bun run check`, `bun run test:unit __entities__`, `bun run test:integration __entities__`, `bun run build:web` — всё должно проходить.
 - Или команды `/test-api` и `/test-ui`.
 - Web-сервер и бота сам не запускай (они читают `.env`). В конце дай пользователю список ручных проверок: открыть меню → раздел → создать → изменить → удалить → поиск → «Назад» в Telegram и в браузере → открыть несуществующий `/__entities__/abc`; если раздел есть в боте — его команды и кнопки в Telegram.
 

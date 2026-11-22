@@ -1,6 +1,8 @@
 ---
 paths:
   - packages/db/**
+  - packages/core/src/**
+  - tests/**
 ---
 
 # База данных (Prisma, `packages/db`)
@@ -35,6 +37,18 @@ paths:
 
 - Запросы к БД — только в сервисах `packages/core`; приложения получают клиент через `createPrismaClient` и передают его в фабрики сервисов.
 - Сырой SQL — только `db.$queryRaw` / `$executeRaw` с шаблонной строкой (tagged template) и фрагменты `Prisma.sql`: подставленные `${…}` уходят в БД параметрами, а не текстом. `$queryRawUnsafe`, `$executeRawUnsafe` и `Prisma.raw` с данными пользователя запрещены. Значение для `LIKE` экранируется (`escapeLike` в `notes/service.ts`), строка для `to_tsquery` строится из слов без спецсимволов (`buildPrefixTsQuery`).
+- Оформление сырого SQL. Короткий запрос или фрагмент — в одну строку (`` Prisma.sql`FALSE` ``, `` db.$executeRaw`TRUNCATE …` ``). Многострочный запрос начинается с новой строки после открывающей `` ` ``; каждая строка SQL — с отступом **на один таб глубже** строки с `$queryRaw`, без дополнительных отступов для продолжений (`AND`, `OR` — на том же уровне, что `WHERE`); закрывающая `` `; `` — на отдельной строке с отступом строки с `$queryRaw`. Отступы — только табами: пробелы внутри шаблонной строки Biome не исправляет, а редактор подсвечивает их как ошибочный отступ. Ключевые слова SQL — заглавными, имена в camelCase — в двойных кавычках (`"userId"`, `"createdAt"`). Образец:
+
+```ts
+const rows = await db.$queryRaw<NoteRow[]>`
+	SELECT id, title, content, "createdAt", "updatedAt"
+	FROM "Note"
+	WHERE "userId" = ${userId}::uuid
+	AND (${ftsMatch} OR title ILIKE ${like} OR content ILIKE ${like})
+	ORDER BY ${rank} DESC, "updatedAt" DESC
+	LIMIT ${limit}
+`;
+```
 - Наружу из core отдаются DTO (`toXDto`), а не модели Prisma: `bigint` → строка, даты → ISO-строки, внутренние поля не протекают. Модель `User` ходит только внутри серверного кода (`locals.user`, `ctx.user`).
 
 ## `src/index.ts`

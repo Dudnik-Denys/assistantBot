@@ -22,11 +22,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |---|---|
 | Рантайм и пакеты | Bun, монорепо на Bun workspaces |
 | Бот | grammY (выбран вместо GramIO из-за зрелости и объёма информации). Структура (роутеры, middleware, клавиатуры) и правила — `.claude/rules/bot.md` |
+| Тесты | `bun:test` в общей папке `tests/` (пакет `@tgab/tests`): `unit/`, `integration/`, `e2e/` → папки модулей; интеграционные — на временном Postgres. Правила — `.claude/rules/tests.md` (unit, integration) и `.claude/rules/e2e.md` (Playwright, Page Object) |
 | Mini App + API | SvelteKit + Svelte 5 (`adapter-node`, серверная часть — это API) + Tailwind CSS v4. Правила вёрстки, дизайн-токены (цвета и размеры — только переменные) и структура компонентов — `.claude/rules/ui.md`; руны и практики Svelte/SvelteKit по официальной документации — `.claude/rules/svelte.md` |
 | БД | PostgreSQL + Prisma. Модели, миграции, сырой SQL — `.claude/rules/db.md` |
 | Фоновые задачи | BullMQ + Redis |
 | Погода | Отдельный сервис на Python: FastAPI, пакеты через uv |
-| CI | GitHub Actions; Docker-образы в GHCR |
+| CI | GitHub Actions (`.github/workflows/ci.yml`: lint, типы, unit- и интеграционные тесты, сборка; e2e — не в CI); Docker-образы в GHCR |
 | Хостинг | VPS + Docker Compose; провайдер ещё не выбран, см. раздел «Хостинг» |
 
 ## Architecture
@@ -40,6 +41,7 @@ apps/worker    # BullMQ: напоминания, сбор вакансий и с
 apps/weather   # Python-сервис предугадывания погоды
 packages/core  # общая логика (services) и типы
 packages/db    # схема Prisma, миграции, клиент
+tests          # тесты всех пакетов: unit/ integration/ e2e/ → папки модулей (.claude/rules/tests.md, e2e.md)
 ```
 
 Принципы (общие правила кода — DRY, ответственность модулей, ООП/SOLID, именование — в `.claude/rules/code.md`):
@@ -83,7 +85,8 @@ bun run user:allow <tgId>    # добавить пользователя в allo
 bun run dev:web              # Mini App + API на http://localhost:5173
 bun run dev:bot              # бот (long polling, bun --watch)
 bun run check                # типы во всех пакетах (tsc / svelte-check)
-bun test                     # тесты (bun:test, файлы *.test.ts)
+bun run test:unit [модуль]   # unit-тесты (tests/unit/<модуль>); -t "текст" — по описанию теста
+bun run test:integration [модуль]  # интеграционные: сами поднимут временный Postgres (tests/integration)
 bun run lint                 # проверка: Biome (TS, JSON, CSS) + Prettier --check (.svelte)
 bun run format               # автоисправление: форматирование, безопасные фиксы Biome, порядок импортов
 bun run build:web && bun --cwd apps/web start   # продакшен-сборка web

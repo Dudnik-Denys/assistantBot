@@ -1,0 +1,56 @@
+# Проверки на каждый push в main и pull request. e2e (Playwright) сюда не входят — запускаются вручную.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, типы, unit-тесты, сборка
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run check
+      - run: bun run test:unit
+      - run: bun run build:web
+        env:
+          # Фиктивный адрес: SvelteKit проверяет env уже при сборке, но к БД сборка не подключается.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+  integration:
+    name: Интеграционные тесты
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: tgab
+          POSTGRES_PASSWORD: tgab
+          POSTGRES_DB: tgab_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tgab -d tgab_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://tgab:tgab@localhost:5432/tgab_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run test:integration

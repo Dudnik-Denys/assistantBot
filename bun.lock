@@ -77,6 +77,19 @@
         "typescript": "^6.0.3",
       },
     },
+    "tests": {
+      "name": "@tgab/tests",
+      "version": "0.0.1",
+      "dependencies": {
+        "@tgab/core": "workspace:*",
+        "@tgab/db": "workspace:*",
+        "zod": "^4.6.7",
+      },
+      "devDependencies": {
+        "@types/bun": "1.4.4",
+        "typescript": "^6.0.3",
+      },
+    },
   },
   "packages": {
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
@@ -278,6 +291,8 @@
     "@tgab/core": ["@tgab/core@workspace:packages/core"],
 
     "@tgab/db": ["@tgab/db@workspace:packages/db"],
+
+    "@tgab/tests": ["@tgab/tests@workspace:tests"],
 
     "@tgab/web": ["@tgab/web@workspace:apps/web"],
 

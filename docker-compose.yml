@@ -29,6 +29,25 @@ services:
       - redis-data:/data
     restart: unless-stopped
 
+  # Только для интеграционных тестов (`bun run test:integration` поднимает его сам).
+  # Данные в памяти (tmpfs): после остановки ничего не остаётся, с рабочей базой не связан.
+  postgres-test:
+    image: postgres:17-alpine
+    profiles: [test]
+    environment:
+      POSTGRES_USER: tgab
+      POSTGRES_PASSWORD: tgab
+      POSTGRES_DB: tgab_test
+    ports:
+      - "127.0.0.1:${POSTGRES_TEST_PORT:-5434}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tgab -d tgab_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
 volumes:
   postgres-data:
   redis-data:
