@@ -1,5 +1,5 @@
 ---
-description: Проверки серверной части — packages/core, packages/db, бот, API SvelteKit
+description: Полная проверка серверной части перед коммитом (линтер, типы, unit- и интеграционные тесты, ревью по правилам) — packages/core, packages/db, бот, API SvelteKit
 allowed-tools: Bash(bun run *), Bash(bun --filter *), Bash(docker compose *), Bash(bunx biome *), Bash(git status *), Bash(git diff *)
 ---
 

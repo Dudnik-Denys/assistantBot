@@ -1,5 +1,5 @@
 ---
-description: Проверки Mini App — компоненты, страницы, стили, сборка
+description: Полная проверка Mini App перед коммитом (формат, линтер, типы, unit-тесты, сборка, ревью по правилам) — компоненты, страницы, стили
 allowed-tools: Bash(bun run *), Bash(bun --filter *), Bash(bunx biome *), Bash(bunx prettier *), Bash(git status *), Bash(git diff *)
 ---
 
