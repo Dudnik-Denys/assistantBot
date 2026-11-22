@@ -1,16 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 import { createHmac } from 'node:crypto';
-import { InitDataError, validateInitData } from './init-data.ts';
+import { InitDataError } from '../errors.ts';
+import { validateInitData } from './init-data.ts';
 
 const TOKEN = '123456:TEST-token';
 
 function sign(fields: Record<string, string>, token = TOKEN): string {
-	const dcs = Object.entries(fields)
-		.map(([k, v]) => `${k}=${v}`)
+	const dataCheckString = Object.entries(fields)
+		.map(([key, value]) => `${key}=${value}`)
 		.sort()
 		.join('\n');
 	const secret = createHmac('sha256', 'WebAppData').update(token).digest();
-	const hash = createHmac('sha256', secret).update(dcs).digest('hex');
+	const hash = createHmac('sha256', secret).update(dataCheckString).digest('hex');
 	return new URLSearchParams({ ...fields, hash }).toString();
 }
 

@@ -1,9 +1,7 @@
 import { z } from 'zod';
 import { __ENTITY___TITLE_MAX } from './limits.ts';
 
-export { __ENTITY___TITLE_MAX };
-
-export const __entity__InputSchema = z.object({
+export const __Entity__InputSchema = z.object({
 	title: z
 		.string()
 		.trim()
@@ -11,14 +9,10 @@ export const __entity__InputSchema = z.object({
 		.max(__ENTITY___TITLE_MAX),
 });
 
-export type __Entity__Input = z.input<typeof __entity__InputSchema>;
+export type __Entity__Input = z.input<typeof __Entity__InputSchema>;
 
-export const __entity__ListQuerySchema = z.object({
-	q: z.string().trim().max(200).optional(),
-	limit: z.coerce.number().int().min(1).max(100).default(50),
-});
-
-export type __Entity__ListQuery = z.input<typeof __entity__ListQuerySchema>;
+// Запрос списка (`q`, `limit`) — общий `ListQuerySchema` из `../common/list-query.ts`.
+// Своя схема — только если разделу нужны доп. параметры: `ListQuerySchema.extend({ … })`.
 
 /** __Title__ в ответе API: даты — ISO-строки. */
 export interface __Entity__Dto {

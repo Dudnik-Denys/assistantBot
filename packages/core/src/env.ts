@@ -12,6 +12,9 @@ export const TelegramIdSchema = z
 	.regex(/^\d+$/, 'ожидается числовой telegramId')
 	.transform(BigInt);
 
+/** Строка подключения к Postgres (`DATABASE_URL`): обязательна и не пуста. */
+export const DatabaseUrlSchema = z.string().min(1, 'DATABASE_URL не задан');
+
 /** Необязательная переменная окружения: пустое значение (`NAME=` в .env) считается незаданным. */
 export function optionalEnv<T extends z.ZodType<unknown, string>>(schema: T) {
 	return z

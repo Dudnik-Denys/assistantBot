@@ -1,5 +1,5 @@
 import type { PrismaClient, User } from '@tgab/db';
-import type { UserDto } from './schema.ts';
+import type { TelegramIdentity, TelegramUserFields, UserDto } from './schema.ts';
 
 export function toUserDto(user: User): UserDto {
 	return {
@@ -9,19 +9,6 @@ export function toUserDto(user: User): UserDto {
 		isAdmin: user.isAdmin,
 		timezone: user.timezone,
 	};
-}
-
-export interface TelegramIdentity {
-	telegramId: bigint;
-	firstName?: string | null;
-	username?: string | null;
-}
-
-/** Поля пользователя Telegram, одинаковые в initData Mini App и в апдейтах бота (`ctx.from`). */
-export interface TelegramUserFields {
-	id: number;
-	first_name?: string;
-	username?: string;
 }
 
 /** Пользователь Telegram (из initData или `ctx.from`) → `TelegramIdentity` для `authenticate`. */

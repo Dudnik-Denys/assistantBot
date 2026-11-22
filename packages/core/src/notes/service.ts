@@ -1,39 +1,36 @@
 import { type Note, Prisma, type PrismaClient } from '@tgab/db';
+import { assertId } from '../common/id.ts';
+import { type ListQuery, ListQuerySchema } from '../common/list-query.ts';
 import { NotFoundError } from '../errors.ts';
-import {
-	type NoteDto,
-	type NoteInput,
-	type NoteListQuery,
-	noteInputSchema,
-	noteListQuerySchema,
-} from './schema.ts';
+import { type NoteDto, type NoteInput, NoteInputSchema } from './schema.ts';
 import { buildPrefixTsQuery } from './search.ts';
 
 type NoteRow = Pick<Note, 'id' | 'title' | 'content' | 'createdAt' | 'updatedAt'>;
 
 const select = { id: true, title: true, content: true, createdAt: true, updatedAt: true } as const;
 
-export function toNoteDto(n: NoteRow): NoteDto {
+const NOT_FOUND = 'Заметка не найдена';
+
+export function toNoteDto(row: NoteRow): NoteDto {
 	return {
-		id: n.id,
-		title: n.title,
-		content: n.content,
-		createdAt: n.createdAt.toISOString(),
-		updatedAt: n.updatedAt.toISOString(),
+		id: row.id,
+		title: row.title,
+		content: row.content,
+		createdAt: row.createdAt.toISOString(),
+		updatedAt: row.updatedAt.toISOString(),
 	};
 }
 
-function escapeLike(s: string): string {
-	return s.replace(/[\\%_]/g, (c) => `\\${c}`);
+/** Экранирует спецсимволы LIKE (`\`, `%`, `_`), чтобы они искались как обычные символы. */
+function escapeLike(text: string): string {
+	return text.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Все методы принимают userId явно и работают только с заметками этого пользователя. */
 export function createNotesService(db: PrismaClient) {
 	return {
-		async list(userId: string, query: NoteListQuery = {}): Promise<NoteDto[]> {
-			const { q, limit } = noteListQuerySchema.parse(query);
+		async list(userId: string, query: ListQuery = {}): Promise<NoteDto[]> {
+			const { q, limit } = ListQuerySchema.parse(query);
 			if (!q) {
 				const rows = await db.note.findMany({
 					where: { userId },
@@ -67,30 +64,30 @@ export function createNotesService(db: PrismaClient) {
 		},
 
 		async get(userId: string, id: string): Promise<NoteDto> {
-			if (!UUID_RE.test(id)) throw new NotFoundError('Заметка не найдена');
+			assertId(id, NOT_FOUND);
 			const note = await db.note.findFirst({ where: { id, userId }, select });
-			if (!note) throw new NotFoundError('Заметка не найдена');
+			if (!note) throw new NotFoundError(NOT_FOUND);
 			return toNoteDto(note);
 		},
 
 		async create(userId: string, input: NoteInput): Promise<NoteDto> {
-			const data = noteInputSchema.parse(input);
+			const data = NoteInputSchema.parse(input);
 			const note = await db.note.create({ data: { ...data, userId }, select });
 			return toNoteDto(note);
 		},
 
 		async update(userId: string, id: string, input: NoteInput): Promise<NoteDto> {
-			if (!UUID_RE.test(id)) throw new NotFoundError('Заметка не найдена');
-			const data = noteInputSchema.parse(input);
+			assertId(id, NOT_FOUND);
+			const data = NoteInputSchema.parse(input);
 			const { count } = await db.note.updateMany({ where: { id, userId }, data });
-			if (count === 0) throw new NotFoundError('Заметка не найдена');
+			if (count === 0) throw new NotFoundError(NOT_FOUND);
 			return this.get(userId, id);
 		},
 
 		async remove(userId: string, id: string): Promise<void> {
-			if (!UUID_RE.test(id)) throw new NotFoundError('Заметка не найдена');
+			assertId(id, NOT_FOUND);
 			const { count } = await db.note.deleteMany({ where: { id, userId } });
-			if (count === 0) throw new NotFoundError('Заметка не найдена');
+			if (count === 0) throw new NotFoundError(NOT_FOUND);
 		},
 	};
 }

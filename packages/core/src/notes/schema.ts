@@ -1,26 +1,18 @@
 import { z } from 'zod';
 import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from './limits.ts';
 
-export { NOTE_CONTENT_MAX, NOTE_TITLE_MAX };
-
-export const noteInputSchema = z
+export const NoteInputSchema = z
 	.object({
 		title: z.string().trim().max(NOTE_TITLE_MAX).default(''),
 		content: z.string().trim().max(NOTE_CONTENT_MAX).default(''),
 	})
-	.refine((n) => n.title.length > 0 || n.content.length > 0, {
+	.refine((note) => note.title.length > 0 || note.content.length > 0, {
 		message: 'Заметка не может быть пустой',
 	});
 
-export type NoteInput = z.input<typeof noteInputSchema>;
+export type NoteInput = z.input<typeof NoteInputSchema>;
 
-export const noteListQuerySchema = z.object({
-	q: z.string().trim().max(200).optional(),
-	limit: z.coerce.number().int().min(1).max(100).default(50),
-});
-
-export type NoteListQuery = z.input<typeof noteListQuerySchema>;
-
+/** Заметка в ответе API: даты — ISO-строки. */
 export interface NoteDto {
 	id: string;
 	title: string;

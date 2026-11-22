@@ -1,9 +1,9 @@
-import { optionalEnv, TelegramIdSchema } from '@tgab/core/env';
+import { DatabaseUrlSchema, optionalEnv, TelegramIdSchema } from '@tgab/core/env';
 import { z } from 'zod';
 
 const EnvSchema = z.object({
 	BOT_TOKEN: z.string().min(1),
-	DATABASE_URL: z.string().min(1),
+	DATABASE_URL: DatabaseUrlSchema,
 	/** Автор: при первом входе становится админом. */
 	ADMIN_TELEGRAM_ID: optionalEnv(TelegramIdSchema),
 	/** HTTPS-адрес Mini App; если задан, /start показывает кнопку открытия. */

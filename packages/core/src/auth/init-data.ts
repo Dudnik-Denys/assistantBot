@@ -1,30 +1,13 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { z } from 'zod';
+import { InitDataError } from '../errors.ts';
+import { type TelegramUser, TelegramUserSchema } from '../users/schema.ts';
 
-/**
- * Поле `user` из initData (https://core.telegram.org/bots/webapps#webappuser).
- * Берём только нужные поля; остальные (`is_premium`, `photo_url`…) отбрасываются.
- */
-export const TelegramWebAppUserSchema = z.object({
-	id: z.number().int().positive(),
-	first_name: z.string().optional(),
-	last_name: z.string().optional(),
-	username: z.string().optional(),
-	language_code: z.string().optional(),
-});
-
-export type TelegramWebAppUser = z.infer<typeof TelegramWebAppUserSchema>;
+/** Сколько живут initData: старше — отклоняются (защита от повторного использования). */
+export const INIT_DATA_MAX_AGE_SECONDS = 24 * 60 * 60;
 
 export interface ValidatedInitData {
-	user: TelegramWebAppUser;
+	user: TelegramUser;
 	authDate: Date;
-}
-
-export class InitDataError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = 'InitDataError';
-	}
 }
 
 /**
@@ -34,7 +17,7 @@ export class InitDataError extends Error {
 export function validateInitData(
 	initData: string,
 	botToken: string,
-	{ maxAgeSeconds = 24 * 60 * 60, now = new Date() } = {},
+	{ maxAgeSeconds = INIT_DATA_MAX_AGE_SECONDS, now = new Date() } = {},
 ): ValidatedInitData {
 	const params = new URLSearchParams(initData);
 	const hash = params.get('hash');
@@ -42,7 +25,7 @@ export function validateInitData(
 	params.delete('hash');
 
 	const dataCheckString = [...params.entries()]
-		.map(([k, v]) => `${k}=${v}`)
+		.map(([key, value]) => `${key}=${value}`)
 		.sort()
 		.join('\n');
 
@@ -63,13 +46,13 @@ export function validateInitData(
 
 	const rawUser = params.get('user');
 	if (!rawUser) throw new InitDataError('В initData нет user');
-	const user = TelegramWebAppUserSchema.safeParse(parseJson(rawUser));
+	const user = TelegramUserSchema.safeParse(parseJson(rawUser));
 	if (!user.success) throw new InitDataError('Некорректный user в initData');
 
 	return { user: user.data, authDate: new Date(authDateSec * 1000) };
 }
 
-/** JSON.parse без исключения: некорректный JSON → undefined (его отклонит схема). */
+/** Разбор JSON перед схемой: некорректный JSON → undefined (его отклонит схема). */
 function parseJson(text: string): unknown {
 	try {
 		return JSON.parse(text);
