@@ -10,3 +10,7 @@ node_modules
 
 # Prisma
 packages/db/src/generated
+
+# VS Code: настройки проекта — только в корне, вложенные .vscode не коммитятся
+.vscode/
+!/.vscode/
