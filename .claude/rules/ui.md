@@ -46,7 +46,7 @@ paths:
 
 - `ui/` — общие, не знают о предметной области, разложены по назначению:
   - `buttons/` — кнопки: `Button`, `BackButton`, `FloatingButton`;
-  - `layout/` — каркас экрана и контейнеры: `Screen`, `PageHeader`, `ActionBar`, `Card`;
+  - `layout/` — каркас экрана и контейнеры: `Screen`, `PageHeader`, `ActionBar`, `Card`, `SwipeActions` (строка списка с действиями по свайпу);
   - `feedback/` — состояния и отклик: `Message`, `Loading`, `Spinner`, `Notice`, `NavigationProgress`;
   - `forms/` — поля ввода: `SearchBar`;
   - `text/` — оформление текста: `SectionTitle`.

@@ -10,12 +10,30 @@
 	import SearchBar from '#lib/components/ui/forms/SearchBar.svelte';
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
+	import { errorMessage } from '#lib/errors.ts';
 	import { DebouncedSearch } from '#lib/reactive/debounced-search.svelte.ts';
+	import { alertDialog, confirmDialog, haptic } from '#lib/telegram.ts';
 
 	// Последний список показывается сразу, свежий подгружается в фоне.
 	const search = new DebouncedSearch<NoteDto>((query, signal) => api.notes.list(query, signal), {
 		initialItems: api.notes.cachedList,
 	});
+
+	async function removeNote(note: NoteDto) {
+		const confirmed = await confirmDialog(
+			`Вы уверены, что хотите удалить заметку «${note.title}»?`,
+			{ confirmText: 'Да', cancelText: 'Нет', destructive: true },
+		);
+		if (!confirmed) return;
+		try {
+			await api.notes.remove(note.id);
+			haptic('warning');
+			search.items = search.items?.filter((item) => item.id !== note.id) ?? null;
+		} catch (e) {
+			haptic('error');
+			await alertDialog(errorMessage(e));
+		}
+	}
 </script>
 
 <Screen>
@@ -40,7 +58,7 @@
 		{:else}
 			<ul class="flex flex-col gap-2 pb-20">
 				{#each search.items as note (note.id)}
-					<li><NoteCard {note} /></li>
+					<li><NoteCard {note} onremove={() => removeNote(note)} /></li>
 				{/each}
 			</ul>
 		{/if}

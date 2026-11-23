@@ -41,6 +41,7 @@
 
 	/* Роли вне темы Telegram. */
 	--color-elevation: color-mix(in srgb, var(--palette-black) 20%, transparent);
+	--color-on-destructive: var(--palette-white); /* текст на красном фоне (кнопка «Удалить») */
 
 	/* Безопасные зоны Telegram; вне Telegram — ноль. */
 	--spacing-safe-top: calc(

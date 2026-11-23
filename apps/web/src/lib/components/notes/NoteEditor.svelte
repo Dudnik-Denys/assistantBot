@@ -1,30 +1,30 @@
 <script lang="ts">
 	import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from '@tgab/core/constants/notes';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { api, type NoteDto } from '#lib/api.ts';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
-	import Button from '#lib/components/ui/buttons/Button.svelte';
-	import ActionBar from '#lib/components/ui/layout/ActionBar.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
-	import { errorMessage } from '#lib/errors.ts';
-	import { confirmDialog, haptic, openLink } from '#lib/telegram.ts';
+	import { Autosave } from '#lib/reactive/autosave.svelte.ts';
+	import { confirmDialog, openLink } from '#lib/telegram.ts';
 	import { formatShortDate } from '#lib/utils/dates.ts';
 	import { displayUrl, linkify } from '#lib/utils/linkify.ts';
 
-	/** note отсутствует — создание новой заметки. */
+	/**
+	 * Редактор заметки без кнопок: изменения сохраняются сами (Autosave), если есть заголовок.
+	 * note отсутствует — новая заметка: создаётся при первом сохранении, дальше обновляется.
+	 */
 	let { note }: { note?: NoteDto } = $props();
 
-	// Редактор держит локальную копию; исходная заметка нужна только для сравнения.
+	// Редактор держит локальную копию; исходная заметка нужна только для начальных значений.
 	// svelte-ignore state_referenced_locally
 	let title = $state(note?.title ?? '');
 	// svelte-ignore state_referenced_locally
 	let content = $state(note?.content ?? '');
-	let saving = $state(false);
-	let error = $state<string | null>(null);
+	// svelte-ignore state_referenced_locally
+	let noteId = note?.id;
 
-	const dirty = $derived(title !== (note?.title ?? '') || content !== (note?.content ?? ''));
-	/** Нечего терять — выход без подтверждения. */
 	const empty = $derived(!title.trim() && !content.trim());
 	/** Заголовок обязателен (NoteInputSchema) — без него не сохранить. */
 	const untitled = $derived(!title.trim());
@@ -32,65 +32,57 @@
 		...new Set(linkify(content).flatMap((s) => (s.type === 'link' ? [s.href] : []))),
 	]);
 
+	const autosave = new Autosave({
+		value: () => ({ title, content }),
+		canSave: (draft) => draft.title.trim() !== '',
+		save: async (draft) => {
+			if (noteId) await api.notes.update(noteId, draft);
+			else {
+				noteId = (await api.notes.create(draft)).id;
+				// Адрес созданной заметки вместо /notes/new — без перехода (редактор и фокус остаются),
+				// чтобы перезагрузка страницы не создала заметку заново. Только если мы ещё здесь:
+				// сохранение могло завершиться уже после ухода на другую страницу.
+				if (page.url.pathname === resolve('/notes/new')) {
+					replaceState(resolve('/notes/[id]', { id: noteId }), {});
+				}
+			}
+		},
+	});
+
 	async function back() {
-		if (dirty && !empty && !(await confirmDialog('Выйти без сохранения изменений?'))) return;
+		const saved = await autosave.flush();
+		if (!saved && !empty) {
+			const message = untitled
+				? 'Заметка без заголовка не сохранится. Выйти?'
+				: 'Не удалось сохранить изменения. Выйти?';
+			if (!(await confirmDialog(message))) return;
+		}
 		goto(resolve('/notes'));
-	}
-
-	async function save() {
-		if (saving || untitled) return;
-		saving = true;
-		error = null;
-		try {
-			const input = { title, content };
-			if (note) await api.notes.update(note.id, input);
-			else await api.notes.create(input);
-			haptic('success');
-			goto(resolve('/notes'));
-		} catch (e) {
-			haptic('error');
-			error = errorMessage(e);
-		} finally {
-			saving = false;
-		}
-	}
-
-	async function remove() {
-		if (!note || !(await confirmDialog('Удалить заметку?'))) return;
-		try {
-			await api.notes.remove(note.id);
-			haptic('warning');
-			goto(resolve('/notes'));
-		} catch (e) {
-			error = errorMessage(e);
-		}
-	}
-
-	function onKeydown(e: KeyboardEvent) {
-		if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') save();
 	}
 </script>
 
-<svelte:window onkeydown={onKeydown} />
-
 <BackButton onback={back} />
 
-<form
-	class="flex flex-1 flex-col"
-	onsubmit={(e) => {
-		e.preventDefault();
-		save();
-	}}
->
+<div class="flex flex-1 flex-col">
 	<input
 		bind:value={title}
 		placeholder="Заголовок"
 		maxlength={NOTE_TITLE_MAX}
 		class="field-bare text-2xl font-bold"
 	/>
-	{#if note}
-		<p class="mb-2 text-xs text-tg-hint">Изменено {formatShortDate(note.updatedAt)}</p>
-	{/if}
+	<p class="mb-2 min-h-4 text-xs text-tg-hint">
+		{#if untitled && !empty}
+			Укажите заголовок — без него заметка не сохранится
+		{:else if autosave.status === 'error'}
+			<span class="text-tg-destructive">{autosave.error}</span>
+		{:else if autosave.status === 'saving'}
+			Сохранение…
+		{:else if autosave.status === 'saved'}
+			Сохранено
+		{:else if note}
+			Изменено {formatShortDate(note.updatedAt)}
+		{/if}
+	</p>
 	<textarea
 		bind:value={content}
 		placeholder="Текст заметки, ссылки…"
@@ -119,17 +111,4 @@
 			</ul>
 		</section>
 	{/if}
-
-	{#if error}
-		<p class="mt-3 text-sm text-tg-destructive">{error}</p>
-	{/if}
-
-	<ActionBar>
-		{#if note}
-			<Button variant="destructive" class="w-24" onclick={remove}>Удалить</Button>
-		{/if}
-		<Button type="submit" class="flex-1" disabled={saving || untitled || (note && !dirty)}>
-			{saving ? 'Сохранение…' : 'Сохранить'}
-		</Button>
-	</ActionBar>
-</form>
+</div>
