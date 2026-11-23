@@ -46,10 +46,10 @@ tests/e2e/
 
 Разделы — в этом порядке, отделены комментарием-заголовком:
 
-1. **Элементы** — `readonly` поля (`deleteButton`) или методы с параметром (`noteCard(title)`), описанные один раз через `getByTestId(TestId.…)` (см. «Элементы и `data-testid`»). Дальше методы и тесты обращаются к ним по имени (`this.deleteButton`), `getBy…` вне раздела элементов не пишется.
-2. **Действия** — то, что делает пользователь, названное по смыслу: `openNewNote()`, `fill(title)`, `save()`, `search(query)`. Не `clickButton()`, не `tap…()` (в Playwright `tap` работает только в режиме сенсорного экрана).
+1. **Элементы** — `readonly` поля (`titleInput`) или методы с параметром (`noteCard(title)`), описанные один раз через `getByTestId(TestId.…)` (см. «Элементы и `data-testid`»). Дальше методы и тесты обращаются к ним по имени (`this.titleInput`), `getBy…` вне раздела элементов не пишется.
+2. **Действия** — то, что делает пользователь, названное по смыслу: `openNewNote()`, `fill(title, content)`, `search(query)`, `deleteNote(title)`. Не `clickButton()`, не `tap…()` (в Playwright `tap` работает только в режиме сенсорного экрана).
 3. **Проверки** — методы `expect…` (см. ниже).
-4. **Удобные методы** — цепочки действий *этого* экрана, которые повторяются в тестах (`fillAndSave(title, content)`).
+4. **Удобные методы** — цепочки действий *этого* экрана, которые повторяются в тестах (`fillAndWaitSaved(title, content)` — заполнить и дождаться автосохранения).
 
 Адрес экрана — полем `path` класса, а не строкой в тестах.
 
@@ -57,9 +57,9 @@ tests/e2e/
 
 Аналог `accessibilityIdentifier` из iOS: атрибут `data-testid` не виден пользователю и экранному диктору, он нужен только тестам. Элементы ищутся по нему, а не по тексту и роли: тесты не ломаются при правке текстов и вёрстки.
 
-- **Константы — один источник** для приложения и тестов: `apps/web/src/lib/constants/test-ids.ts`, объект `TestId` (`as const`), сгруппированный по экранам. Значение — `'<экран>.<элемент>'` в kebab-case: `TestId.NoteEditor.Delete = 'note-editor.delete'`. Строки-идентификаторы вручную нигде не пишутся — ни в компонентах, ни в тестах. Файл без зависимостей (не импортирует `$app/*`), поэтому его импортируют и компоненты (`#lib/constants/test-ids.ts`), и тесты (тот же путь: алиас `#lib/*` в `tests/tsconfig.json`).
+- **Константы — один источник** для приложения и тестов: `apps/web/src/lib/constants/test-ids.ts`, объект `TestId` (`as const`), сгруппированный по экранам. Значение — `'<экран>.<элемент>'` в kebab-case: `TestId.NoteEditor.Title = 'note-editor.title'`. Строки-идентификаторы вручную нигде не пишутся — ни в компонентах, ни в тестах. Файл без зависимостей (не импортирует `$app/*`), поэтому его импортируют и компоненты (`#lib/constants/test-ids.ts`), и тесты (`#web/lib/constants/test-ids.ts` — алиас `#web/*` в `tests/tsconfig.json`).
 - **Атрибут ставится только на элементы, с которыми работают тесты**: кнопки и поля, которые тест нажимает или заполняет, контейнеры, которые он проверяет (список, пустое состояние, сообщение об ошибке). Не на каждый `div`.
-- **В компоненте**: `data-testid={TestId.NoteEditor.Delete}`. Компоненты `ui/` передают атрибут дальше через `{...rest}` (как `Card`, `Button`); если компонент `rest` не принимает — добавить.
+- **В компоненте**: `data-testid={TestId.NoteEditor.Title}`. Компоненты `ui/` передают атрибут дальше через `{...rest}` (как `Card`, `Button`); если компонент `rest` не принимает — добавить.
 - **Повторяющиеся элементы** (карточки списка): один идентификатор на все, нужная выбирается по содержимому — `this.page.getByTestId(TestId.NotesList.Card).filter({ hasText: title })`; кнопка внутри карточки — от карточки (`this.noteCard(title).getByTestId(TestId.NoteCard.Delete)`). `nth()` — нет.
 - **Данные проверяются на элементе с идентификатором**: `await expect(this.noteCard(title)).toContainText(content)`. Текст в тесте — это проверяемые данные, а не способ найти элемент.
 - Доступность от этого не отменяется: у кнопки-иконки обязателен `aria-label`, у поля — подпись (`ui.md`), просто тесты на них не опираются.
@@ -69,19 +69,20 @@ tests/e2e/
 // apps/web/src/lib/constants/test-ids.ts
 export const TestId = {
 	NotesList: { Search: 'notes-list.search', Card: 'notes-list.card', Empty: 'notes-list.empty' },
-	NoteEditor: { Title: 'note-editor.title', Save: 'note-editor.save', Delete: 'note-editor.delete' },
+	NoteCard: { Delete: 'note-card.delete' },
+	NoteEditor: { Title: 'note-editor.title', Content: 'note-editor.content' },
 } as const;
 
-// tests/e2e/notes/note-editor.page.ts
+// tests/e2e/notes/note-editor.page.ts — кнопки «Сохранить» нет: редактор сохраняет сам
 export class NoteEditorPage extends BasePage {
 	// --- Элементы ---
 	readonly titleInput = this.page.getByTestId(TestId.NoteEditor.Title);
-	readonly saveButton = this.page.getByTestId(TestId.NoteEditor.Save);
-	readonly deleteButton = this.page.getByTestId(TestId.NoteEditor.Delete);
+	readonly contentInput = this.page.getByTestId(TestId.NoteEditor.Content);
 
 	// --- Действия ---
-	async delete(): Promise<void> {
-		await this.deleteButton.click();
+	async fill(title: string, content = ''): Promise<void> {
+		await this.titleInput.fill(title);
+		await this.contentInput.fill(content);
 	}
 }
 ```
@@ -106,7 +107,7 @@ test('Нахождение созданной заметки поиском', as
 	await step('Создание заметки', async () => {
 		await notesList.open();
 		await notesList.openNewNote();
-		await noteEditor.fillAndSave('Покупки', 'молоко');
+		await noteEditor.fillAndWaitSaved('Покупки', 'молоко');
 	});
 	await step('Поиск заметки', async () => {
 		await notesList.search('покуп');
@@ -133,7 +134,7 @@ test('Нахождение созданной заметки поиском', as
 
    ```ts
    const saved = page.waitForResponse('**/api/notes');
-   await noteEditor.save();
+   await noteEditor.fill('Покупки'); // автосохранение отправит POST
    await saved;
    ```
 
@@ -144,4 +145,4 @@ test('Нахождение созданной заметки поиском', as
 ## Данные
 
 - Данные, которые не проверяются в этом сценарии, создаются фабриками из `tests/helpers/factories.ts`; через интерфейс — только то, что проверяет сценарий.
-- Описания `test` — по-русски в именном стиле, как в остальных тестах (`tests.md`, «Оформление»): «Удаление заметки из редактора»; `test.describe` — название экрана или сценария.
+- Описания `test` — по-русски в именном стиле, как в остальных тестах (`tests.md`, «Оформление»): «Удаление заметки свайпом из списка»; `test.describe` — название экрана или сценария.

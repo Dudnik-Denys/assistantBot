@@ -3,11 +3,21 @@ import { errorMessage, isConnectionError } from '#lib/errors.ts';
 /** Загрузка списка по запросу; signal нужен, чтобы отменить устаревший запрос. */
 export type SearchLoader<T> = (query: string, signal: AbortSignal) => Promise<T[]>;
 
+/** Пауза после последнего нажатия перед поиском: запрос уходит не на каждую букву. */
+const SEARCH_DELAY_MS = 250;
+
 /**
  * Паузы между повторами при ошибке связи: всего 30 секунд попыток, потом — ошибка.
  * Появление сети (событие `online`) запускает повтор сразу, не дожидаясь паузы.
  */
 const RECONNECT_DELAYS_MS = [2_000, 4_000, 8_000, 16_000];
+
+export interface DebouncedSearchOptions<T> {
+	/** Пауза перед поиском по непустому запросу. */
+	delayMs?: number;
+	/** Уже известный список (кеш): показывается сразу, пока идёт загрузка. */
+	initialItems?: T[] | null;
+}
 
 /**
  * Список с поиском: загружает элементы по запросу с паузой после ввода (debounce)
@@ -32,10 +42,9 @@ export class DebouncedSearch<T> {
 	/** Есть ли непустой запрос — чтобы отличать «ничего не найдено» от «список пуст». */
 	hasQuery = $derived(this.query.trim() !== '');
 
-	/** `initialItems` — уже известный список (кеш): показывается сразу, пока идёт загрузка. */
 	constructor(
 		load: SearchLoader<T>,
-		{ delayMs = 250, initialItems = null }: { delayMs?: number; initialItems?: T[] | null } = {},
+		{ delayMs = SEARCH_DELAY_MS, initialItems = null }: DebouncedSearchOptions<T> = {},
 	) {
 		this.items = initialItems;
 		$effect(() => {

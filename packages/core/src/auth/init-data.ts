@@ -3,6 +3,9 @@ import { INIT_DATA_MAX_AGE_SECONDS } from '../constants/auth.ts';
 import { InitDataError } from '../errors.ts';
 import { type TelegramUser, TelegramUserSchema } from '../schemas/users/telegram-user.ts';
 
+/** auth_date в initData — в секундах, Date — в миллисекундах. */
+const MS_PER_SECOND = 1000;
+
 export interface ValidatedInitData {
 	user: TelegramUser;
 	authDate: Date;
@@ -34,11 +37,11 @@ export function validateInitData(
 		throw new InitDataError('Неверная подпись initData');
 	}
 
-	const authDateSec = Number(params.get('auth_date'));
-	if (!Number.isFinite(authDateSec) || authDateSec <= 0) {
+	const authDateSeconds = Number(params.get('auth_date'));
+	if (!Number.isFinite(authDateSeconds) || authDateSeconds <= 0) {
 		throw new InitDataError('Некорректный auth_date');
 	}
-	if (now.getTime() / 1000 - authDateSec > maxAgeSeconds) {
+	if (now.getTime() / MS_PER_SECOND - authDateSeconds > maxAgeSeconds) {
 		throw new InitDataError('initData устарели');
 	}
 
@@ -47,7 +50,7 @@ export function validateInitData(
 	const user = TelegramUserSchema.safeParse(parseJson(rawUser));
 	if (!user.success) throw new InitDataError('Некорректный user в initData');
 
-	return { user: user.data, authDate: new Date(authDateSec * 1000) };
+	return { user: user.data, authDate: new Date(authDateSeconds * MS_PER_SECOND) };
 }
 
 /** Разбор JSON перед схемой: некорректный JSON → undefined (его отклонит схема). */

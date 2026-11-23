@@ -48,8 +48,9 @@ export interface RequestOptions {
 
 /**
  * Транспорт к API Mini App: подставляет `Authorization: tma <initData>`,
- * сериализует тело в JSON, разбирает ответ и превращает ошибки в `ApiError` (сервер ответил
- * ошибкой) или `NetworkError` (ответа нет).
+ * сериализует тело в JSON, разбирает ответ и превращает ошибки в `ApiError` (наш API ответил
+ * ошибкой), `ServerUnavailableError` (ответил не наш API: туннель, прокси) или `NetworkError`
+ * (ответа нет).
  */
 export class HttpClient {
 	constructor(private readonly baseUrl: string) {}

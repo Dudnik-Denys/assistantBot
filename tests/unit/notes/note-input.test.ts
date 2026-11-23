@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from '#core/constants/notes.ts';
+import {
+	NOTE_CONTENT_MAX,
+	NOTE_TITLE_MAX,
+	NOTE_TITLE_REQUIRED_MESSAGE,
+} from '#core/constants/notes.ts';
 import { NoteInputSchema } from '#core/schemas/notes/note-input.ts';
 
 describe('NoteInputSchema', () => {
@@ -20,7 +24,7 @@ describe('NoteInputSchema', () => {
 	test('Отклонение заметки без заголовка, в том числе из одних пробелов', () => {
 		for (const input of [{}, { content: 'Только текст' }, { title: '   ', content: 'Текст' }]) {
 			const result = NoteInputSchema.safeParse(input);
-			expect(result.error?.issues[0]?.message).toBe('Укажите заголовок');
+			expect(result.error?.issues[0]?.message).toBe(NOTE_TITLE_REQUIRED_MESSAGE);
 		}
 	});
 

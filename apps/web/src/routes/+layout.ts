@@ -1,6 +1,7 @@
 import { ApiError, api } from '#lib/api.ts';
 import { HttpStatus } from '#lib/constants/http-status.ts';
 import { errorMessage } from '#lib/errors.ts';
+import { AccessDeniedBodySchema } from '#lib/schemas/api-error.ts';
 import type { LayoutLoad } from './$types';
 
 // Все данные доступны только с initData из Telegram, которые есть лишь в браузере,
@@ -22,8 +23,8 @@ export const load: LayoutLoad = async ({ fetch }): Promise<{ access: Access }> =
 		return { access: { kind: 'ready' } };
 	} catch (loadError) {
 		if (loadError instanceof ApiError && loadError.status === HttpStatus.Forbidden) {
-			const id = loadError.body.telegramId;
-			return { access: { kind: 'denied', telegramId: typeof id === 'string' ? id : undefined } };
+			const details = AccessDeniedBodySchema.safeParse(loadError.body);
+			return { access: { kind: 'denied', telegramId: details.data?.telegramId } };
 		}
 		return { access: { kind: 'error', message: errorMessage(loadError) } };
 	}

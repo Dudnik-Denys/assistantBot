@@ -31,13 +31,13 @@ tests/
   run-tests.ts              # запускалка для `bun run test:<тип>`
 ```
 
-- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders`, `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код вне модулей — папкой по его месту в `src`: core — `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`); Mini App — `tests/unit/http/` (`lib/http/` и `lib/errors.ts`).
+- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders`, `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код вне модулей — папкой по его месту в `src`: core — `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`); Mini App — `tests/unit/http/` (`lib/http/` и `lib/errors.ts`), `tests/unit/utils/` (`lib/utils/`). Код бота — в папке своего модуля (`tests/integration/users/allowlist.test.ts` → `middlewares/allowlist.ts`).
 - Файл называется по тому, что проверяет: `tests/unit/notes/search.test.ts` → `packages/core/src/notes/search.ts`, `tests/unit/notes/note-input.test.ts` → `schemas/notes/note-input.ts`, `tests/integration/notes/service.test.ts` → `notes/service.ts`. Unit и integration — `*.test.ts` (e2e — `*.spec.ts`, см. `e2e.md`).
 - Новый модуль — новые папки `tests/unit/<модуль>/` и `tests/integration/<модуль>/`; в `package.json` ничего добавлять не нужно.
 
 ## Импорты
 
-- Внутренности core — через алиас `#core/…` (`#core/notes/search.ts`), код Mini App — через `#web/…` (`#web/lib/http/client.ts`); алиасы заданы в `tests/tsconfig.json` (`paths`), а не в `package.json`: путь за пределы пакета там запрещён. Unit-тестами покрывается код Mini App без рун и DOM (`lib/http/`, `lib/errors.ts`, `lib/utils/`); классы с рунами (`lib/reactive/`) и компоненты — e2e (`e2e.md`).
+- Внутренности core — через алиас `#core/…` (`#core/notes/search.ts`), код Mini App — через `#web/…` (`#web/lib/http/client.ts`), бота — через `#bot/…` (`#bot/middlewares/allowlist.ts`); алиасы заданы в `tests/tsconfig.json` (`paths`), а не в `package.json`: путь за пределы пакета там запрещён. Unit-тестами покрывается код Mini App без рун и DOM (`lib/http/`, `lib/errors.ts`, `lib/utils/`); классы с рунами (`lib/reactive/`) и компоненты — e2e (`e2e.md`).
 - Integration-тесты по возможности импортируют публичный API (`@tgab/core`) — так проверяется то, чем пользуются приложения. `#core/…` — для того, что наружу не экспортируется (константы, внутренние функции).
 - Хелперы — относительным путём (`../../helpers/test-database.ts`).
 
@@ -46,6 +46,7 @@ tests/
 - **unit** — чистые функции и схемы: валидные и невалидные данные, граничные значения (пустая строка, лимит, лимит + 1), даты и часовые пояса (переход на летнее время, конец месяца, 29 февраля).
 - **integration** — каждый метод сервиса: успешный путь, чужие данные (`NotFoundError`, а не доступ к чужой записи), неверный id, некорректный ввод (`ZodError`), запросы с сырым SQL (спецсимволы и попытка SQL-инъекции в поиске).
 - Prisma не подменяется (mock): integration-тест ходит в настоящую тестовую БД, иначе проверяется подмена, а не запрос.
+- Контекст grammY в тестах бота — простой объект только с теми полями, которые читает проверяемый код (`from`, `chat`, `reply`), приведённый к `BotContext` с комментарием: настоящий `Context` отправил бы ответ в Telegram.
 - Сеть в unit-тестах Mini App — через `createFakeFetch` (`helpers/fake-fetch.ts`): передаётся как `fetchFn` в `HttpClient.request` или подменяет глобальный `fetch` (`spyOn(globalThis, 'fetch')`, в `afterEach` — `mockRestore()`).
 - Новая функция core без тестов не считается готовой. Исправленная ошибка получает тест, который её воспроизводит.
 

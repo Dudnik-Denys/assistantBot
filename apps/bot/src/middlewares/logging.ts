@@ -1,9 +1,14 @@
 import type { Context, NextFunction, Transformer } from 'grammy';
 
-/** Лог входящих апдейтов — помогает разбираться с дублями и ошибками. */
+/**
+ * Лог входящих апдейтов — помогает разбираться с дублями и ошибками. Текст сообщений не пишется
+ * (там личные данные пользователей): только тип апдейта и команда (`message /start`).
+ */
 export async function logUpdates(ctx: Context, next: NextFunction): Promise<void> {
-	const text = ctx.message?.text ?? ctx.callbackQuery?.data ?? '';
-	console.log(`← update ${ctx.update.update_id} from ${ctx.from?.id}: ${text}`);
+	const kind = Object.keys(ctx.update).find((key) => key !== 'update_id') ?? 'unknown';
+	const command = ctx.entities('bot_command')[0]?.text;
+	const summary = command ? `${kind} ${command}` : kind;
+	console.log(`← update ${ctx.update.update_id} from ${ctx.from?.id}: ${summary}`);
 	await next();
 }
 

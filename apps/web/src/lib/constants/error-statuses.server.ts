@@ -13,7 +13,7 @@ export interface ErrorStatus<E extends Error = Error> {
 	message?(error: E): string;
 }
 
-/** Помощник для типов: внутри `message` ошибка имеет тип своего класса (`e.issues` у ZodError). */
+/** Помощник для типов: внутри `message` ошибка имеет тип своего класса (`zodError.issues` у ZodError). */
 const errorStatus = <E extends Error>(entry: ErrorStatus<E>): ErrorStatus<E> => entry;
 
 /**
