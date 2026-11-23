@@ -4,6 +4,11 @@ import { createBot } from '#bot/bot.ts';
 import { COMMAND_MENU } from '#bot/constants/commands.ts';
 import { env } from '#bot/env.ts';
 
+if (!env.ADMIN_TELEGRAM_ID) {
+	console.warn('⚠ ADMIN_TELEGRAM_ID не задан: доступа к Mini App не будет ни у кого.');
+	console.warn('  Узнайте свой ID командой /id у бота и впишите его в .env.');
+}
+
 const db = createPrismaClient(env.DATABASE_URL);
 const users = createUsersService(db, { adminTelegramId: env.ADMIN_TELEGRAM_ID });
 const bot = createBot({ token: env.BOT_TOKEN, users, miniAppUrl: env.MINI_APP_URL });

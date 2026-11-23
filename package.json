@@ -8,8 +8,7 @@
 		"tests"
 	],
 	"scripts": {
-		"dev:web": "bun --filter @tgab/web dev",
-		"dev:bot": "bun --filter @tgab/bot dev",
+		"dev": "bun --filter './apps/*' dev",
 		"build:web": "bun --filter @tgab/web build",
 		"check": "bun --filter '*' check",
 		"test:unit": "bun tests/run-tests.ts unit",

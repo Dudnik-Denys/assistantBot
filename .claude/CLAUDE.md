@@ -77,13 +77,12 @@ VPS берётся, когда проект готов к запуску в comp
 ## Commands
 
 ```bash
-./run.sh [web|bot]           # всё сразу: Docker, БД, bun install, миграции, сервисы (по умолчанию web + bot)
+./run.sh                     # всё сразу: Docker, БД, bun install, миграции, web + bot
 bun install                  # зависимости + prisma generate (postinstall)
 docker compose up -d         # Postgres и Redis для разработки
 bun run db:deploy            # применить миграции; db:migrate — создать новую (prisma migrate dev)
 bun run user:allow <tgId>    # добавить пользователя в allowlist (--admin — сделать админом)
-bun run dev:web              # Mini App + API на http://localhost:5173
-bun run dev:bot              # бот (long polling, bun --watch)
+bun run dev                  # все приложения apps/* вместе: web (http://localhost:5173) + бот (long polling); по отдельности не запускаются
 bun run check                # типы во всех пакетах (tsc / svelte-check)
 bun run test:unit [модуль]   # unit-тесты (tests/unit/<модуль>); -t "текст" — по описанию теста
 bun run test:integration [модуль]  # интеграционные: сами поднимут временный Postgres (tests/integration)
