@@ -4,7 +4,10 @@
 	import type { ClassProp } from '#lib/types/props.ts';
 	import { mergeClasses } from '#lib/utils/classes.ts';
 
-	/** Шапка экрана: прилипает к верху при прокрутке, фон во всю ширину. */
+	/**
+	 * Шапка экрана: «Назад», заголовок и содержимое под ним (поиск). Без своего фона — под ней
+	 * видно свечение страницы, поэтому не прилипает: экрану с длинным списком — `Screen fit`.
+	 */
 	interface Props extends ClassProp {
 		title: string;
 		/** Показать «Назад»: системная кнопка в Telegram, ссылка в браузере. */
@@ -18,15 +21,7 @@
 	let { title, onback, backLabel, class: className, children }: Props = $props();
 </script>
 
-<header
-	class={mergeClasses(
-		'sticky top-0 z-10',
-		// фон во всю ширину: выходим за поля Screen и возвращаем их внутрь
-		'-mt-page-t -mr-page-r -ml-page-l pt-page-t pr-page-r pb-3 pl-page-l',
-		'bg-tg-bg',
-		className,
-	)}
->
+<header class={mergeClasses('pb-3', className)}>
 	{#if onback}
 		<BackButton {onback} label={backLabel} />
 	{/if}

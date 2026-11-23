@@ -16,8 +16,8 @@
 
 	const variants: Record<Variant, string> = {
 		primary: 'bg-tg-button text-tg-button-text',
-		secondary: 'bg-tg-secondary-bg text-tg-text',
-		destructive: 'bg-tg-secondary-bg text-tg-destructive',
+		secondary: 'bg-surface text-tg-text',
+		destructive: 'bg-surface text-tg-destructive',
 	};
 </script>
 

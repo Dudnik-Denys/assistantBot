@@ -12,7 +12,6 @@
 	--palette-black: #000000;
 	--palette-gray: #8e8e93;
 	--palette-gray-light: #f2f2f7;
-	--palette-gray-lighter: #e5e5ea;
 	--palette-blue: #2481cc;
 	--palette-red: #e53935;
 
@@ -20,10 +19,16 @@
 	--size-none: 0px;
 	--size-page-gutter: 1rem; /* поля страницы слева, справа и снизу */
 	--size-page-top: 0.75rem; /* поле страницы сверху — меньше, под заголовком Telegram */
+	/*
+	 * Свечение вверху страницы (bg-page-glow): круг радиусом --size-glow, центр чуть выше края
+	 * окна. Размеры — от ширины (vw): высоту окна меняет клавиатура, и свечение от неё сжималось бы.
+	 */
+	--size-glow: 150vw;
+	--size-glow-top: -20vw;
 }
 
 /*
- * Токены по ролям — их и только их используют классы Tailwind (bg-tg-bg, text-tg-hint…).
+ * Токены по ролям — их и только их используют классы Tailwind (bg-surface, text-tg-hint…).
  * Цвета берутся из Telegram (telegram-web-app.js выставляет --tg-theme-* на <html>),
  * палитра — запасное значение. Безопасные зоны — оттуда же (--tg-*-safe-area-inset-*).
  */
@@ -36,8 +41,16 @@
 	--color-tg-button-text: var(--tg-theme-button-text-color, var(--palette-white));
 	--color-tg-secondary-bg: var(--tg-theme-secondary-bg-color, var(--palette-gray-light));
 	--color-tg-section-bg: var(--tg-theme-section-bg-color, var(--palette-white));
-	--color-tg-separator: var(--tg-theme-section-separator-color, var(--palette-gray-lighter));
 	--color-tg-destructive: var(--tg-theme-destructive-text-color, var(--palette-red));
+
+	/*
+	 * Поверхности, как в настройках Telegram и iOS: страница — второй цвет темы,
+	 * карточки, поля и кнопки на ней — цвет секций (светлее в тёмной теме, белый в светлой).
+	 */
+	--color-page: var(--color-tg-secondary-bg);
+	--color-surface: var(--color-tg-section-bg);
+	/* Свечение вверху страницы — цвет кнопок темы, приглушённый (утилита bg-page-glow). */
+	--color-glow: color-mix(in srgb, var(--color-tg-button) 40%, transparent);
 
 	/* Роли вне темы Telegram. */
 	--color-elevation: color-mix(in srgb, var(--palette-black) 20%, transparent);
@@ -63,9 +76,30 @@
 }
 
 /*
+ * typing: — пока в поле ввода фокус (на телефоне это открытая клавиатура): typing:opacity-0.
+ * По фокусу, а не по размеру окна: клавиатура в Telegram меняет высоту окна не на всех платформах.
+ */
+@custom-variant typing (body:has(:is(input, textarea):focus) &);
+
+/*
  * Свои утилиты — повторяющийся «вид» элементов разного типа, когда компонент не подходит.
  * Используются в разметке как обычный класс Tailwind: class="field-bare text-2xl".
  */
+
+/*
+ * Фон приложения: цвет страницы и мягкое свечение сверху. Размеры — от ширины окна (--size-glow*),
+ * а не от страницы: на длинной странице свечение не растягивается. Только на <body> (app.html).
+ */
+@utility bg-page-glow {
+	background:
+		radial-gradient(
+			circle var(--size-glow) at 50% var(--size-glow-top),
+			var(--color-glow),
+			transparent 75%
+		)
+		no-repeat,
+		var(--color-page);
+}
 
 /* Поле ввода без рамки и фона: заголовок и текст в редакторах. */
 @utility field-bare {

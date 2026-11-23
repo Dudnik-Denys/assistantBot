@@ -19,7 +19,7 @@
 <a
 	{href}
 	class={mergeClasses(
-		'block rounded-2xl bg-tg-secondary-bg px-4 py-3 transition active:opacity-70',
+		'block rounded-2xl bg-surface px-4 py-3 transition active:opacity-70',
 		className,
 	)}
 	{...rest}

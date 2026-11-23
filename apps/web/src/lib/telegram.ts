@@ -1,9 +1,19 @@
+import {
+	CONFIRM_BUTTON_ID,
+	FULLSCREEN_MIN_VERSION,
+	MOBILE_PLATFORMS,
+	PAGE_COLOR_KEY,
+} from '#lib/constants/telegram.ts';
+
 /** Кнопка системного диалога `showPopup`; без `id` нажатие возвращает пустую строку. */
 interface PopupButton {
 	id?: string;
 	type?: 'default' | 'destructive' | 'cancel';
 	text?: string;
 }
+
+/** Цвет темы Telegram по ключу — для шапки, фона и нижней панели клиента. */
+type ThemeColorKey = 'bg_color' | 'secondary_bg_color';
 
 /** Минимальные типы той части Telegram.WebApp, которой пользуется приложение. */
 interface TelegramWebApp {
@@ -15,6 +25,14 @@ interface TelegramWebApp {
 	 * Bot API 7.7+: жесты по содержимому не сворачивают приложение (в старых клиентах метода нет).
 	 */
 	disableVerticalSwipes?(): void;
+	isVersionAtLeast?(version: string): boolean;
+	/** Bot API 8.0+: приложение на весь экран, кнопки Telegram — поверх него. */
+	requestFullscreen?(): void;
+	/** Цвета шапки, фона под приложением и нижней панели Telegram — ключом темы или hex. */
+	setHeaderColor?(color: ThemeColorKey): void;
+	setBackgroundColor?(color: ThemeColorKey): void;
+	/** Bot API 7.10+. */
+	setBottomBarColor?(color: ThemeColorKey): void;
 	openLink(url: string): void;
 	showConfirm(message: string, callback: (ok: boolean) => void): void;
 	showAlert(message: string, callback?: () => void): void;
@@ -53,14 +71,29 @@ export function isInTelegram(): boolean {
 	return Boolean(webApp()?.initData);
 }
 
+/** Открывать ли приложение на весь экран: только на телефоне и в клиенте с Bot API 8.0+. */
+export function shouldUseFullscreen(platform: string, supportsFullscreen: boolean): boolean {
+	return supportsFullscreen && MOBILE_PLATFORMS.includes(platform);
+}
+
 export function initTelegram(): void {
 	const app = webApp();
 	if (!app) return;
 	app.ready();
 	app.expand();
 	// Свайпы внутри приложения (по списку, по строкам) не тянут его вниз;
-	// свернуть по-прежнему можно, потянув за шапку Telegram.
+	// закрыть можно кнопками Telegram (в обычном режиме — и потянув за его шапку).
 	app.disableVerticalSwipes?.();
+	// На весь экран: свечение фона доходит до верха, кнопки «×» и «…» — поверх него.
+	// Отступы под них и под вырез экрана — токены page-* (--tg-content-safe-area-inset-*).
+	// В старых клиентах метода нет (вызов бросил бы ошибку) — там остаётся обычная шапка.
+	if (shouldUseFullscreen(app.platform, app.isVersionAtLeast?.(FULLSCREEN_MIN_VERSION) ?? false)) {
+		app.requestFullscreen?.();
+	}
+	// Шапка и края Telegram — цветом страницы (--color-page в app.css), а не основным фоном темы.
+	app.setHeaderColor?.(PAGE_COLOR_KEY);
+	app.setBackgroundColor?.(PAGE_COLOR_KEY);
+	app.setBottomBarColor?.(PAGE_COLOR_KEY);
 }
 
 export function openLink(url: string): void {
@@ -76,8 +109,6 @@ export interface ConfirmOptions {
 	/** Подтверждение — опасное действие (удаление): кнопка красная. */
 	destructive?: boolean;
 }
-
-const CONFIRM_BUTTON_ID = 'confirm';
 
 /**
  * Диалог подтверждения: true — пользователь согласился. В Telegram — системный диалог

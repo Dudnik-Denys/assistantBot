@@ -34,7 +34,7 @@
 		enterkeyhint="search"
 		class={[
 			'h-10 w-full rounded-xl pr-3 pl-9 text-base',
-			'bg-tg-secondary-bg text-tg-text outline-none placeholder:text-tg-hint',
+			'bg-surface text-tg-text outline-none placeholder:text-tg-hint',
 			'focus:ring-2 focus:ring-tg-button/40',
 			// своя кнопка очистки ниже вместо системного крестика
 			'[&::-webkit-search-cancel-button]:hidden',

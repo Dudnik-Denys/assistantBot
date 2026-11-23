@@ -4,6 +4,7 @@
 	import Message from '#lib/components/ui/feedback/Message.svelte';
 	import NavigationProgress from '#lib/components/ui/feedback/NavigationProgress.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
+	import { dismissKeyboardOnSwipeDown } from '#lib/keyboard.ts';
 	import { initTelegram } from '#lib/telegram.ts';
 	import type { LayoutProps } from './$types';
 
@@ -11,6 +12,8 @@
 
 	// ready() — после первой отрисовки: до этого Telegram показывает свой индикатор загрузки.
 	$effect(() => initTelegram());
+	// Свайп вниз в любом месте закрывает экранную клавиатуру; слушатели снимаются вместе с layout.
+	$effect(() => dismissKeyboardOnSwipeDown());
 </script>
 
 <svelte:head>

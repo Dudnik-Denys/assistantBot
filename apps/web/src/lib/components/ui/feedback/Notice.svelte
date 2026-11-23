@@ -16,7 +16,7 @@
 	class={[
 		'mb-2 flex items-center gap-2',
 		'rounded-xl px-3 py-2 text-sm',
-		'bg-tg-secondary-bg text-tg-hint',
+		'bg-surface text-tg-hint',
 	]}
 	role="status"
 >

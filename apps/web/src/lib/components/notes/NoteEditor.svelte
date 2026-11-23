@@ -6,6 +6,7 @@
 	import { api, type NoteDto } from '#lib/api.ts';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
+	import { focusField } from '#lib/keyboard.ts';
 	import { Autosave } from '#lib/reactive/autosave.svelte.ts';
 	import { confirmDialog, openLink } from '#lib/telegram.ts';
 	import { formatShortDate } from '#lib/utils/dates.ts';
@@ -62,6 +63,11 @@
 		},
 	});
 
+	/** Новая заметка — сразу фокус в заголовок; существующая открывается без клавиатуры. */
+	function focusIfNew(input: HTMLInputElement) {
+		if (!note) focusField(input);
+	}
+
 	async function back() {
 		const saved = await autosave.flush();
 		if (!saved && !empty) {
@@ -78,6 +84,7 @@
 
 <div class="flex flex-1 flex-col">
 	<input
+		{@attach focusIfNew}
 		bind:value={title}
 		placeholder="Заголовок"
 		maxlength={NOTE_TITLE_MAX}
@@ -113,7 +120,7 @@
 							type="button"
 							class={[
 								'w-full truncate rounded-lg px-3 py-2 text-left text-sm',
-								'bg-tg-secondary-bg text-tg-link',
+								'bg-surface text-tg-link',
 							]}
 							onclick={() => openLink(href)}
 						>

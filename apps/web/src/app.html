@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" class="overscroll-none">
 	<head>
+		<!-- overscroll-none: свайп по экрану, которому нечего прокручивать, не утягивает всю страницу (отскок iOS) -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="text-scale" content="scale" />
 		<script src="https://telegram.org/js/telegram-web-app.js"></script>
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover" class="bg-tg-bg text-tg-text antialiased">
+	<body data-sveltekit-preload-data="hover" class="bg-page-glow text-tg-text antialiased">
 		<div class="contents">%sveltekit.body%</div>
 	</body>
 </html>

@@ -1,8 +1,13 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { ClassProp } from '#lib/types/props.ts';
+	import { mergeClasses } from '#lib/utils/classes.ts';
 
-	/** Состояние экрана вместо содержимого: загрузка, пусто, ничего не найдено, ошибка. */
-	interface Props {
+	/**
+	 * Состояние экрана вместо содержимого: загрузка, пусто, ничего не найдено, ошибка.
+	 * По умолчанию — по центру свободного места; `class="flex-none"` — сразу под шапкой.
+	 */
+	interface Props extends ClassProp {
 		title: string;
 		/** Простой текст под заголовком; пустой не выводится. */
 		text?: string;
@@ -18,11 +23,23 @@
 		children?: Snippet;
 	}
 
-	let { title, text, caption, tone = 'info', level = 2, icon, children }: Props = $props();
+	let {
+		title,
+		text,
+		caption,
+		tone = 'info',
+		level = 2,
+		icon,
+		children,
+		class: className,
+	}: Props = $props();
 </script>
 
 <div
-	class="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center"
+	class={mergeClasses(
+		'flex flex-1 flex-col items-center justify-center gap-2 px-6 py-16 text-center',
+		className,
+	)}
 	role={tone === 'error' ? 'alert' : 'status'}
 >
 	{#if icon}
