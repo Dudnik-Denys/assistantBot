@@ -1,11 +1,8 @@
+import { TRAILING_PUNCTUATION, URL_PATTERN } from '#lib/constants/links.ts';
+
 export type Segment =
 	| { type: 'text'; value: string }
 	| { type: 'link'; value: string; href: string };
-
-/** Ссылка в тексте: с протоколом http(s) или начинается с `www.`. */
-const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
-/** Знаки препинания в конце ссылки — они относятся к предложению, а не к адресу. */
-const TRAILING_PUNCTUATION = /[.,;:!?)\]}»"']+$/;
 
 /** Разбивает текст на обычные фрагменты и ссылки. */
 export function linkify(text: string): Segment[] {

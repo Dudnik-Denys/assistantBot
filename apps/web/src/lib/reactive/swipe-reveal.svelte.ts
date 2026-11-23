@@ -1,7 +1,4 @@
-/**
- * Сдвиг пальца, после которого ясно, горизонтальный это жест (свайп) или вертикальный (прокрутка).
- */
-const AXIS_LOCK_PX = 8;
+import { AXIS_LOCK_PX } from '#lib/constants/gestures.ts';
 
 /** Открытая строка (может быть только одна) — её закрытие и элемент. */
 let opened: { close: () => void; element: () => HTMLElement | undefined } | null = null;

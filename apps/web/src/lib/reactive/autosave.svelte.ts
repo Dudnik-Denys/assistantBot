@@ -1,10 +1,5 @@
+import { AUTOSAVE_DELAY_MS } from '#lib/constants/delays.ts';
 import { errorMessage } from '#lib/errors.ts';
-
-/**
- * Пауза после последнего изменения перед сохранением: для пользователя это «сразу»,
- * но запрос уходит не на каждую букву.
- */
-const AUTOSAVE_DELAY_MS = 300;
 
 export interface AutosaveOptions<T> {
 	/** Текущие данные; читается реактивно — изменение запускает отложенное сохранение. */

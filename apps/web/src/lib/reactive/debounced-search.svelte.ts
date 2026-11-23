@@ -1,16 +1,8 @@
+import { RECONNECT_DELAYS_MS, SEARCH_DELAY_MS } from '#lib/constants/delays.ts';
 import { errorMessage, isConnectionError } from '#lib/errors.ts';
 
 /** Загрузка списка по запросу; signal нужен, чтобы отменить устаревший запрос. */
 export type SearchLoader<T> = (query: string, signal: AbortSignal) => Promise<T[]>;
-
-/** Пауза после последнего нажатия перед поиском: запрос уходит не на каждую букву. */
-const SEARCH_DELAY_MS = 250;
-
-/**
- * Паузы между повторами при ошибке связи: всего 30 секунд попыток, потом — ошибка.
- * Появление сети (событие `online`) запускает повтор сразу, не дожидаясь паузы.
- */
-const RECONNECT_DELAYS_MS = [2_000, 4_000, 8_000, 16_000];
 
 export interface DebouncedSearchOptions<T> {
 	/** Пауза перед поиском по непустому запросу. */

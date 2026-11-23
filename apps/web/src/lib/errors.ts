@@ -1,7 +1,5 @@
+import { UNEXPECTED_ERROR_MESSAGE } from '#lib/constants/errors.ts';
 import { ApiError, NetworkError, ServerUnavailableError } from '#lib/http/client.ts';
-
-/** Текст для пользователя при неожиданной ошибке (баге) — подробности только в консоли. */
-export const UNEXPECTED_ERROR_MESSAGE = 'Что-то пошло не так. Попробуйте ещё раз';
 
 /**
  * Текст ошибки для показа пользователю.

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { UNEXPECTED_ERROR_MESSAGE } from '#web/lib/constants/errors.ts';
 import { HttpStatus } from '#web/lib/constants/http-status.ts';
-import { errorMessage, isConnectionError, UNEXPECTED_ERROR_MESSAGE } from '#web/lib/errors.ts';
+import { errorMessage, isConnectionError } from '#web/lib/errors.ts';
 import { ApiError, NetworkError, ServerUnavailableError } from '#web/lib/http/client.ts';
 
 const SERVER_MESSAGE = 'Заметка не найдена';
