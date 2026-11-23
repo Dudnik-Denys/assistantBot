@@ -1,6 +1,6 @@
 ---
 name: research-ui
-description: Исследует UI-компоненты Mini App tgAssistantBot (apps/web/src/lib/components) и дизайн-токены app.css на соответствие .claude/rules/ui.md и разделу «Компоненты» svelte.md: токены, классы, Props, переиспользование, доступность. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `ui`) или напрямую для аудита этой области.
+description: Исследует UI-компоненты Mini App tgAssistantBot (apps/web/src/lib/components) и дизайн-токены app.css на соответствие .claude/rules/components.md и ui.md: токены, классы, Props, переиспользование, доступность. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `ui`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -17,8 +17,9 @@ model: sonnet
 
 Кроме `.claude/CLAUDE.md` и `.claude/rules/code.md` (их читают все исследователи):
 
+- `.claude/rules/components.md`
 - `.claude/rules/ui.md`
-- `.claude/rules/svelte.md` — «Руны обязательны», «Компоненты»
+- `.claude/rules/svelte.md` — «Руны обязательны»
 
 ## На что смотреть
 

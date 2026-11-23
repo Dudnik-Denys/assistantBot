@@ -1,6 +1,6 @@
 ---
 name: research-api
-description: Исследует серверную часть и HTTP-слой Mini App tgAssistantBot — эндпоинты routes/api, хуки сервера, авторизацию initData, перевод ошибок в HTTP, HTTP-клиент и API-клиент браузера — на соответствие svelte.md («SvelteKit») и code.md. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `api`) или напрямую для аудита этой области.
+description: Исследует серверную часть и HTTP-слой Mini App tgAssistantBot — эндпоинты routes/api, хуки сервера, авторизацию initData, перевод ошибок в HTTP, HTTP-клиент и API-клиент браузера — на соответствие api.md и code.md. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `api`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -18,8 +18,8 @@ model: sonnet
 
 Кроме `.claude/CLAUDE.md` и `.claude/rules/code.md` (их читают все исследователи):
 
+- `.claude/rules/api.md` — целиком
 - `.claude/rules/svelte.md` — «SvelteKit», таблица «Где лежит код в `src/lib`»
-- `.claude/rules/code.md`
 - `.claude/CLAUDE.md` — «Детали каркаса» (авторизация, `DEV_TELEGRAM_ID`, SPA)
 
 ## На что смотреть

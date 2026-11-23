@@ -19,7 +19,8 @@ model: sonnet
 
 Кроме `.claude/CLAUDE.md` и `.claude/rules/code.md` (их читают все исследователи):
 
-- `.claude/rules/code.md` — «Где что лежит в core», «Схемы zod», «Именование и типы», DRY
+- `.claude/rules/code.md` — «Схемы zod», «Именование и типы», DRY
+- `.claude/rules/core.md` — «Где что лежит» (schemas, constants, types, env в core)
 - `.claude/rules/svelte.md` — «Где лежит код в `src/lib`» (constants, schemas, types)
 - `.claude/rules/bot.md` — таблица структуры (schemas, constants)
 

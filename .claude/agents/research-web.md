@@ -19,6 +19,7 @@ model: sonnet
 Кроме `.claude/CLAUDE.md` и `.claude/rules/code.md` (их читают все исследователи):
 
 - `.claude/rules/svelte.md`
+- `.claude/rules/components.md` (страницы — тоже компоненты: `<script>`, Props, использование `ui/`)
 - `.claude/rules/ui.md` (разметка страниц)
 - `.claude/CLAUDE.md` — «Детали каркаса»
 

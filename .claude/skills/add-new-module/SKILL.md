@@ -13,7 +13,7 @@ argument-hint: "<модуль, например: счётчики>"
 - **Одинаковое у всех модулей** (модель, сервис с `userId`, API, клиент, загрузка элемента) — по шаблонам из `templates/`.
 - **Своё у каждого модуля** (экраны, действия, поиск, бот) — проектируется под задачу и собирается из готовых частей проекта (раздел 3); живой образец — код заметок.
 
-Правила проекта обязательны: `.claude/CLAUDE.md`, `.claude/rules/code.md`, `db.md`, `svelte.md`, `ui.md`, `tests.md`, `bot.md` (если нужен бот).
+Правила проекта обязательны: `.claude/CLAUDE.md`, `.claude/rules/code.md`, `core.md`, `db.md`, `api.md`, `svelte.md`, `components.md`, `ui.md`, `tests.md`, `bot.md` (если нужен бот).
 
 ## 1. Проектирование — до кода
 
@@ -59,21 +59,21 @@ argument-hint: "<модуль, например: счётчики>"
 | «Назад» | `ui/buttons/BackButton` (системная кнопка Telegram) или `PageHeader` с `onback` | любая страница |
 | Карточка-ссылка | `ui/layout/Card` | `NoteCard.svelte` |
 
-Список общих компонентов по группам — `ui.md`, раздел «Компоненты».
+Список общих компонентов по группам — `components.md`, раздел «Где лежат».
 
 ## 4. Шаги
 
 ### Всегда
 
 1. **Модель и миграция** — `templates/prisma-model.prisma.tpl` → `packages/db/prisma/schema.prisma`, обратная связь в `User`. Миграция — по `db.md`: при запущенном Postgres `bun run db:migrate -- --name add___entities__` (с подтверждения пользователя), без него — `prisma migrate diff`; ручной SQL помечается комментарием.
-2. **Константы, схема, DTO** (раскладка — `code.md`, «Где что лежит в core»): `templates/core-constants.ts.tpl` → `packages/core/src/constants/__entities__.ts` и вход `./constants/__entities__` в `packages/core/package.json`; `templates/core-schema.ts.tpl` → `packages/core/src/schemas/__entities__/__entity__-input.ts`; `templates/core-types.ts.tpl` → `packages/core/src/__entities__/types.ts`.
+2. **Константы, схема, DTO** (раскладка — `core.md`, «Где что лежит»): `templates/core-constants.ts.tpl` → `packages/core/src/constants/__entities__.ts` и вход `./constants/__entities__` в `packages/core/package.json`; `templates/core-schema.ts.tpl` → `packages/core/src/schemas/__entities__/__entity__-input.ts`; `templates/core-types.ts.tpl` → `packages/core/src/__entities__/types.ts`.
 3. **Сервис** — `templates/core-service.ts.tpl` → `packages/core/src/__entities__/service.ts`. `assertId` и `ListQuerySchema` — общие, свои не пиши. В `packages/core/src/index.ts` — именованные экспорты только нужного приложениям (`create__Entities__Service`, `__Entity__Dto`, `__Entity__Input`).
 4. **Регистрация сервиса** — `apps/web/src/lib/server/services.ts`: `export const __entities__ = create__Entities__Service(db);`
 5. **API** — `templates/api-collection.server.ts.tpl` → `apps/web/src/routes/api/__entities__/+server.ts`, `templates/api-item.server.ts.tpl` → `…/api/__entities__/[id]/+server.ts`. Лишние методы (например, `GET` элемента, если нет экрана элемента) не создавай.
 6. **Клиент API** — `templates/api-client.ts.tpl` → `apps/web/src/lib/api.ts`.
 7. **Пункт меню** — `apps/web/src/lib/constants/sections.ts`: `{ href: resolve('/__entities__'), title: '__Title__', description: '…', icon: '…' }`.
 8. **Тесты** — по `tests.md`: `tests/unit/__entities__/` — схема ввода (валидные, невалидные, граничные значения) и чистые функции; `tests/integration/__entities__/service.test.ts` — каждый метод сервиса, чужие записи (`NotFoundError`), неверный id, некорректный ввод. Фабрика `createTest__Entity__` — в `tests/helpers/factories.ts`. Образцы — тесты заметок.
-9. **Документация** — `.claude/CLAUDE.md`: «Project status», при необходимости архитектура; новые общие компоненты — в список `ui.md`.
+9. **Документация** — `.claude/CLAUDE.md`: «Project status», при необходимости архитектура; новые общие компоненты — в список `components.md`.
 
 ### По плану модуля
 

@@ -20,6 +20,7 @@ apps/web       # SvelteKit: Mini App + API (/api/*)
 apps/bot       # бот на grammY
 packages/core  # бизнес-логика и типы
 packages/db    # схема Prisma, миграции, клиент
+tests          # тесты всех пакетов: unit/, integration/ (позже e2e/)
 ```
 
 ## Быстрый старт

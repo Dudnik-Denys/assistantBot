@@ -1,6 +1,6 @@
 ---
 name: research-core
-description: Исследует бизнес-логику tgAssistantBot в packages/core — сервисы, доменные ошибки, общий код, проверку initData, поиск, публичный API пакета и скрипты — на соответствие .claude/rules/code.md и принципам CLAUDE.md. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `core`) или напрямую для аудита этой области.
+description: Исследует бизнес-логику tgAssistantBot в packages/core — сервисы, доменные ошибки, общий код, проверку initData, поиск, публичный API пакета и скрипты — на соответствие .claude/rules/core.md, code.md и принципам CLAUDE.md. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `core`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -17,7 +17,8 @@ model: sonnet
 
 Кроме `.claude/CLAUDE.md` и `.claude/rules/code.md` (их читают все исследователи):
 
-- `.claude/rules/code.md` — целиком
+- `.claude/rules/core.md`
+- `.claude/rules/db.md` — «Доступ к данным и SQL» (только граница: DTO наружу, запросы — в сервисах)
 - `.claude/CLAUDE.md` — «Architecture» (логика в core, userId явно, allowlist, UTC)
 
 ## На что смотреть
