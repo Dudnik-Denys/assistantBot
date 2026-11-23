@@ -31,8 +31,8 @@ tests/
   run-tests.ts              # запускалка для `bun run test:<тип>`
 ```
 
-- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders`, `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код вне модулей — папкой по его месту в `src`: core — `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`); Mini App — `tests/unit/http/` (`lib/http/` и `lib/errors.ts`), `tests/unit/utils/` (`lib/utils/`). Код бота — в папке своего модуля (`tests/integration/users/allowlist.test.ts` → `middlewares/allowlist.ts`).
-- Файл называется по тому, что проверяет: `tests/unit/notes/search.test.ts` → `packages/core/src/notes/search.ts`, `tests/unit/notes/note-input.test.ts` → `schemas/notes/note-input.ts`, `tests/integration/notes/service.test.ts` → `notes/service.ts`. Unit и integration — `*.test.ts` (e2e — `*.spec.ts`, см. `e2e.md`).
+- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders`, `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код вне модулей — папкой по его месту в `src`: core — `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`); Mini App — `tests/unit/http/` (`lib/http/` и `lib/errors.ts`), `tests/unit/utils/` (`lib/utils/`), `tests/unit/telegram/` (`lib/telegram.ts`, без обращений к самому Telegram — чистые решения вроде `shouldUseFullscreen`). Код бота — в папке своего модуля (`tests/integration/users/allowlist.test.ts` → `middlewares/allowlist.ts`).
+- Файл называется по тому, что проверяет: `tests/unit/notes/search.test.ts` → `packages/core/src/notes/search.ts`, `tests/unit/notes/note-input.test.ts` → `schemas/notes/note-input.ts`, `tests/integration/notes/service.test.ts` → `notes/service.ts`, `tests/unit/telegram/telegram.test.ts` → `lib/telegram.ts`. Unit и integration — `*.test.ts` (e2e — `*.spec.ts`, см. `e2e.md`).
 - Новый модуль — новые папки `tests/unit/<модуль>/` и `tests/integration/<модуль>/`; в `package.json` ничего добавлять не нужно.
 
 ## Импорты

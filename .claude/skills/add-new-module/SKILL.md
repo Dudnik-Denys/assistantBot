@@ -48,6 +48,7 @@ argument-hint: "<модуль, например: счётчики>"
 
 | Нужно модулю | Что использовать | Образец |
 |---|---|---|
+| Экран списка | `<Screen fit>` + `PageHeader` (поиск — в его `children`) + `ScrollArea` со списком и сообщениями (`Message class="flex-none"`); правило — `components.md`, «Экран с прокруткой» | `routes/notes/+page.svelte` |
 | Список с поиском | `DebouncedSearch` (`lib/reactive/debounced-search.svelte.ts`): задержка ввода, отмена устаревших запросов, повторы при обрыве связи (`reconnecting`), `initialItems` | `routes/notes/+page.svelte` |
 | Мгновенный показ списка при возврате | кеш `RestResource.cachedList` → `initialItems` | `routes/notes/+page.svelte` |
 | Состояния экрана | `Loading` (с задержкой и спиннером), `Message` (пусто, ошибка, «ничего не найдено»), `Notice pending` (полоска «Нет связи…» над списком) | `routes/notes/+page.svelte` |
@@ -57,7 +58,8 @@ argument-hint: "<модуль, например: счётчики>"
 | Нестандартное действие (`+1`) | метод сервиса в core + эндпоинт + наследник `RestResource` в `lib/api.ts` (см. `templates/api-client.ts.tpl`) | — |
 | Диалоги, вибрация, ссылки | `confirmDialog`, `alertDialog`, `haptic`, `openLink` из `lib/telegram.ts` | — |
 | «Назад» | `ui/buttons/BackButton` (системная кнопка Telegram) или `PageHeader` с `onback` | любая страница |
-| Карточка-ссылка | `ui/layout/Card` | `NoteCard.svelte` |
+| Карточка-ссылка | `ui/layout/Card` (фон `bg-surface`, `ui.md` → «Поверхности») | `NoteCard.svelte` |
+| Кнопка «+» (создать) | `ui/buttons/FloatingButton` с `onopen={holdKeyboard}`, если экран создания начинается с поля ввода; поле — `focusField` из `lib/keyboard.ts` | `routes/notes/+page.svelte`, `NoteEditor.svelte` |
 
 Список общих компонентов по группам — `components.md`, раздел «Где лежат».
 
