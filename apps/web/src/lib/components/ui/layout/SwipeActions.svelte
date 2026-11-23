@@ -28,7 +28,7 @@
 	<div
 		class={[
 			'flex touch-pan-y',
-			'translate-x-[var(--swipe-offset)]',
+			'translate-x-(--swipe-offset)',
 			!swipe.dragging && 'transition-transform',
 		]}
 		style:--swipe-offset="{swipe.offset}px"
