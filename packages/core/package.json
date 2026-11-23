@@ -5,7 +5,7 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./env": "./src/schemas/env/variables.ts",
+		"./env": "./src/env/index.ts",
 		"./constants/notes": "./src/constants/notes.ts"
 	},
 	"scripts": {

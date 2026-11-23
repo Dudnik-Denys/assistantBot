@@ -22,7 +22,7 @@ tests/
   integration/<модуль>/…    # с настоящим Postgres: сервисы core
   e2e/<модуль>/…            # Playwright (появится позже) — правила в e2e.md
   helpers/                  # test-database.ts (класс TestDatabase), factories.ts (тестовые записи),
-                            # test-env.ts (проверенный env тестов), commands.ts (spawnCommand),
+                            # test-env.ts (env тестов через parseEnv), commands.ts (spawnCommand),
                             # fake-fetch.ts (createFakeFetch — подменный fetch для кода Mini App)
   schemas/                  # zod-схемы тестов: env.ts (TestEnvSchema), cli.ts (TestTypeSchema),
                             # fake-api.ts (тело запроса к фейковому API в unit/http)

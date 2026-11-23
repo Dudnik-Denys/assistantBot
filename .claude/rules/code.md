@@ -25,18 +25,19 @@
 
 | Путь в `packages/core/src/` | Что |
 |---|---|
-| `schemas/<модуль>/<тема>.ts` | zod-схемы и выведенные из них типы (`schemas/notes/note-input.ts` — `NoteInputSchema`, `NoteInput`). Группы вне модулей — `schemas/common/` (`id.ts`, `list-query.ts`), `schemas/env/variables.ts` (схемы env и CLI, вход `@tgab/core/env`) |
+| `schemas/<модуль>/<тема>.ts` | zod-схемы и выведенные из них типы (`schemas/notes/note-input.ts` — `NoteInputSchema`, `NoteInput`). Группы вне модулей — `schemas/common/` (`id.ts`, `list-query.ts`), `schemas/env/variables.ts` (схемы env и CLI) |
 | `constants/<модуль>.ts` | Константы модуля, без зависимостей (`constants/notes.ts` — лимиты и `SEARCH_WORDS_MAX`, `constants/users.ts` — `DEFAULT_TIMEZONE`); общие — `constants/list.ts`. Нужные клиенту — через вход `@tgab/core/constants/<модуль>` |
 | `<модуль>/service.ts` | Сервис (фабрика `createXService(db)`) и `toXDto` |
 | `<модуль>/types.ts` | Интерфейсы, которые не выводятся из схем: DTO (`NoteDto`), `TelegramIdentity` |
 | `<модуль>/<тема>.ts` | Прочая логика модуля (`notes/search.ts`, `auth/init-data.ts`) |
+| `env/` | Вход `@tgab/core/env` (`index.ts`): схемы env и CLI из `schemas/env/` и `parseEnv` (`parse.ts`) — разбор env при старте приложения. Зависит только от zod |
 | `common/` | Логика, общая для модулей (`common/id.ts` — `assertId`) |
 | `errors.ts`, `index.ts` | Доменные ошибки; публичный API пакета |
 
 ## Схемы zod
 
 - zod-схема объявляется только в папке `schemas/` своего пакета — не в файле сервиса, роутера, env или теста. Внутри — папки модулей или групп (`schemas/notes/`, `schemas/common/`), файл — по теме схемы (`note-input.ts`, `list-query.ts`); в маленьком пакете без модулей — файл по теме прямо в `schemas/` (`apps/bot/src/schemas/env.ts`, `tests/schemas/env.ts`).
-- В файле схемы — только схемы и выведенные из них типы (`z.infer` / `z.input`). Константы — в `constants/`, интерфейсы DTO — в `types.ts` модуля, разбор и обработка ошибок (`safeParse`, `prettifyError`) — в коде, который схему использует (`env.ts` бота, `helpers/test-env.ts`).
+- В файле схемы — только схемы и выведенные из них типы (`z.infer` / `z.input`). Константы — в `constants/`, интерфейсы DTO — в `types.ts` модуля, разбор и обработка ошибок (`safeParse`, `prettifyError`) — в коде, который схему использует. Env приложения разбирается одной общей функцией `parseEnv(схема, заголовок)` из `@tgab/core/env` (`env.ts` бота, `helpers/test-env.ts`): у приложения — только своя схема и заголовок сообщения.
 - Схема, нужная нескольким пакетам, — в `packages/core/src/schemas/`; приложения и тесты импортируют её из core, а не пишут свою.
 - Где лежат `schemas/`: core — `packages/core/src/schemas/`, бот — `apps/bot/src/schemas/`, Mini App — `apps/web/src/lib/schemas/` (схемы только для web: `api-error.ts`), тесты — `tests/schemas/`. Исключение — `apps/web/src/env.ts`: SvelteKit ищет его по этому пути; схемы внутри него собираются из `@tgab/core/env`.
 
@@ -56,7 +57,7 @@
 ## Именование и типы
 
 - Имена — по смыслу и роли, а не по реализации: `elevation`, а не `black20`; `notesService`, а не `ns`.
-- Без `any`; внешние данные (запрос, env, ответы API) проверяются схемой (zod) на границе, дальше по коду идут уже типизированные значения. Одна и та же проверка не пишется дважды: общие схемы — в `packages/core` (для env и аргументов CLI — `@tgab/core/env`: `optionalEnv`, `TelegramIdSchema`, `DatabaseUrlSchema`). Ручные `typeof`, регулярки и `JSON.parse` *вместо* схемы — нет. Разбор строки в значение перед схемой допустим (`JSON.parse` с `try/catch`, где ошибка разбора даёт `undefined`, а проверяет результат схема — как `parseJson` в `auth/init-data.ts`).
+- Без `any`; внешние данные (запрос, env, ответы API) проверяются схемой (zod) на границе, дальше по коду идут уже типизированные значения. Одна и та же проверка не пишется дважды: общие схемы — в `packages/core` (для env и аргументов CLI — `@tgab/core/env`: `optionalEnv`, `TelegramIdSchema`, `DatabaseUrlSchema`, разбор — `parseEnv`). Ручные `typeof`, регулярки и `JSON.parse` *вместо* схемы — нет. Разбор строки в значение перед схемой допустим (`JSON.parse` с `try/catch`, где ошибка разбора даёт `undefined`, а проверяет результат схема — как `parseJson` в `auth/init-data.ts`).
 - Метод сервиса, который принимает данные снаружи (тело запроса, query-параметры, текст из бота), объявляет их как `input: unknown` / `query: unknown` и сам разбирает схемой (`NoteInputSchema.parse(input)`). Вызывающий код не приводит тип через `as` (`as NoteInput` — нет): `as` выдаёт непроверенные данные за проверенные. Тип ввода (`NoteInput`) экспортируется для клиента, который эти данные формирует.
 - zod-схемы называются `PascalCase` + `Schema` (`NoteInputSchema`, `TelegramIdSchema`); выведенный из схемы тип — тем же именем без суффикса (`NoteInput`). Короткие имена и сокращения (`n`, `s`, `k, v`, `e`, `res`, `cb`, `fn`) не используются нигде — ни в стрелочных функциях, ни в `catch`, ни в обработчиках событий: `note`, `text`, `[key, value]`, `catch (error)`, `(event: PointerEvent)`, `response`, `callback`. Если имя занято (`error` из `@sveltejs/kit`) — уточни по смыслу: `loadError`, `removeError`. Исключения — общепринятые имена библиотек (`z` из zod, `ctx` в grammY), параметры типов (`T`) и `fetchFn` — подменяемый `fetch` (как в `load` SvelteKit): там `Fn` — часть имени, которая отличает функцию от глобального `fetch`, а не всё имя.
 - Числа со смыслом (лимиты, сроки, размеры страниц) — именованные константы, а не литералы в коде.

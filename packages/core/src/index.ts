@@ -1,6 +1,7 @@
 // Публичный API пакета: только то, что используют приложения (`apps/*`).
 // Внутреннее (схемы ввода, DTO-мапперы, поиск) остаётся в своих модулях.
-// Схемы env — отдельный вход `@tgab/core/env`, константы для клиента — `@tgab/core/constants/<модуль>`.
+// Env (схемы и `parseEnv`) — отдельный вход `@tgab/core/env`, константы
+// для клиента — `@tgab/core/constants/<модуль>`.
 export { validateInitData } from './auth/init-data.ts';
 export { InitDataError, NotFoundError } from './errors.ts';
 export { createNotesService } from './notes/service.ts';
