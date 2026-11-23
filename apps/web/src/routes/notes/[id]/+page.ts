@@ -1,22 +1,11 @@
-import { error } from '@sveltejs/kit';
-import { ApiError, api } from '#lib/api.ts';
-import { HttpStatus } from '#lib/constants/http-status.ts';
-import { errorMessage } from '#lib/errors.ts';
+import { api } from '#lib/api.ts';
+import { loadItem } from '#lib/load-item.ts';
 import type { PageLoad } from './$types';
 
-/** Заметка загружается до показа страницы; ошибка — в routes/+error.svelte. */
-export const load: PageLoad = async ({ params, fetch }) => {
-	try {
-		return { note: await api.notes.get(params.id, fetch) };
-	} catch (loadError) {
-		if (loadError instanceof ApiError && loadError.status === HttpStatus.NotFound) {
-			error(HttpStatus.NotFound, 'Возможно, ссылка устарела или заметку удалили', {
-				title: loadError.message,
-			});
-		}
-		error(
-			loadError instanceof ApiError ? loadError.status : HttpStatus.InternalServerError,
-			errorMessage(loadError),
-		);
-	}
-};
+/** Заметка загружается до показа страницы. */
+export const load: PageLoad = async ({ params, fetch }) => ({
+	note: await loadItem(
+		() => api.notes.get(params.id, fetch),
+		'Возможно, ссылка устарела или заметку удалили',
+	),
+});

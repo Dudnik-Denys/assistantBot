@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { NoteDto } from '#lib/api.ts';
+	import SwipeDeleteButton from '#lib/components/ui/buttons/SwipeDeleteButton.svelte';
 	import Card from '#lib/components/ui/layout/Card.svelte';
 	import SwipeActions from '#lib/components/ui/layout/SwipeActions.svelte';
 	import { formatShortDate } from '#lib/utils/dates.ts';
@@ -26,15 +27,6 @@
 	</Card>
 
 	{#snippet actions(close)}
-		<button
-			type="button"
-			class="w-24 bg-tg-destructive font-semibold text-on-destructive"
-			onclick={async () => {
-				await onremove();
-				close();
-			}}
-		>
-			Удалить
-		</button>
+		<SwipeDeleteButton {onremove} {close} />
 	{/snippet}
 </SwipeActions>
