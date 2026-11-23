@@ -1,0 +1,77 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { api, type CounterDto } from '#lib/api.ts';
+	import CounterCard from '#lib/components/counters/CounterCard.svelte';
+	import FloatingButton from '#lib/components/ui/buttons/FloatingButton.svelte';
+	import ListState from '#lib/components/ui/feedback/ListState.svelte';
+	import Message from '#lib/components/ui/feedback/Message.svelte';
+	import SegmentedControl from '#lib/components/ui/forms/SegmentedControl.svelte';
+	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
+	import Screen from '#lib/components/ui/layout/Screen.svelte';
+	import ScrollArea from '#lib/components/ui/layout/ScrollArea.svelte';
+	import {
+		COUNTER_EMPTY_TAB_MESSAGES,
+		COUNTER_TABS,
+		type CounterTab,
+	} from '#lib/constants/counters.ts';
+	import { isFinished, isRunning, removeCounter } from '#lib/counters.ts';
+	import { holdKeyboard } from '#lib/keyboard.ts';
+	import { Clock } from '#lib/reactive/clock.svelte.ts';
+	import { DebouncedSearch } from '#lib/reactive/debounced-search.svelte.ts';
+
+	// Без поиска: DebouncedSearch с пустым запросом — загрузка с повторами при обрыве связи
+	// и показ последнего списка из кеша, пока идёт загрузка.
+	const loader = new DebouncedSearch<CounterDto>((_, signal) => api.counters.list('', signal), {
+		initialItems: api.counters.cachedList,
+	});
+	const clock = new Clock();
+
+	let tab = $state<CounterTab>('all');
+
+	const visible = $derived.by(() => {
+		const items = loader.items ?? [];
+		if (tab === 'running') return items.filter(isRunning);
+		if (tab === 'finished') return items.filter(isFinished);
+		return items;
+	});
+
+	async function remove(counter: CounterDto) {
+		if (!(await removeCounter(counter))) return;
+		loader.items = loader.items?.filter((item) => item.id !== counter.id) ?? null;
+	}
+</script>
+
+<Screen fit>
+	<PageHeader title="Счётчики" onback={() => goto(resolve('/'))} backLabel="В меню">
+		<SegmentedControl options={COUNTER_TABS} bind:value={tab} label="Какие счётчики показать" />
+	</PageHeader>
+
+	<ScrollArea>
+		<ListState items={loader.items} error={loader.error} reconnecting={loader.reconnecting}>
+			{#snippet empty()}
+				<Message
+					class="flex-none"
+					title="У вас пока нет ни одного счётчика"
+					text="Нажмите «+», чтобы создать первый"
+				/>
+			{/snippet}
+			{#snippet children()}
+				{#if visible.length === 0 && tab !== 'all'}
+					<Message class="flex-none" title={COUNTER_EMPTY_TAB_MESSAGES[tab]} />
+				{:else}
+					<ul class="flex flex-col gap-2 pb-20">
+						{#each visible as counter (counter.id)}
+							<li><CounterCard {counter} now={clock.now} onremove={() => remove(counter)} /></li>
+						{/each}
+					</ul>
+				{/if}
+			{/snippet}
+		</ListState>
+	</ScrollArea>
+
+	<!-- клавиатура открывается сразу по касанию: на iOS иначе фокус в название не встанет -->
+	<FloatingButton href={resolve('/counters/new')} label="Новый счётчик" onopen={holdKeyboard}>
+		+
+	</FloatingButton>
+</Screen>

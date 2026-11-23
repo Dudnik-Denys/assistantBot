@@ -17,3 +17,6 @@ export class NotFoundError extends DomainError {
 
 /** initData Mini App не прошли проверку (подпись, срок, формат). */
 export class InitDataError extends DomainError {}
+
+/** Ввод корректен по форме, но не подходит по смыслу (дата уже прошла и т. п.). */
+export class ValidationError extends DomainError {}

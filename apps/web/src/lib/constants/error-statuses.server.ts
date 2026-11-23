@@ -1,4 +1,4 @@
-import { InitDataError, NotFoundError } from '@tgab/core';
+import { InitDataError, NotFoundError, ValidationError } from '@tgab/core';
 import { z } from 'zod';
 import { HttpStatus } from '#lib/constants/http-status.ts';
 
@@ -26,6 +26,7 @@ const errorStatus = <E extends Error>(entry: ErrorStatus<E>): ErrorStatus<E> => 
 export const ERROR_STATUSES: readonly ErrorStatus[] = [
 	errorStatus({ type: InitDataError, status: HttpStatus.Unauthorized }),
 	errorStatus({ type: NotFoundError, status: HttpStatus.NotFound }),
+	errorStatus({ type: ValidationError, status: HttpStatus.BadRequest }),
 	errorStatus({
 		type: z.ZodError,
 		status: HttpStatus.BadRequest,

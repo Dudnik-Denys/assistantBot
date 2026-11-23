@@ -14,6 +14,7 @@
 	--palette-gray-light: #f2f2f7;
 	--palette-blue: #2481cc;
 	--palette-red: #e53935;
+	--palette-teal: #1fbfae;
 
 	/* Размеры: каждое значение тоже объявлено один раз. */
 	--size-none: 0px;
@@ -49,12 +50,17 @@
 	 */
 	--color-page: var(--color-tg-secondary-bg);
 	--color-surface: var(--color-tg-section-bg);
+	/* Поле ввода и переключатель внутри поверхности (Panel): «утопленные», чуть темнее неё. */
+	--color-field: color-mix(in srgb, var(--color-tg-hint) 12%, transparent);
 	/* Свечение вверху страницы — цвет кнопок темы, приглушённый (утилита bg-page-glow). */
 	--color-glow: color-mix(in srgb, var(--color-tg-button) 40%, transparent);
 
 	/* Роли вне темы Telegram. */
 	--color-elevation: color-mix(in srgb, var(--palette-black) 20%, transparent);
 	--color-on-destructive: var(--palette-white); /* текст на красном фоне (кнопка «Удалить») */
+	/* Переключатель (Switch): фон включённого и бегунок — одинаковые в любой теме Telegram. */
+	--color-switch-on: var(--palette-teal);
+	--color-switch-knob: var(--palette-white);
 
 	/* Безопасные зоны Telegram; вне Telegram — ноль. */
 	--spacing-safe-top: calc(

@@ -6,13 +6,19 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./env": "./src/env/index.ts",
-		"./constants/notes": "./src/constants/notes.ts"
+		"./constants/notes": "./src/constants/notes.ts",
+		"./constants/counters": "./src/constants/counters.ts",
+		"./constants/users": "./src/constants/users.ts",
+		"./constants/time": "./src/constants/time.ts",
+		"./constants/notifications": "./src/constants/notifications.ts"
 	},
 	"scripts": {
 		"check": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
+		"@date-fns/tz": "^1.5.0",
 		"@tgab/db": "workspace:*",
+		"date-fns": "^4.4.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {

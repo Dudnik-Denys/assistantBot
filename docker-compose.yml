@@ -27,6 +27,12 @@ services:
       - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
+    # Готовность — ответ на PING: `docker compose up --wait` (run.sh) ждёт его, а не только старта.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
 
   # Только для интеграционных тестов (`bun run test:integration` поднимает его сам).

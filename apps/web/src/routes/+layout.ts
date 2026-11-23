@@ -19,6 +19,7 @@ type Access =
  */
 export const load: LayoutLoad = async ({ fetch }): Promise<{ access: Access }> => {
 	try {
+		// Профиль остаётся в `api.user.current` (часовой пояс для форм).
 		await api.user.get(fetch);
 		return { access: { kind: 'ready' } };
 	} catch (loadError) {

@@ -12,3 +12,6 @@ export const RECONNECT_DELAYS_MS = [2_000, 4_000, 8_000, 16_000];
  * но запрос уходит не на каждую букву.
  */
 export const AUTOSAVE_DELAY_MS = 300;
+
+/** Как часто обновляются часы на экране (обратный отсчёт таймера). */
+export const CLOCK_TICK_MS = 1_000;

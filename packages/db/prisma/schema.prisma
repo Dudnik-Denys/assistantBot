@@ -21,7 +21,9 @@ model User {
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
 
-  notes Note[]
+  notes                Note[]
+  counters             Counter[]
+  counterNotifications CounterNotification[]
 }
 
 model Note {
@@ -40,4 +42,84 @@ model Note {
 
   @@index([userId, updatedAt(sort: Desc)])
   @@index([search], type: Gin)
+}
+
+/// Режим таймера счётчика: на срок (длительность от старта) или до даты.
+enum CounterTimerMode {
+  DURATION
+  DATE
+}
+
+/// Состояние таймера: идёт цикл или цикл закончился и ждёт «Продолжить».
+enum CounterTimerStatus {
+  RUNNING
+  FINISHED
+}
+
+/// Счётчик: число (ручное управление и/или +1 за каждый цикл таймера) и необязательный таймер.
+/// Без таймера (`timerMode` = null) счётчик всегда ручной — это проверяет схема в core.
+model Counter {
+  id              String              @id @default(uuid(7)) @db.Uuid
+  userId          String              @db.Uuid
+  title           String
+  /// Число: меняется вручную (−1, +1, сброс) и растёт на 1 с каждым завершённым циклом.
+  value           Int
+  /// Показывать кнопки ручного управления (− число +, «Сбросить»).
+  manual          Boolean
+  /// Показывать число на экране счётчика; при `manual` показывается всегда.
+  showValue       Boolean
+  timerMode       CounterTimerMode?
+  /// Срок цикла (режим DURATION), складывается в часовом поясе пользователя.
+  durationMonths  Int
+  durationWeeks   Int
+  durationDays    Int
+  durationHours   Int
+  durationMinutes Int
+  /// Начало и конец текущего цикла (UTC); null — таймера нет.
+  startAt         DateTime?           @db.Timestamptz(3)
+  targetAt        DateTime?           @db.Timestamptz(3)
+  timerStatus     CounterTimerStatus?
+  /// Когда закончился последний цикл.
+  finishedAt      DateTime?           @db.Timestamptz(3)
+  /// Следующий цикл — с теми же параметрами (той же длины), без выбора новой даты.
+  repeatSame      Boolean
+  /// Следующий цикл начинается сам в момент окончания (только вместе с `repeatSame`).
+  autoRestart     Boolean
+  /// Уведомлять об окончании цикла (бот и раздел «Напоминания»).
+  notify          Boolean
+  createdAt       DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime            @updatedAt @db.Timestamptz(3)
+
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications CounterNotification[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  /// Выборка наступивших циклов воркером.
+  @@index([timerStatus, targetAt])
+}
+
+/// Уведомление об окончании цикла счётчика (раздел «Напоминания» Mini App и сообщение в боте).
+model CounterNotification {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  userId           String    @db.Uuid
+  counterId        String    @db.Uuid
+  /// Число счётчика после этого цикла.
+  cycle            Int
+  /// Конец цикла, о котором уведомление.
+  finishedAt       DateTime  @db.Timestamptz(3)
+  readAt           DateTime? @db.Timestamptz(3)
+  /// Сообщение в Telegram отправлено. null — ещё нет: воркер досылает такие (outbox).
+  sentAt           DateTime? @db.Timestamptz(3)
+  /// Сообщение не доставить никогда (пользователь заблокировал бота, 403): больше не досылать.
+  deliveryFailedAt DateTime? @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  counter Counter @relation(fields: [counterId], references: [id], onDelete: Cascade)
+
+  /// Один цикл — одно уведомление, даже если воркер обработает его повторно.
+  @@unique([counterId, finishedAt])
+  @@index([userId, createdAt(sort: Desc)])
+  /// Выборка неотправленных воркером.
+  @@index([sentAt, createdAt])
 }
