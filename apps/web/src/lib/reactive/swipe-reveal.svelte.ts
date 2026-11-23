@@ -1,18 +1,41 @@
 /** Сдвиг пальца, после которого ясно, горизонтальный это жест (свайп) или вертикальный (прокрутка). */
 const AXIS_LOCK_PX = 8;
 
-/** Закрыть открытую строку: открыта может быть только одна. */
-let closeOpened: (() => void) | null = null;
+/** Открытая строка (может быть только одна) — её закрытие и элемент. */
+let opened: { close: () => void; element: () => HTMLElement | undefined } | null = null;
 
 /**
- * Свайп строки влево, открывающий действия под ней (как в списках iOS).
+ * Касание закрыло открытую строку — тап по другой строке не должен открыть её ссылку.
+ * Сбрасывается в следующей задаче: pointerdown строки приходит в том же событии, сразу после.
+ */
+let closedByPointer = false;
+
+/**
+ * Любое касание вне открытой строки закрывает её (как в Заметках iOS).
+ * Слушатель на документе в фазе перехвата — раньше обработчиков самих строк.
+ */
+function onDocumentPointerDown(event: PointerEvent): void {
+	if (!opened) return;
+	const element = opened.element();
+	if (element && event.target instanceof Node && element.contains(event.target)) return;
+	opened.close();
+	closedByPointer = true;
+	setTimeout(() => (closedByPointer = false));
+}
+
+/**
+ * Свайп строки влево, выдвигающий действия справа от неё (как в списках iOS).
  * Влево — открыть (если сдвинули больше чем на половину ширины действий), вправо — закрыть;
- * закрытую строку вправо не сдвинуть. Тап по открытой строке закрывает её, а не открывает ссылку.
- * Вертикальный жест не перехватывается — список прокручивается как обычно (нужен `touch-action: pan-y`).
+ * закрытую строку вправо не сдвинуть. Открытая строка остаётся открытой, пока её не закроют:
+ * свайпом вправо, тапом по ней, касанием другой строки или любого места экрана, прокруткой.
+ * Тап, который закрыл строку, ссылку не открывает.
+ * Вертикальный жест не перехватывается — список
+ * прокручивается как обычно (нужен `touch-action: pan-y`).
  *
- * Создавать при инициализации компонента (в <script>); обработчики — на сдвигаемый элемент.
+ * Создавать при инициализации компонента (в <script>). Сдвиг (`offset`) — на ряд «содержимое +
+ * действия», обработчики указателя — только на содержимое: касание кнопок действий — не жест.
  *
- *   const swipe = new SwipeReveal(() => actionsWidth);
+ *   const swipe = new SwipeReveal(() => actionsWidth, () => rowElement);
  *   <div style:--offset="{swipe.offset}px" onpointerdown={swipe.onpointerdown} …>
  */
 export class SwipeReveal {
@@ -22,42 +45,50 @@ export class SwipeReveal {
 	dragging = $state(false);
 
 	#width: () => number;
+	#element: () => HTMLElement | undefined;
 	#open = false;
 	#start: { x: number; y: number; offset: number } | null = null;
 	#axis: 'x' | 'y' | null = null;
 	#suppressClick = false;
 
-	/** width — ширина действий в пикселях (измеряется в разметке). */
-	constructor(width: () => number) {
+	/** width — ширина действий в пикселях, element — вся строка (измеряются в разметке). */
+	constructor(width: () => number, element: () => HTMLElement | undefined) {
 		this.#width = width;
-		$effect(() => () => {
-			if (closeOpened === this.close) closeOpened = null;
-		});
+		this.#element = element;
+		$effect(() => () => this.#settle(false));
 	}
 
 	close = (): void => this.#settle(false);
 
-	onpointerdown = (e: PointerEvent): void => {
-		if (!e.isPrimary) return;
-		this.#start = { x: e.clientX, y: e.clientY, offset: this.offset };
+	onpointerdown = (event: PointerEvent): void => {
+		if (!event.isPrimary) return;
+		this.#start = { x: event.clientX, y: event.clientY, offset: this.offset };
 		this.#axis = null;
-		this.#suppressClick = false;
+		// Это касание закрыло другую строку — по нему не переходим.
+		this.#suppressClick = closedByPointer;
 	};
 
-	onpointermove = (e: PointerEvent): void => {
-		if (!this.#start || !e.isPrimary) return;
-		const dx = e.clientX - this.#start.x;
-		const dy = e.clientY - this.#start.y;
+	onpointermove = (event: PointerEvent): void => {
+		if (!this.#start || !event.isPrimary) return;
+		const deltaX = event.clientX - this.#start.x;
+		const deltaY = event.clientY - this.#start.y;
 		if (!this.#axis) {
-			if (Math.max(Math.abs(dx), Math.abs(dy)) < AXIS_LOCK_PX) return;
-			this.#axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-			if (this.#axis === 'x') {
-				if (e.currentTarget instanceof Element) e.currentTarget.setPointerCapture(e.pointerId);
-				this.dragging = true;
+			if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < AXIS_LOCK_PX) return;
+			this.#axis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+			if (this.#axis === 'y') {
+				// Прокрутка закрывает открытую строку, как в iOS.
+				if (this.#open) this.#settle(false);
+				return;
+			}
+			this.dragging = true;
+			// Для мыши — чтобы строка не «отпускалась», когда курсор уходит с неё. Касание
+			// браузер и так закрепляет за элементом под пальцем.
+			if (event.pointerType === 'mouse' && event.currentTarget instanceof Element) {
+				event.currentTarget.setPointerCapture(event.pointerId);
 			}
 		}
 		if (this.#axis !== 'x') return;
-		this.offset = Math.min(0, Math.max(-this.#width(), this.#start.offset + dx));
+		this.offset = Math.min(0, Math.max(-this.#width(), this.#start.offset + deltaX));
 	};
 
 	onpointerup = (): void => {
@@ -66,6 +97,7 @@ export class SwipeReveal {
 			this.#suppressClick = true;
 			this.#settle(this.offset < -this.#width() / 2);
 		} else if (this.#axis === null && this.#open) {
+			// Тап по открытой строке закрывает её.
 			this.#suppressClick = true;
 			this.#settle(false);
 		}
@@ -73,10 +105,7 @@ export class SwipeReveal {
 		this.dragging = false;
 	};
 
-	/**
-	 * Браузер забрал жест себе (началась прокрутка) или захват указателя потерян без pointerup —
-	 * вернуть строку в прежнее положение. После обычного pointerup жест уже завершён (#start = null).
-	 */
+	/** Браузер забрал жест себе (началась прокрутка) — вернуть строку в прежнее положение. */
 	onpointercancel = (): void => {
 		if (!this.#start) return;
 		this.#settle(this.#open);
@@ -84,11 +113,14 @@ export class SwipeReveal {
 		this.dragging = false;
 	};
 
-	/** После свайпа или закрывающего тапа браузер всё равно шлёт click — гасим его, чтобы не открылась ссылка. */
-	onclickcapture = (e: MouseEvent): void => {
+	/**
+	 * После свайпа или закрывающего тапа браузер всё равно шлёт click —
+	 * гасим его, чтобы не открылась ссылка.
+	 */
+	onclickcapture = (event: MouseEvent): void => {
 		if (!this.#suppressClick) return;
-		e.preventDefault();
-		e.stopPropagation();
+		event.preventDefault();
+		event.stopPropagation();
 		this.#suppressClick = false;
 	};
 
@@ -96,10 +128,12 @@ export class SwipeReveal {
 		this.#open = open;
 		this.offset = open ? -this.#width() : 0;
 		if (open) {
-			if (closeOpened !== this.close) closeOpened?.();
-			closeOpened = this.close;
-		} else if (closeOpened === this.close) {
-			closeOpened = null;
+			if (opened && opened.close !== this.close) opened.close();
+			if (!opened) document.addEventListener('pointerdown', onDocumentPointerDown, true);
+			opened = { close: this.close, element: this.#element };
+		} else if (opened?.close === this.close) {
+			opened = null;
+			document.removeEventListener('pointerdown', onDocumentPointerDown, true);
 		}
 	}
 }

@@ -11,9 +11,8 @@ export const load: PageLoad = async ({ params, fetch }) => {
 	} catch (e) {
 		// 404: заголовок — текст сервера («Счётчик не найден»), под ним — подсказка, подпись «404 Error».
 		if (e instanceof ApiError && e.status === HttpStatus.NotFound) {
-			error(HttpStatus.NotFound, {
+			error(HttpStatus.NotFound, 'Возможно, ссылка устарела или __one__ удалили', {
 				title: e.message,
-				message: 'Возможно, ссылка устарела или __one__ удалили',
 			});
 		}
 		error(e instanceof ApiError ? e.status : HttpStatus.InternalServerError, errorMessage(e));

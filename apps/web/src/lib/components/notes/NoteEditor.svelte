@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { NOTE_CONTENT_MAX, NOTE_TITLE_MAX } from '@tgab/core/constants/notes';
-	import { goto, replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { api, type NoteDto } from '#lib/api.ts';
@@ -12,8 +12,8 @@
 	import { displayUrl, linkify } from '#lib/utils/linkify.ts';
 
 	/**
-	 * Редактор заметки без кнопок: изменения сохраняются сами (Autosave), если есть заголовок.
-	 * note отсутствует — новая заметка: создаётся при первом сохранении, дальше обновляется.
+	 * Редактор заметки без кнопок и без индикатора сохранения, как в Заметках iOS: изменения
+	 * сохраняются сами (Autosave), если есть заголовок; под ним — время последнего изменения.
 	 */
 	let { note }: { note?: NoteDto } = $props();
 
@@ -24,6 +24,9 @@
 	let content = $state(note?.content ?? '');
 	// svelte-ignore state_referenced_locally
 	let noteId = note?.id;
+	/** Время последнего изменения — из ответа сервера после каждого сохранения. */
+	// svelte-ignore state_referenced_locally
+	let updatedAt = $state(note?.updatedAt);
 
 	const empty = $derived(!title.trim() && !content.trim());
 	/** Заголовок обязателен (NoteInputSchema) — без него не сохранить. */
@@ -36,14 +39,17 @@
 		value: () => ({ title, content }),
 		canSave: (draft) => draft.title.trim() !== '',
 		save: async (draft) => {
-			if (noteId) await api.notes.update(noteId, draft);
-			else {
-				noteId = (await api.notes.create(draft)).id;
+			if (noteId) {
+				updatedAt = (await api.notes.update(noteId, draft)).updatedAt;
+			} else {
+				const created = await api.notes.create(draft);
+				noteId = created.id;
+				updatedAt = created.updatedAt;
 				// Адрес созданной заметки вместо /notes/new — без перехода (редактор и фокус остаются),
 				// чтобы перезагрузка страницы не создала заметку заново. Только если мы ещё здесь:
 				// сохранение могло завершиться уже после ухода на другую страницу.
 				if (page.url.pathname === resolve('/notes/new')) {
-					replaceState(resolve('/notes/[id]', { id: noteId }), {});
+					void goto(resolve('/notes/[id]', { id: noteId }), { shallow: true, replace: true });
 				}
 			}
 		},
@@ -73,14 +79,10 @@
 	<p class="mb-2 min-h-4 text-xs text-tg-hint">
 		{#if untitled && !empty}
 			Укажите заголовок — без него заметка не сохранится
-		{:else if autosave.status === 'error'}
+		{:else if autosave.error}
 			<span class="text-tg-destructive">{autosave.error}</span>
-		{:else if autosave.status === 'saving'}
-			Сохранение…
-		{:else if autosave.status === 'saved'}
-			Сохранено
-		{:else if note}
-			Изменено {formatShortDate(note.updatedAt)}
+		{:else if updatedAt}
+			Изменено {formatShortDate(updatedAt)}
 		{/if}
 	</p>
 	<textarea

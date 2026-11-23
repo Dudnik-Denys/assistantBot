@@ -1,9 +1,10 @@
 import { errorMessage } from '#lib/errors.ts';
 
-/** Пауза после последнего изменения перед сохранением: не отправлять запрос на каждую букву. */
-const AUTOSAVE_DELAY_MS = 800;
-
-export type AutosaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+/**
+ * Пауза после последнего изменения перед сохранением: для пользователя это «сразу»,
+ * но запрос уходит не на каждую букву.
+ */
+const AUTOSAVE_DELAY_MS = 300;
 
 export interface AutosaveOptions<T> {
 	/** Текущие данные; читается реактивно — изменение запускает отложенное сохранение. */
@@ -15,7 +16,8 @@ export interface AutosaveOptions<T> {
 }
 
 /**
- * Автосохранение формы: сохраняет данные через паузу после изменения, а также сразу —
+ * Автосохранение формы (как в Заметках iOS — без кнопки и без индикатора «Сохранение…»):
+ * сохраняет данные через короткую паузу после изменения, а также сразу —
  * при сворачивании приложения и уничтожении компонента. Сохранения идут строго по очереди,
  * поэтому `save` может опираться на результат предыдущего (id созданной записи).
  * Начальные данные считаются сохранёнными.
@@ -30,8 +32,6 @@ export class Autosave<T> {
 	#canSave: (value: T) => boolean;
 	#save: (value: T) => Promise<void>;
 	#savedKey = $state('');
-	#saving = $state(false);
-	#savedOnce = $state(false);
 	#error = $state<string | null>(null);
 	#queue: Promise<void> = Promise.resolve();
 	#cancelPending: (() => void) | undefined;
@@ -71,13 +71,6 @@ export class Autosave<T> {
 		return JSON.stringify(this.#value()) !== this.#savedKey;
 	}
 
-	/** Состояние для показа: ошибка, идёт (или ждёт паузы) сохранение, сохранено. */
-	get status(): AutosaveStatus {
-		if (this.#error) return 'error';
-		if (this.#saving || (this.dirty && this.#canSave(this.#value()))) return 'saving';
-		return this.#savedOnce ? 'saved' : 'idle';
-	}
-
 	/** Текст ошибки последнего сохранения или null. */
 	get error(): string | null {
 		return this.#error;
@@ -97,16 +90,12 @@ export class Autosave<T> {
 	#enqueue(value: T, key: string): void {
 		this.#queue = this.#queue.then(async () => {
 			if (key === this.#savedKey) return;
-			this.#saving = true;
 			try {
 				await this.#save(value);
 				this.#savedKey = key;
-				this.#savedOnce = true;
 				this.#error = null;
 			} catch (e) {
 				this.#error = errorMessage(e);
-			} finally {
-				this.#saving = false;
 			}
 		});
 	}

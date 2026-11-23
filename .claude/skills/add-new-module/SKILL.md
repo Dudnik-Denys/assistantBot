@@ -52,7 +52,7 @@ argument-hint: "<модуль, например: счётчики>"
 | Мгновенный показ списка при возврате | кеш `RestResource.cachedList` → `initialItems` | `routes/notes/+page.svelte` |
 | Состояния экрана | `Loading` (с задержкой и спиннером), `Message` (пусто, ошибка, «ничего не найдено»), `Notice pending` (полоска «Нет связи…» над списком) | `routes/notes/+page.svelte` |
 | Удаление свайпом | `ui/layout/SwipeActions` + `confirmDialog(…, { confirmText: 'Да', cancelText: 'Нет', destructive: true })` | `NoteCard.svelte`, `removeNote` в списке заметок |
-| Редактор без кнопки «Сохранить» | `Autosave` (`lib/reactive/autosave.svelte.ts`): отложенное сохранение, `flush()` перед уходом, создание при первом сохранении + `replaceState` на адрес записи | `NoteEditor.svelte` |
+| Редактор без кнопки «Сохранить» | `Autosave` (`lib/reactive/autosave.svelte.ts`): отложенное сохранение, `flush()` перед уходом, создание при первом сохранении + `goto(адрес записи, { shallow: true, replace: true })` | `NoteEditor.svelte` |
 | Кнопки действий | `ui/buttons/Button` (варианты `primary`, `secondary`, `destructive`), `ActionBar` — панель внизу экрана | — |
 | Нестандартное действие (`+1`) | метод сервиса в core + эндпоинт + наследник `RestResource` в `lib/api.ts` (см. `templates/api-client.ts.tpl`) | — |
 | Диалоги, вибрация, ссылки | `confirmDialog`, `alertDialog`, `haptic`, `openLink` из `lib/telegram.ts` | — |

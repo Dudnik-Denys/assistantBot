@@ -3,44 +3,45 @@
 	import { SwipeReveal } from '#lib/reactive/swipe-reveal.svelte.ts';
 
 	/**
-	 * Строка списка с действиями под ней: свайп влево открывает `actions` справа, свайп вправо —
-	 * закрывает (логика жеста — SwipeReveal). `actions` получает `close`, чтобы закрыть строку
-	 * после действия. Скругление — как у `Card`.
+	 * Строка списка с действиями справа: свайп влево выдвигает `actions` из-за края строки, свайп
+	 * вправо — убирает (логика жеста — SwipeReveal). Содержимое и действия стоят в одном ряду и
+	 * едут вместе — действия не лежат под содержимым. Скругление — как у `Card`.
 	 */
 	let { children, actions }: { children: Snippet; actions: Snippet<[close: () => void]> } =
 		$props();
 
 	let actionsWidth = $state(0);
-	const swipe = new SwipeReveal(() => actionsWidth);
+	let row = $state<HTMLElement>();
+	const swipe = new SwipeReveal(
+		() => actionsWidth,
+		() => row,
+	);
 </script>
 
-<div class="relative overflow-hidden rounded-2xl">
-	<!-- invisible в закрытом виде: иначе действия просвечивают по скруглённым углам строки -->
+<div class="overflow-hidden rounded-2xl" bind:this={row}>
 	<div
 		class={[
-			'absolute inset-y-0 right-0 flex',
-			swipe.offset === 0 && !swipe.dragging && 'invisible',
-		]}
-		bind:clientWidth={actionsWidth}
-	>
-		{@render actions(swipe.close)}
-	</div>
-	<!-- Жест — только для указателя; действие доступно и без него (кнопка в actions), семантика — у содержимого (ссылка Card). -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class={[
-			'relative touch-pan-y select-none',
+			'flex touch-pan-y',
 			'translate-x-[var(--swipe-offset)]',
 			!swipe.dragging && 'transition-transform',
 		]}
 		style:--swipe-offset="{swipe.offset}px"
-		onpointerdown={swipe.onpointerdown}
-		onpointermove={swipe.onpointermove}
-		onpointerup={swipe.onpointerup}
-		onpointercancel={swipe.onpointercancel}
-		onlostpointercapture={swipe.onpointercancel}
-		onclickcapture={swipe.onclickcapture}
 	>
-		{@render children()}
+		<!-- Жест — только для указателя; действие доступно и без него (кнопка в actions),
+		    семантика — у содержимого (ссылка Card). -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="w-full shrink-0 select-none"
+			onpointerdown={swipe.onpointerdown}
+			onpointermove={swipe.onpointermove}
+			onpointerup={swipe.onpointerup}
+			onpointercancel={swipe.onpointercancel}
+			onclickcapture={swipe.onclickcapture}
+		>
+			{@render children()}
+		</div>
+		<div class="flex shrink-0" bind:clientWidth={actionsWidth}>
+			{@render actions(swipe.close)}
+		</div>
 	</div>
 </div>

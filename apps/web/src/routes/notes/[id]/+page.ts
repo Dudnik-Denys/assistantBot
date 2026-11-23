@@ -10,9 +10,8 @@ export const load: PageLoad = async ({ params, fetch }) => {
 		return { note: await api.notes.get(params.id, fetch) };
 	} catch (e) {
 		if (e instanceof ApiError && e.status === HttpStatus.NotFound) {
-			error(HttpStatus.NotFound, {
+			error(HttpStatus.NotFound, 'Возможно, ссылка устарела или заметку удалили', {
 				title: e.message,
-				message: 'Возможно, ссылка устарела или заметку удалили',
 			});
 		}
 		error(e instanceof ApiError ? e.status : HttpStatus.InternalServerError, errorMessage(e));

@@ -11,6 +11,10 @@ interface TelegramWebApp {
 	platform: string;
 	ready(): void;
 	expand(): void;
+	/**
+	 * Bot API 7.7+: жесты по содержимому не сворачивают приложение (в старых клиентах метода нет).
+	 */
+	disableVerticalSwipes?(): void;
 	openLink(url: string): void;
 	showConfirm(message: string, callback: (ok: boolean) => void): void;
 	showAlert(message: string, callback?: () => void): void;
@@ -54,6 +58,9 @@ export function initTelegram(): void {
 	if (!app) return;
 	app.ready();
 	app.expand();
+	// Свайпы внутри приложения (по списку, по строкам) не тянут его вниз;
+	// свернуть по-прежнему можно, потянув за шапку Telegram.
+	app.disableVerticalSwipes?.();
 }
 
 export function openLink(url: string): void {
