@@ -44,7 +44,7 @@ const rows = await db.$queryRaw<NoteRow[]>`
 	SELECT id, title, content, "createdAt", "updatedAt"
 	FROM "Note"
 	WHERE "userId" = ${userId}::uuid
-	AND (${ftsMatch} OR title ILIKE ${like} OR content ILIKE ${like})
+	AND (${ftsMatch} OR title ILIKE ${like})
 	ORDER BY ${rank} DESC, "updatedAt" DESC
 	LIMIT ${limit}
 `;

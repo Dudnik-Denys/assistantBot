@@ -24,7 +24,10 @@
 	let error = $state<string | null>(null);
 
 	const dirty = $derived(title !== (note?.title ?? '') || content !== (note?.content ?? ''));
+	/** Нечего терять — выход без подтверждения. */
 	const empty = $derived(!title.trim() && !content.trim());
+	/** Заголовок обязателен (NoteInputSchema) — без него не сохранить. */
+	const untitled = $derived(!title.trim());
 	const links = $derived([
 		...new Set(linkify(content).flatMap((s) => (s.type === 'link' ? [s.href] : []))),
 	]);
@@ -35,7 +38,7 @@
 	}
 
 	async function save() {
-		if (saving || empty) return;
+		if (saving || untitled) return;
 		saving = true;
 		error = null;
 		try {
@@ -125,7 +128,7 @@
 		{#if note}
 			<Button variant="destructive" class="w-24" onclick={remove}>Удалить</Button>
 		{/if}
-		<Button type="submit" class="flex-1" disabled={saving || empty || (note && !dirty)}>
+		<Button type="submit" class="flex-1" disabled={saving || untitled || (note && !dirty)}>
 			{saving ? 'Сохранение…' : 'Сохранить'}
 		</Button>
 	</ActionBar>

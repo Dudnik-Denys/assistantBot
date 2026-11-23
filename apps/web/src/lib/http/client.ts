@@ -1,5 +1,6 @@
 import { TMA_AUTH_SCHEME } from '#lib/constants/auth.ts';
 import { HttpStatus } from '#lib/constants/http-status.ts';
+import { ApiErrorBodySchema } from '#lib/schemas/api-error.ts';
 import { webApp } from '#lib/telegram.ts';
 
 /** Ошибка ответа API: HTTP-статус, текст для пользователя и тело ответа (например, telegramId при 403). */
@@ -17,6 +18,17 @@ export class ApiError extends Error {
 export class NetworkError extends Error {
 	constructor(cause: unknown) {
 		super('Нет связи с сервером. Проверьте интернет', { cause });
+	}
+}
+
+/**
+ * Ответил не наш API, а то, что стоит перед ним (туннель, прокси): тело не в формате
+ * `{ error }`. Например, ngrok при выключенном туннеле отдаёт 404 — это «сервер недоступен»,
+ * а не «не найдено», поэтому код такого ответа пользователю не показывается.
+ */
+export class ServerUnavailableError extends Error {
+	constructor(readonly status: number) {
+		super('Сервер не отвечает. Попробуйте чуть позже');
 	}
 }
 
@@ -61,7 +73,9 @@ export class HttpClient {
 		}
 		if (res.status === HttpStatus.NoContent) return undefined as T;
 		const data = await res.json().catch(() => ({}));
-		if (!res.ok) throw new ApiError(res.status, data.error ?? `Ошибка ${res.status}`, data);
-		return data as T;
+		if (res.ok) return data as T;
+		const errorBody = ApiErrorBodySchema.safeParse(data);
+		if (!errorBody.success) throw new ServerUnavailableError(res.status);
+		throw new ApiError(res.status, errorBody.data.error, errorBody.data);
 	}
 }

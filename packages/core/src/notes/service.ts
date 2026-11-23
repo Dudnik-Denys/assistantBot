@@ -46,8 +46,8 @@ export function createNotesService(db: PrismaClient) {
 				return rows.map(toNoteDto);
 			}
 
-			// Полнотекстовый поиск (морфология, префиксы слов) + подстрока —
-			// чтобы находились ссылки и фрагменты, которые парсер tsvector режет иначе.
+			// Поиск только по заголовку: полнотекстовый (морфология, префиксы слов) + подстрока —
+			// чтобы находились фрагменты, которые парсер tsvector режет иначе («50%», адреса).
 			const tsQuery = buildPrefixTsQuery(q);
 			const like = `%${escapeLike(q)}%`;
 			const ftsMatch = tsQuery
@@ -61,7 +61,7 @@ export function createNotesService(db: PrismaClient) {
 				SELECT id, title, content, "createdAt", "updatedAt"
 				FROM "Note"
 				WHERE "userId" = ${userId}::uuid
-				AND (${ftsMatch} OR title ILIKE ${like} OR content ILIKE ${like})
+				AND (${ftsMatch} OR title ILIKE ${like})
 				ORDER BY ${rank} DESC, "updatedAt" DESC
 				LIMIT ${limit}
 			`;

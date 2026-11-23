@@ -100,7 +100,7 @@ bun run build:web && bun --cwd apps/web start   # продакшен-сборк�
 - Mini App — SPA (`ssr = false`): данные требуют `initData`, которые есть только в браузере. API — `/api/*`, авторизация — хук в `hooks.server.ts`, логика в `lib/server/auth.ts` (`authenticateRequest`), заголовок `Authorization: tma <initData>` (схема — `TMA_AUTH_SCHEME` в `lib/constants/auth.ts`). В `vite dev` при заданном `DEV_TELEGRAM_ID` запросы без заголовка идут от имени этого пользователя — можно открыть приложение в обычном браузере.
 - Бот: `apps/bot/src/index.ts` только запускает, `bot.ts` (`createBot(deps)`) собирает middleware и роутеры (`Composer` grammY) по папкам `middlewares/`, `routers/`, `keyboards/`, `constants/`; алиас `#bot/*` с явным расширением; env — zod-схема в `env.ts`. Подробно — `.claude/rules/bot.md`.
 - Prisma 7: генератор `prisma-client` в `packages/db/src/generated` (не в git), подключение через `@prisma/adapter-pg`, конфиг — `packages/db/prisma.config.ts`.
-- `Note.search` — generated-колонка `tsvector`, выражение дописано в миграцию вручную; в схеме оно продублировано в `@default(dbgenerated(...))` ровно в том виде, как его интроспектирует Prisma, иначе `migrate dev` создаёт миграцию `DROP DEFAULT`. Поиск — `to_tsquery` с префиксами слов плюс `ILIKE` по подстроке (для ссылок).
+- `Note.search` — generated-колонка `tsvector`, выражение дописано в миграцию вручную; в схеме оно продублировано в `@default(dbgenerated(...))` ровно в том виде, как его интроспектирует Prisma, иначе `migrate dev` создаёт миграцию `DROP DEFAULT`. Поиск — только по заголовку (он обязателен): `to_tsquery` с префиксами слов плюс `ILIKE` по подстроке.
 
 ## Окружение
 

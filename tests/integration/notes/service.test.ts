@@ -27,8 +27,10 @@ describe('create', () => {
 		expect(Object.keys(note).sort()).toEqual(['content', 'createdAt', 'id', 'title', 'updatedAt']);
 	});
 
-	test('Отклонение пустой заметки', async () => {
-		await expect(notes.create(owner.id, { title: ' ', content: '' })).rejects.toThrow(z.ZodError);
+	test('Отклонение заметки без заголовка', async () => {
+		await expect(notes.create(owner.id, { title: ' ', content: 'Текст' })).rejects.toThrow(
+			z.ZodError,
+		);
 	});
 
 	test('Отклонение ввода не той формы', async () => {
@@ -76,9 +78,15 @@ describe('list', () => {
 		expect(found.map((note) => note.title)).toEqual(['Погода в Киеве']);
 	});
 
-	test('Поиск ссылки по подстроке', async () => {
-		await createTestNote(db, owner.id, { content: 'https://github.com/foo/bar' });
+	test('Поиск по подстроке заголовка', async () => {
+		await createTestNote(db, owner.id, { title: 'github.com/foo/bar' });
 		expect(await notes.list(owner.id, { q: 'github.com/foo' })).toHaveLength(1);
+	});
+
+	test('Поиск только по заголовку, без текста', async () => {
+		await createTestNote(db, owner.id, { title: 'Ссылки', content: 'Погода https://github.com' });
+		expect(await notes.list(owner.id, { q: 'погода' })).toEqual([]);
+		expect(await notes.list(owner.id, { q: 'github' })).toEqual([]);
 	});
 
 	test('Поиск % и _ как обычных символов', async () => {

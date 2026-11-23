@@ -27,14 +27,14 @@ model User {
 model Note {
   id        String   @id @default(uuid(7)) @db.Uuid
   userId    String   @db.Uuid
-  title     String   @default("")
+  title     String
   content   String   @default("")
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
   /// В БД это GENERATED ALWAYS AS (...) STORED — задано в миграции вручную.
   /// dbgenerated() повторяет выражение так, как его видит Prisma, чтобы migrate не находил расхождений.
-  search Unsupported("tsvector")? @default(dbgenerated("to_tsvector('russian'::regconfig, ((title || ' '::text) || content))"))
+  search Unsupported("tsvector")? @default(dbgenerated("to_tsvector('russian'::regconfig, title)"))
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

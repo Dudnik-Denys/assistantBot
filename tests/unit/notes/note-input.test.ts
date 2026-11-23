@@ -10,21 +10,17 @@ describe('NoteInputSchema', () => {
 		});
 	});
 
-	test('Подстановка пустой строки вместо недостающего поля', () => {
+	test('Подстановка пустой строки вместо недостающего текста', () => {
 		expect(NoteInputSchema.parse({ title: 'Только заголовок' })).toEqual({
 			title: 'Только заголовок',
 			content: '',
 		});
-		expect(NoteInputSchema.parse({ content: 'Только текст' })).toEqual({
-			title: '',
-			content: 'Только текст',
-		});
 	});
 
-	test('Отклонение пустой заметки, в том числе из одних пробелов', () => {
-		for (const input of [{}, { title: '', content: '' }, { title: '   ', content: '\n' }]) {
+	test('Отклонение заметки без заголовка, в том числе из одних пробелов', () => {
+		for (const input of [{}, { content: 'Только текст' }, { title: '   ', content: 'Текст' }]) {
 			const result = NoteInputSchema.safeParse(input);
-			expect(result.error?.issues[0]?.message).toBe('Заметка не может быть пустой');
+			expect(result.error?.issues[0]?.message).toBe('Укажите заголовок');
 		}
 	});
 
@@ -36,10 +32,12 @@ describe('NoteInputSchema', () => {
 	});
 
 	test(`Ограничение текста ${NOTE_CONTENT_MAX} символами включительно`, () => {
-		expect(NoteInputSchema.safeParse({ content: 'а'.repeat(NOTE_CONTENT_MAX) }).success).toBe(true);
-		expect(NoteInputSchema.safeParse({ content: 'а'.repeat(NOTE_CONTENT_MAX + 1) }).success).toBe(
-			false,
-		);
+		expect(
+			NoteInputSchema.safeParse({ title: 'Т', content: 'а'.repeat(NOTE_CONTENT_MAX) }).success,
+		).toBe(true);
+		expect(
+			NoteInputSchema.safeParse({ title: 'Т', content: 'а'.repeat(NOTE_CONTENT_MAX + 1) }).success,
+		).toBe(false);
 	});
 
 	test('Подсчёт лимита после обрезки пробелов', () => {

@@ -47,9 +47,9 @@ paths:
 - `ui/` — общие, не знают о предметной области, разложены по назначению:
   - `buttons/` — кнопки: `Button`, `BackButton`, `FloatingButton`;
   - `layout/` — каркас экрана и контейнеры: `Screen`, `PageHeader`, `ActionBar`, `Card`;
-  - `feedback/` — состояния и отклик: `Message`, `NavigationProgress`;
+  - `feedback/` — состояния и отклик: `Message`, `Loading`, `Spinner`, `Notice`, `NavigationProgress`;
   - `forms/` — поля ввода: `SearchBar`;
-  - `text/` — оформление текста: `SectionTitle`, `Linkified`.
+  - `text/` — оформление текста: `SectionTitle`.
 
   Новый компонент кладётся в подходящую группу; если не подходит ни одна — заводится новая группа с понятным именем во множественном числе. Компоненты принимают данные и тексты через props, а не хардкодят их под конкретный раздел.
 - `<раздел>/` — компоненты одной функции: `notes/` (`NoteCard`, `NoteEditor`), дальше `counters/`, `reminders/` и т. д. Могут использовать `ui/`, но не компоненты другого раздела.
