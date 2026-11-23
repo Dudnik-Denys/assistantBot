@@ -1,3 +1,1 @@
-# Правила, скиллы и шаблоны (*.tpl) в .claude/ — инструкции для Claude Code, а не код приложения.
-# Не учитывать в статистике языков GitHub (иначе *.tpl считаются шаблонами Smarty и Go Template).
 .claude/** linguist-documentation

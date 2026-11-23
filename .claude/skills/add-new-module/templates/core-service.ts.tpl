@@ -29,6 +29,8 @@ export function create__Entities__Service(db: PrismaClient) {
 		async list(userId: string, query: unknown = {}): Promise<__Entity__Dto[]> {
 			const { q, limit } = ListQuerySchema.parse(query);
 			// Поиск по подстроке. Если нужен полнотекстовый — см. notes/service.ts ($queryRaw + tsvector).
+			// Порядок — от новых к старым (updatedAt desc): кеш списка в RestResource на клиенте
+			// кладёт созданную или изменённую запись в начало. Другой порядок — поправь и кеш.
 			const rows = await db.__entity__.findMany({
 				where: { userId, ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}) },
 				orderBy: { updatedAt: 'desc' },

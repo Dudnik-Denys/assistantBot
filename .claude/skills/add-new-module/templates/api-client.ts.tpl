@@ -1,7 +1,8 @@
 // В apps/web/src/lib/api.ts:
 // 1) добавить __Entity__Dto и __Entity__Input в `import type { … } from '@tgab/core'`
 //    и __Entity__Dto — в `export type { … }`;
-// 2) добавить строку в объект `api`:
+// 2) добавить строку в объект `api` (RestResource сам кеширует общий список и правит кеш
+//    при create/update/remove; DTO обязан иметь `id: string`):
 
 	__entities__: new RestResource<__Entity__Dto, __Entity__Input>(http, '/__entities__'),
 
