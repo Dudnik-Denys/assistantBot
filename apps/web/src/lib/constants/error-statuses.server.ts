@@ -28,7 +28,7 @@ export const ERROR_STATUSES: readonly ErrorStatus[] = [
 	errorStatus({
 		type: z.ZodError,
 		status: HttpStatus.BadRequest,
-		message: (e) => e.issues[0]?.message ?? 'Некорректные данные',
+		message: (zodError) => zodError.issues[0]?.message ?? 'Некорректные данные',
 	}),
 	errorStatus({
 		type: SyntaxError,

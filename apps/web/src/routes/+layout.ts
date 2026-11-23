@@ -20,11 +20,11 @@ export const load: LayoutLoad = async ({ fetch }): Promise<{ access: Access }> =
 	try {
 		await api.user.get(fetch);
 		return { access: { kind: 'ready' } };
-	} catch (e) {
-		if (e instanceof ApiError && e.status === HttpStatus.Forbidden) {
-			const id = e.body.telegramId;
+	} catch (loadError) {
+		if (loadError instanceof ApiError && loadError.status === HttpStatus.Forbidden) {
+			const id = loadError.body.telegramId;
 			return { access: { kind: 'denied', telegramId: typeof id === 'string' ? id : undefined } };
 		}
-		return { access: { kind: 'error', message: errorMessage(e) } };
+		return { access: { kind: 'error', message: errorMessage(loadError) } };
 	}
 };

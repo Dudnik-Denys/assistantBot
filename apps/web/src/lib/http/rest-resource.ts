@@ -25,11 +25,11 @@ export class RestResource<Dto extends { id: string }, Input> {
 		return this.#cachedList;
 	}
 
-	/** Список; q — поисковый запрос, signal — отмена устаревшего запроса. */
-	async list(q = '', signal?: AbortSignal): Promise<Dto[]> {
-		const query = q ? `?q=${encodeURIComponent(q)}` : '';
-		const items = await this.http.request<Dto[]>(`${this.path}${query}`, { signal });
-		if (!q) this.#cachedList = items;
+	/** Список; searchQuery — поисковый запрос, signal — отмена устаревшего запроса. */
+	async list(searchQuery = '', signal?: AbortSignal): Promise<Dto[]> {
+		const queryString = searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : '';
+		const items = await this.http.request<Dto[]>(`${this.path}${queryString}`, { signal });
+		if (!searchQuery) this.#cachedList = items;
 		return items;
 	}
 

@@ -22,8 +22,8 @@ const authorizeApi: Handle = async ({ event, resolve }) => {
 	if (!event.url.pathname.startsWith('/api/')) return resolve(event);
 	try {
 		event.locals.user = await authenticateRequest(event.request);
-	} catch (e) {
-		return errorResponse(e);
+	} catch (error) {
+		return errorResponse(error);
 	}
 	return resolve(event);
 };

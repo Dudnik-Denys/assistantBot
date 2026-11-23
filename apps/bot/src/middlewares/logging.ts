@@ -8,10 +8,12 @@ export async function logUpdates(ctx: Context, next: NextFunction): Promise<void
 }
 
 /** Лог исходящих вызовов Bot API с длительностью (кроме getUpdates — его вызывает polling). */
-export const logApiCalls: Transformer = async (prev, method, payload, signal) => {
+export const logApiCalls: Transformer = async (callApi, method, payload, signal) => {
 	const started = Date.now();
-	const res = await prev(method, payload, signal);
+	const response = await callApi(method, payload, signal);
 	if (method !== 'getUpdates')
-		console.log(`→ ${method} ${res.ok ? 'ok' : res.description} (${Date.now() - started} ms)`);
-	return res;
+		console.log(
+			`→ ${method} ${response.ok ? 'ok' : response.description} (${Date.now() - started} ms)`,
+		);
+	return response;
 };

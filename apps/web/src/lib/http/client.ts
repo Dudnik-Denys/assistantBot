@@ -58,24 +58,24 @@ export class HttpClient {
 		if (initData) headers.set('Authorization', `${TMA_AUTH_SCHEME} ${initData}`);
 		if (body !== undefined) headers.set('Content-Type', 'application/json');
 
-		let res: Response;
+		let response: Response;
 		try {
-			res = await fetchFn(`${this.baseUrl}${path}`, {
+			response = await fetchFn(`${this.baseUrl}${path}`, {
 				method,
 				headers,
 				signal,
 				body: body === undefined ? undefined : JSON.stringify(body),
 			});
-		} catch (e) {
+		} catch (cause) {
 			// Отмена через AbortController — не сбой сети, пробрасываем как есть.
-			if (signal?.aborted) throw e;
-			throw new NetworkError(e);
+			if (signal?.aborted) throw cause;
+			throw new NetworkError(cause);
 		}
-		if (res.status === HttpStatus.NoContent) return undefined as T;
-		const data = await res.json().catch(() => ({}));
-		if (res.ok) return data as T;
+		if (response.status === HttpStatus.NoContent) return undefined as T;
+		const data = await response.json().catch(() => ({}));
+		if (response.ok) return data as T;
 		const errorBody = ApiErrorBodySchema.safeParse(data);
-		if (!errorBody.success) throw new ServerUnavailableError(res.status);
-		throw new ApiError(res.status, errorBody.data.error, errorBody.data);
+		if (!errorBody.success) throw new ServerUnavailableError(response.status);
+		throw new ApiError(response.status, errorBody.data.error, errorBody.data);
 	}
 }

@@ -20,5 +20,5 @@ process.once('SIGTERM', shutdown);
 
 await bot.start({
 	drop_pending_updates: true,
-	onStart: (me) => console.log(`Бот @${me.username} запущен (long polling)`),
+	onStart: (botInfo) => console.log(`Бот @${botInfo.username} запущен (long polling)`),
 });

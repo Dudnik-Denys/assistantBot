@@ -29,9 +29,9 @@
 			await api.notes.remove(note.id);
 			haptic('warning');
 			search.items = search.items?.filter((item) => item.id !== note.id) ?? null;
-		} catch (e) {
+		} catch (removeError) {
 			haptic('error');
-			await alertDialog(errorMessage(e));
+			await alertDialog(errorMessage(removeError));
 		}
 	}
 </script>

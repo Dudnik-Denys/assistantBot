@@ -35,8 +35,8 @@ function escapeLike(text: string): string {
 export function createNotesService(db: PrismaClient) {
 	return {
 		async list(userId: string, query: unknown = {}): Promise<NoteDto[]> {
-			const { q, limit } = ListQuerySchema.parse(query);
-			if (!q) {
+			const { q: searchQuery, limit } = ListQuerySchema.parse(query);
+			if (!searchQuery) {
 				const rows = await db.note.findMany({
 					where: { userId },
 					orderBy: { updatedAt: 'desc' },
@@ -48,8 +48,8 @@ export function createNotesService(db: PrismaClient) {
 
 			// Поиск только по заголовку: полнотекстовый (морфология, префиксы слов) + подстрока —
 			// чтобы находились фрагменты, которые парсер tsvector режет иначе («50%», адреса).
-			const tsQuery = buildPrefixTsQuery(q);
-			const like = `%${escapeLike(q)}%`;
+			const tsQuery = buildPrefixTsQuery(searchQuery);
+			const like = `%${escapeLike(searchQuery)}%`;
 			const ftsMatch = tsQuery
 				? Prisma.sql`search @@ to_tsquery('russian', ${tsQuery})`
 				: Prisma.sql`FALSE`;

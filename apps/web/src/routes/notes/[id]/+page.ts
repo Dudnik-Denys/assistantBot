@@ -8,12 +8,15 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ params, fetch }) => {
 	try {
 		return { note: await api.notes.get(params.id, fetch) };
-	} catch (e) {
-		if (e instanceof ApiError && e.status === HttpStatus.NotFound) {
+	} catch (loadError) {
+		if (loadError instanceof ApiError && loadError.status === HttpStatus.NotFound) {
 			error(HttpStatus.NotFound, 'Возможно, ссылка устарела или заметку удалили', {
-				title: e.message,
+				title: loadError.message,
 			});
 		}
-		error(e instanceof ApiError ? e.status : HttpStatus.InternalServerError, errorMessage(e));
+		error(
+			loadError instanceof ApiError ? loadError.status : HttpStatus.InternalServerError,
+			errorMessage(loadError),
+		);
 	}
 };

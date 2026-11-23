@@ -16,7 +16,7 @@ const RECONNECT_DELAYS_MS = [2_000, 4_000, 8_000, 16_000];
  *
  * Создавать при инициализации компонента (в <script>): эффект живёт, пока жив компонент.
  *
- *   const search = new DebouncedSearch((q, signal) => api.notes.list(q, signal));
+ *   const search = new DebouncedSearch((query, signal) => api.notes.list(query, signal));
  *   <SearchBar bind:value={search.query} />
  *   {#each search.items ?? [] as item}…
  */
@@ -54,10 +54,10 @@ export class DebouncedSearch<T> {
 						this.error = null;
 						this.reconnecting = false;
 					})
-					.catch((e: unknown) => {
+					.catch((error: unknown) => {
 						if (controller.signal.aborted) return;
 						const retryDelay = RECONNECT_DELAYS_MS[failedAttempts];
-						if (isConnectionError(e) && retryDelay !== undefined) {
+						if (isConnectionError(error) && retryDelay !== undefined) {
 							failedAttempts++;
 							this.error = null; // ошибка прошлого запроса не перекрывает «пробуем снова»
 							this.reconnecting = true;
@@ -66,7 +66,7 @@ export class DebouncedSearch<T> {
 							return;
 						}
 						this.reconnecting = false;
-						this.error = errorMessage(e);
+						this.error = errorMessage(error);
 					});
 			};
 

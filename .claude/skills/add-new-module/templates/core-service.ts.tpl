@@ -27,12 +27,15 @@ export function to__Entity__Dto(row: __Entity__Row): __Entity__Dto {
 export function create__Entities__Service(db: PrismaClient) {
 	return {
 		async list(userId: string, query: unknown = {}): Promise<__Entity__Dto[]> {
-			const { q, limit } = ListQuerySchema.parse(query);
-			// Поиск по подстроке. Если нужен полнотекстовый — см. notes/service.ts ($queryRaw + tsvector).
+			const { q: searchQuery, limit } = ListQuerySchema.parse(query);
+			// Поиск по подстроке. Полнотекстовый — см. notes/service.ts ($queryRaw + tsvector).
 			// Порядок — от новых к старым (updatedAt desc): кеш списка в RestResource на клиенте
 			// кладёт созданную или изменённую запись в начало. Другой порядок — поправь и кеш.
 			const rows = await db.__entity__.findMany({
-				where: { userId, ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}) },
+				where: {
+					userId,
+					...(searchQuery ? { title: { contains: searchQuery, mode: 'insensitive' } } : {}),
+				},
 				orderBy: { updatedAt: 'desc' },
 				take: limit,
 				select,

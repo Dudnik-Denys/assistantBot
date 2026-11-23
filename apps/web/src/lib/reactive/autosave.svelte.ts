@@ -94,8 +94,8 @@ export class Autosave<T> {
 				await this.#save(value);
 				this.#savedKey = key;
 				this.#error = null;
-			} catch (e) {
-				this.#error = errorMessage(e);
+			} catch (error) {
+				this.#error = errorMessage(error);
 			}
 		});
 	}

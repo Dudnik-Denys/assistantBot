@@ -26,20 +26,22 @@ export function requireUser(locals: App.Locals): User {
  * свой `HttpStatusError` или ошибка из таблицы `ERROR_STATUSES`.
  * Неизвестную ошибку пробрасывает дальше — SvelteKit ответит 500 и запишет её в лог.
  */
-export function errorResponse(e: unknown): Response {
-	if (e instanceof HttpStatusError) return jsonError(e.status, e.message, e.details);
+export function errorResponse(error: unknown): Response {
+	if (error instanceof HttpStatusError)
+		return jsonError(error.status, error.message, error.details);
 	for (const entry of ERROR_STATUSES) {
-		if (e instanceof entry.type) return jsonError(entry.status, entry.message?.(e) ?? e.message);
+		if (error instanceof entry.type)
+			return jsonError(entry.status, entry.message?.(error) ?? error.message);
 	}
-	throw e;
+	throw error;
 }
 
 /** Обёртка эндпоинта: ошибки → `errorResponse`. */
-export async function handleApi(fn: () => Promise<Response>): Promise<Response> {
+export async function handleApi(handler: () => Promise<Response>): Promise<Response> {
 	try {
-		return await fn();
-	} catch (e) {
-		return errorResponse(e);
+		return await handler();
+	} catch (error) {
+		return errorResponse(error);
 	}
 }
 

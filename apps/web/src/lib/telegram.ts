@@ -29,8 +29,8 @@ interface TelegramWebApp {
 	BackButton: {
 		show(): void;
 		hide(): void;
-		onClick(cb: () => void): void;
-		offClick(cb: () => void): void;
+		onClick(callback: () => void): void;
+		offClick(callback: () => void): void;
 	};
 	HapticFeedback?: {
 		notificationOccurred(type: 'error' | 'success' | 'warning'): void;
@@ -111,10 +111,10 @@ export function alertDialog(message: string): Promise<void> {
 }
 
 export function haptic(type: 'success' | 'error' | 'warning' | 'light'): void {
-	const h = webApp()?.HapticFeedback;
-	if (!isInTelegram() || !h) return;
-	if (type === 'light') h.impactOccurred('light');
-	else h.notificationOccurred(type);
+	const hapticFeedback = webApp()?.HapticFeedback;
+	if (!isInTelegram() || !hapticFeedback) return;
+	if (type === 'light') hapticFeedback.impactOccurred('light');
+	else hapticFeedback.notificationOccurred(type);
 }
 
 /**

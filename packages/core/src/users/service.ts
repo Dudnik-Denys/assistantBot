@@ -20,7 +20,7 @@ export function toTelegramIdentity(user: TelegramUserFields): TelegramIdentity {
 
 export function createUsersService(
 	db: PrismaClient,
-	opts: { adminTelegramId?: bigint | null } = {},
+	options: { adminTelegramId?: bigint | null } = {},
 ) {
 	return {
 		/**
@@ -39,7 +39,7 @@ export function createUsersService(
 				}
 				return existing;
 			}
-			if (opts.adminTelegramId != null && identity.telegramId === opts.adminTelegramId) {
+			if (options.adminTelegramId != null && identity.telegramId === options.adminTelegramId) {
 				return db.user.create({
 					data: {
 						telegramId: identity.telegramId,

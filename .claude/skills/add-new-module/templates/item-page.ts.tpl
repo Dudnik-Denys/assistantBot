@@ -8,13 +8,16 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ params, fetch }) => {
 	try {
 		return { __entity__: await api.__entities__.get(params.id, fetch) };
-	} catch (e) {
-		// 404: заголовок — текст сервера («Счётчик не найден»), под ним — подсказка, подпись «404 Error».
-		if (e instanceof ApiError && e.status === HttpStatus.NotFound) {
+	} catch (loadError) {
+		// 404: заголовок — текст сервера («Счётчик не
+		// найден»), под ним — подсказка, подпись «404 Error».
+		if (loadError instanceof ApiError && loadError.status === HttpStatus.NotFound) {
 			error(HttpStatus.NotFound, 'Возможно, ссылка устарела или __one__ удалили', {
-				title: e.message,
+				title: loadError.message,
 			});
 		}
-		error(e instanceof ApiError ? e.status : HttpStatus.InternalServerError, errorMessage(e));
+		const status =
+			loadError instanceof ApiError ? loadError.status : HttpStatus.InternalServerError;
+		error(status, errorMessage(loadError));
 	}
 };

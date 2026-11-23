@@ -32,7 +32,9 @@
 	/** Заголовок обязателен (NoteInputSchema) — без него не сохранить. */
 	const untitled = $derived(!title.trim());
 	const links = $derived([
-		...new Set(linkify(content).flatMap((s) => (s.type === 'link' ? [s.href] : []))),
+		...new Set(
+			linkify(content).flatMap((segment) => (segment.type === 'link' ? [segment.href] : [])),
+		),
 	]);
 
 	const autosave = new Autosave({
