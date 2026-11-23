@@ -15,14 +15,14 @@
 - [ ] Интерфейс DTO — в `packages/core/src/<модуль>/types.ts`; есть `id: string` (нужно `RestResource`); даты — ISO-строки, `bigint` — строки.
 - [ ] Каждый метод сервиса принимает `userId` и фильтрует по нему; чужой или несуществующий id → `NotFoundError` (не 403).
 - [ ] Формат id — общим `assertId`; текст «не найдено» — одна константа `NOT_FOUND`.
-- [ ] Запрос списка — общий `ListQuerySchema`; порядок — `updatedAt desc` (на нём держится кеш `RestResource`) или кеш поправлен под другой порядок.
+- [ ] Запрос списка — общий `ListQuerySchema`; порядок — `updatedAt desc` (на нём держится кеш `RestResource`) или `createdAt desc` с `{ stableOrder: true }` у ресурса (как у счётчиков).
 - [ ] Ввод снаружи — `unknown`, разбирается схемой в сервисе; у вызывающих нет `as`.
 - [ ] В `packages/core/src/index.ts` — именованные экспорты только используемого приложениями.
 
 ## API и клиент
 - [ ] Сервис зарегистрирован в `lib/server/services.ts`.
 - [ ] Эндпоинты тонкие: `requireUser` → сервис → `Response.json`, всё в `handleApi`; `201` на создание, `204` на удаление; лишних методов нет.
-- [ ] Ресурс в `lib/api.ts` через `RestResource`; доп. действия — наследником; действие, меняющее запись, обновляет кеш списка.
+- [ ] Ресурс в `lib/api.ts` через `RestResource` (или `ReadResource`, если записи создаёт сервер); доп. действия — наследником; действие, меняющее запись, обновляет кеш списка (`cacheItem`).
 
 ## Экраны
 - [ ] Части взяты из раздела 3 `SKILL.md` (`DebouncedSearch`, `SwipeActions`, `Autosave`, `Loading`/`Message`/`Notice`…), а не написаны заново; общее для двух модулей — в `ui/` или `lib/reactive/`.

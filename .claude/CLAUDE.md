@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-`tgAssistantBot` — Telegram-бот с Mini App для ежедневных рутинных задач. Пользователи — автор, друзья и родственники (закрытый круг, не публичный сервис); у каждого свои данные. Есть каркас монорепо, Mini App с заметками (`apps/web`, `packages/core`, `packages/db`) и минимальный бот (`apps/bot`: `/start`, `/id`, allowlist); остальные функции MVP, воркер и сервис погоды ещё не начаты. Форматирование и линтинг: Biome (всё, кроме `.svelte`) и Prettier с `prettier-plugin-svelte` (только `.svelte`).
+`tgAssistantBot` — Telegram-бот с Mini App для ежедневных рутинных задач. Пользователи — автор, друзья и родственники (закрытый круг, не публичный сервис); у каждого свои данные. Есть каркас монорепо, Mini App с заметками и счётчиками (`apps/web`, `packages/core`, `packages/db`), минимальный бот (`apps/bot`: `/start`, `/id`, allowlist) и воркер (`apps/worker`: окончание циклов счётчиков и уведомления о нём в Telegram). Раздел «Напоминания» пока показывает только уведомления об окончании циклов счётчиков; сами напоминания, погода и вакансии ещё не начаты. Unit- и интеграционных тестов счётчиков пока нет. Форматирование и линтинг: Biome (всё, кроме `.svelte`) и Prettier с `prettier-plugin-svelte` (только `.svelte`).
 
 ## Функции MVP
 
@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-Структура монорепо (`apps/worker`, `apps/weather` ещё не созданы):
+Структура монорепо (`apps/weather` ещё не создан):
 
 ```
 apps/web       # SvelteKit: Mini App + API
@@ -79,12 +79,12 @@ VPS берётся, когда проект готов к запуску в comp
 ## Commands
 
 ```bash
-./run.sh                     # всё сразу: Docker, БД, bun install, миграции, web + bot
+./run.sh                     # всё сразу: Docker, БД, bun install, миграции, web + bot + worker
 bun install                  # зависимости + prisma generate (postinstall)
 docker compose up -d         # Postgres и Redis для разработки
 bun run db:deploy            # применить миграции; db:migrate — создать новую (prisma migrate dev)
 bun run user:allow <tgId>    # добавить пользователя в allowlist (--admin — сделать админом)
-bun run dev                  # все приложения apps/* вместе: web (http://localhost:5173) + бот (long polling); по отдельности не запускаются
+bun run dev                  # все приложения apps/* вместе: web (http://localhost:5173) + бот (long polling) + воркер (BullMQ); по отдельности не запускаются
 bun run check                # типы во всех пакетах (tsc / svelte-check)
 bun run test:unit [модуль]   # unit-тесты (tests/unit/<модуль>); -t "текст" — по описанию теста
 bun run test:integration [модуль]  # интеграционные: сами поднимут временный Postgres (tests/integration)
@@ -93,25 +93,29 @@ bun run format               # автоисправление: форматир�
 bun run build:web && bun --cwd apps/web start   # продакшен-сборка web
 ```
 
+Известные проблемы, оставленные сознательно (симптом, причина, как узнать), — `.claude/knownIssue.md`: при разборе ошибки сначала сверься с ним; новая такая проблема — запись туда.
+
 Проверки после изменений (линтер, типы, тесты, `verify-server` / `verify-ui`) основной агент сам не прогоняет — поручает их субагенту `verifier` (`.claude/agents/verifier.md`), указывая режим (`server`, `ui`, `all`, `unit`, `integration`) и при необходимости модуль; в основной контекст возвращается только короткий отчёт. Модель: для `unit` и `integration` — вызывать с `model: haiku` (механический прогон и пересказ вывода), для `server`, `ui`, `all` — модель по умолчанию из файла субагента (`sonnet`): там есть ревью кода по правилам. `bun run format` запускает основной агент — субагент файлы не меняет.
 
-Аудит проекта на соответствие правилам и этому файлу — скилл `/research [области…] [changed]`: параллельно запускает агентов-исследователей `research-*` (`.claude/agents/`, по одному на область: `docs`, `tests`, `e2e`, `db`, `schemas`, `core`, `bot`, `ui`, `api`, `web`, `tooling`) и сводит их находки в один отчёт. Без аргументов скилл ничего не запускает, а предлагает выбрать области; больше трёх агентов (в том числе `all`) — только после подтверждения: подписка Pro, полный прогон съедает большую часть 5-часового лимита. Обычный режим — `changed`. Общий протокол исследователей — `.claude/rules/research.md`. В отличие от `verifier`, исследователи не запускают проверки, а читают код области целиком и ищут то, что инструменты не ловят: расположение файлов, дублирование, устаревшие правила, пробелы в тестах. Код они не меняют.
+Аудит проекта на соответствие правилам и этому файлу — скилл `/research [области…] [changed]`: параллельно запускает агентов-исследователей `research-*` (`.claude/agents/`, по одному на область: `docs`, `tests`, `e2e`, `db`, `schemas`, `core`, `bot`, `worker`, `ui`, `api`, `web`, `tooling`) и сводит их находки в один отчёт. Без аргументов скилл ничего не запускает, а предлагает выбрать области; больше трёх агентов (в том числе `all`) — только после подтверждения: подписка Pro, полный прогон съедает большую часть 5-часового лимита. Обычный режим — `changed`. Общий протокол исследователей — `.claude/rules/research.md`. В отличие от `verifier`, исследователи не запускают проверки, а читают код области целиком и ищут то, что инструменты не ловят: расположение файлов, дублирование, устаревшие правила, пробелы в тестах. Код они не меняют.
 
-Команды Claude Code (`.claude/commands/`): `/dev-start`, `/dev-stop`, `/dev-status` — запуск, остановка и состояние (бот + web, Docker, git); `/commit-plan` — проверка на секреты и план коммитов (сам не коммитит); `/allow-user <tgId> [--admin]`; `/migration <имя>` — миграция Prisma с проверкой SQL; `/outdated` — устаревшие и расходящиеся зависимости; `/test-db-stop` — остановить `postgres-test`; `/verify-server`, `/verify-ui` — полные проверки. «Запусти / останови бота» — это `/dev-start` / `/dev-stop`.
+Команды Claude Code (`.claude/commands/`): `/dev-start`, `/dev-stop`, `/dev-status` — запуск, остановка и состояние (бот + web + воркер, Docker, git); `/commit-plan` — проверка на секреты и план коммитов (сам не коммитит); `/allow-user <tgId> [--admin]`; `/migration <имя>` — миграция Prisma с проверкой SQL; `/outdated` — устаревшие и расходящиеся зависимости; `/test-db-stop` — остановить `postgres-test`; `/verify-server`, `/verify-ui` — полные проверки. «Запусти / останови бота» — это `/dev-start` / `/dev-stop`.
 
 Скиллы (`.claude/skills/`): `/add-new-module`, `/add-bot-command`, `/add-worker-job`, `/add-source` — новые части проекта; `/fix-bug` — разбор ошибки по описанию, видео, скриншотам и логам до теста и исправления; `/update-deps` — обновление зависимостей группами; `/get-info`, `/get-deep-info` — обзор и разбор кода (`<файл | папка | project>`); `/research` — аудит по правилам; `/cover-module` — e2e-тесты модуля; `/deploy-setup`, `/release`, `/backup` — продакшен (см. «Хостинг»).
 
 Детали каркаса:
 
+- Воркер (`apps/worker`, BullMQ): устройство, задачи и правила — `.claude/rules/worker.md`.
+- Счётчики: число (ручное управление и +1 за каждый цикл) и необязательный таймер на срок или до даты; время вводится в часовом поясе пользователя (`api.user.timeZone` на клиенте), хранится в UTC, сроки складываются через `@date-fns/tz` (`packages/core/src/counters/timer.ts`). Окончание цикла обрабатывает воркер (`counters.processDue`, раз в минуту) и создаёт `CounterNotification` — их показывает раздел «Напоминания».
 - SvelteKit 3: конфиг kit — в `vite.config.ts` (`svelte.config.js` нет); алиас `#lib/*` (а не `$lib`) с явным расширением: `#lib/api.ts`, `#lib/components/X.svelte`. Env-переменные объявляются в `apps/web/src/env.ts` (`defineEnvVars`) и импортируются из `$app/env/private`; `.env` читается из корня монорепо (`env.dir`).
 - Mini App — SPA (`ssr = false`): данные требуют `initData`, которые есть только в браузере. API — `/api/*`, авторизация — хук в `hooks.server.ts`, логика в `lib/server/auth.ts` (`authenticateRequest`), заголовок `Authorization: tma <initData>` (схема — `TMA_AUTH_SCHEME` в `lib/constants/auth.ts`). В `vite dev` при заданном `DEV_TELEGRAM_ID` запросы без заголовка идут от имени этого пользователя — можно открыть приложение в обычном браузере.
-- Бот: `apps/bot/src/index.ts` только запускает, `bot.ts` (`createBot(deps)`) собирает middleware и роутеры (`Composer` grammY) по папкам `middlewares/`, `routers/`, `keyboards/`, `constants/`; алиас `#bot/*` с явным расширением; env — zod-схема в `env.ts`. Подробно — `.claude/rules/bot.md`.
+- Бот: `apps/bot/src/index.ts` только запускает, `bot.ts` (`createBot(deps)`) собирает middleware и роутеры (`Composer` grammY) по папкам `middlewares/`, `routers/`, `keyboards/`, `constants/`; алиас `#bot/*` с явным расширением; env — схема в `schemas/env.ts`, разбор — `env.ts`. Подробно — `.claude/rules/bot.md`.
 - Prisma 7: генератор `prisma-client` в `packages/db/src/generated` (не в git), подключение через `@prisma/adapter-pg`, конфиг — `packages/db/prisma.config.ts`.
 - `Note.search` — generated-колонка `tsvector`, выражение дописано в миграцию вручную; в схеме оно продублировано в `@default(dbgenerated(...))` ровно в том виде, как его интроспектирует Prisma, иначе `migrate dev` создаёт миграцию `DROP DEFAULT`. Поиск — только по заголовку (он обязателен): `to_tsquery` с префиксами слов плюс `ILIKE` по подстроке.
 
 ## Окружение
 
-- Разработка ведётся на macOS (Apple Silicon, arm64) и на домашнем ПК; код синхронизируется через git, `.env` на каждой машине свой (переменные описаны в `README.md`, раздел «Переменные окружения»; локальный `.env.example` в git не входит). Новая переменная окружения — сразу в таблицу README (и в `apps/web/src/env.ts` или `apps/bot/src/env.ts`, где она читается). На маке Docker — через OrbStack (или Docker Desktop).
+- Разработка ведётся на macOS (Apple Silicon, arm64) и на домашнем ПК; код синхронизируется через git, `.env` на каждой машине свой (переменные описаны в `README.md`, раздел «Переменные окружения»; локальный `.env.example` в git не входит). Новая переменная окружения — сразу в таблицу README (и в `apps/web/src/env.ts`, `apps/bot/src/schemas/env.ts` или `apps/worker/src/schemas/env.ts`, где она читается). На маке Docker — через OrbStack (или Docker Desktop).
 - Локально Postgres и Redis запускаются в контейнерах через `docker compose`, а `web`, `bot`, `worker` — напрямую через `bun` (hot reload), сервис погоды — через `uv run`. Полный compose со всеми сервисами — для проверки перед деплоем.
 - Продакшен-образы собираются под amd64 в GitHub Actions, а не на маке; локальная сборка x86-образа — `docker buildx --platform linux/amd64`.
 - Для разработки нужен отдельный бот (второй токен от BotFather) и HTTPS-туннель (`cloudflared` или ngrok) для локального открытия Mini App.

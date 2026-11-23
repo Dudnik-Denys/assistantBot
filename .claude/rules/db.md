@@ -55,6 +55,8 @@ const rows = await db.$queryRaw<NoteRow[]>`
 
 Экспортирует поимённо: `createPrismaClient`, `Prisma` (значение — ради `Prisma.sql`), типы моделей, нужные снаружи, и `PrismaClient` **только как тип** — клиент создаётся через фабрику с адаптером `pg`, а не `new PrismaClient()`.
 
+Enum'ы схемы (`CounterTimerMode`, `CounterTimerStatus`) отсюда не экспортируются: их значения в коде — константы `as const` в `packages/core/src/constants/` (`COUNTER_TIMER_MODE`, `COUNTER_TIMER_STATUS`) с теми же строками. Одна константа нужна и серверу, и клиенту (через вход `@tgab/core/constants/<модуль>` — без Prisma), а Prisma принимает эти строки как значения enum. Новое значение enum — в схему и в константу вместе; в сыром SQL — параметром с приведением типа: `${COUNTER_TIMER_STATUS.Running}::"CounterTimerStatus"`.
+
 ## `prisma.config.ts` — допустимое исключение
 
 - `DATABASE_URL` читается как `process.env.DATABASE_URL ?? ''`, без zod-схемы, — это не ошибка: `prisma generate` (postinstall, CI) должен работать без БД, а при `migrate` Prisma сама сообщает о неверном адресе. `DatabaseUrlSchema` из `@tgab/core/env` здесь не подключить: core зависит от db, получится цикл.

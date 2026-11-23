@@ -50,12 +50,15 @@ argument-hint: "<модуль, например: счётчики>"
 |---|---|---|
 | Экран списка | `<Screen fit>` + `PageHeader` (поиск — в его `children`) + `ScrollArea` со списком и сообщениями (`Message class="flex-none"`); правило — `components.md`, «Экран с прокруткой» | `routes/notes/+page.svelte` |
 | Список с поиском | `DebouncedSearch` (`lib/reactive/debounced-search.svelte.ts`): задержка ввода, отмена устаревших запросов, повторы при обрыве связи (`reconnecting`), `initialItems` | `routes/notes/+page.svelte` |
+| Список без поиска | тот же `DebouncedSearch` с пустым запросом (`(_, signal) => api.x.list('', signal)`) — загрузка, повторы связи, кеш; фильтр по вкладкам — `$derived` над `items` + `SegmentedControl` в шапке | `routes/counters/+page.svelte` |
 | Мгновенный показ списка при возврате | кеш `RestResource.cachedList` → `initialItems` | `routes/notes/+page.svelte` |
-| Состояния экрана | `Loading` (с задержкой и спиннером), `Message` (пусто, ошибка, «ничего не найдено»), `Notice pending` (полоска «Нет связи…» над списком) | `routes/notes/+page.svelte` |
-| Удаление свайпом | `ui/layout/SwipeActions` + `confirmDialog(…, { confirmText: 'Да', cancelText: 'Нет', destructive: true })` | `NoteCard.svelte`, `removeNote` в списке заметок |
+| Состояния экрана | `ui/feedback/ListState` (ошибка, загрузка, «Нет связи…», пусто) — экран передаёт только snippets `empty` и `children` | `routes/notes/+page.svelte` |
+| Удаление свайпом | `ui/layout/SwipeActions` + `ui/buttons/SwipeDeleteButton`; подтверждение, вибрация и ошибка — `removeWithConfirm` из `lib/feedback.ts` | `NoteCard.svelte`, `removeNote` в списке заметок |
 | Редактор без кнопки «Сохранить» | `Autosave` (`lib/reactive/autosave.svelte.ts`): отложенное сохранение, `flush()` перед уходом, создание при первом сохранении + `goto(адрес записи, { shallow: true, replace: true })` | `NoteEditor.svelte` |
 | Кнопки действий | `ui/buttons/Button` (варианты `primary`, `secondary`, `destructive`), `ActionBar` — панель внизу экрана | — |
-| Нестандартное действие (`+1`) | метод сервиса в core + эндпоинт + наследник `RestResource` в `lib/api.ts` (см. `templates/api-client.ts.tpl`) | — |
+| Нестандартное действие (`+1`) | метод сервиса в core + эндпоинт `POST /<раздел>/:id/<действие>` (`api.md`) + метод наследника `RestResource` в `lib/api.ts` с `cacheItem` (см. `templates/api-client.ts.tpl`); отклик — `runWithFeedback` из `lib/feedback.ts` | `CountersApi`, `CounterView.svelte` |
+| Записи создаёт сервер, клиент только читает и удаляет | `ReadResource` вместо `RestResource` | `NotificationsApi` |
+| Форма с кнопкой «Сохранить» (автосохранение не подходит: например, перезапускает таймер) | состояние и проверки — класс в `lib/reactive/` (`CounterFormState`), поля — `ui/forms/*` в `Panel`, кнопка — в `ActionBar` | `CounterForm.svelte` |
 | Диалоги, вибрация, ссылки | `confirmDialog`, `alertDialog`, `haptic`, `openLink` из `lib/telegram.ts` | — |
 | «Назад» | `ui/buttons/BackButton` (системная кнопка Telegram) или `PageHeader` с `onback` | любая страница |
 | Карточка-ссылка | `ui/layout/Card` (фон `bg-surface`, `ui.md` → «Поверхности») | `NoteCard.svelte` |
@@ -80,7 +83,7 @@ argument-hint: "<модуль, например: счётчики>"
 ### По плану модуля
 
 10. **Экраны** — из частей раздела 3: список `routes/__entities__/+page.svelte`; если есть экран элемента — `routes/__entities__/[id]/+page.ts` по `templates/item-page.ts.tpl` и `+page.svelte` с `{#key data.__entity__.id}`; создание — `routes/__entities__/new/+page.svelte` или прямо в списке. Компоненты раздела — `lib/components/__entities__/`.
-11. **Доп. действия** — метод сервиса, эндпоинт (`POST /api/__entities__/[id]/<действие>` или `PATCH`), метод наследника `RestResource`; если действие меняет запись — обнови и кеш списка.
+11. **Доп. действия** — метод сервиса, эндпоинт `POST /api/__entities__/[id]/<действие>` (`api.md`, «Эндпоинты»), метод наследника `RestResource`; если действие меняет запись — обнови и кеш списка (`cacheItem`).
 12. **Поиск** — подстрока (в шаблоне сервиса) или полнотекстовый, как у заметок (`db.md`, generated-колонка `tsvector`).
 13. **Бот** — по `bot.md`, «Как добавить команду или раздел»; логика — тот же сервис core, без дублирования.
 

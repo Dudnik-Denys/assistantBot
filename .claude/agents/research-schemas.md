@@ -9,10 +9,10 @@ model: sonnet
 
 ## Область
 
-- Схемы: `packages/core/src/schemas/**`, `apps/bot/src/schemas/**`, `apps/web/src/lib/schemas/**`, `tests/schemas/**`
-- Константы: `packages/core/src/constants/**`, `apps/web/src/lib/constants/**`, `apps/bot/src/constants/**`, `tests/constants/**`
+- Схемы: `packages/core/src/schemas/**`, `apps/bot/src/schemas/**`, `apps/worker/src/schemas/**`, `apps/web/src/lib/schemas/**`, `tests/schemas/**`
+- Константы: `packages/core/src/constants/**`, `apps/web/src/lib/constants/**`, `apps/bot/src/constants/**`, `apps/worker/src/constants/**`, `tests/constants/**`
 - Типы: `packages/core/src/**/types.ts`, `apps/web/src/lib/types/**`, `apps/web/src/app.d.ts`, `apps/bot/src/context.ts`
-- Env: `packages/core/src/env/**`, `apps/bot/src/env.ts`, `apps/web/src/env.ts`, `tests/helpers/test-env.ts`
+- Env: `packages/core/src/env/**`, `apps/bot/src/env.ts`, `apps/worker/src/env.ts`, `apps/web/src/env.ts`, `tests/helpers/test-env.ts`
 - Использование всего этого по коду — `git grep` по всем пакетам
 
 ## Правила области
