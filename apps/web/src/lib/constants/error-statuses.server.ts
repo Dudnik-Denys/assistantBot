@@ -17,7 +17,8 @@ export interface ErrorStatus<E extends Error = Error> {
 const errorStatus = <E extends Error>(entry: ErrorStatus<E>): ErrorStatus<E> => entry;
 
 /**
- * Какие ошибки API отдаёт клиенту и с каким кодом (используется в `errorResponse`, только на сервере).
+ * Какие ошибки API отдаёт клиенту и с каким кодом.
+ * Используется в `errorResponse`, только на сервере.
  * Доменные ошибки core про HTTP не знают — перевод в коды здесь. Новая ошибка — одна строка.
  * Порядок важен: побеждает первое совпадение (наследник — выше родителя).
  * `HttpStatusError` сюда не входит: его код задаётся у каждого экземпляра.

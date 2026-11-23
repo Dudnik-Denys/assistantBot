@@ -5,14 +5,15 @@
 
 	/**
 	 * Карточка-ссылка: пункт меню, элемент списка. Общий фон, скругление, отклик на нажатие.
-	 * class снаружи дополняет и переопределяет базовые стили через mergeClasses() (например, `class="flex gap-3"`).
+	 * Остальные атрибуты — как у `<a>`; `class` объединяется с базовыми через mergeClasses()
+	 * (например, `class="flex gap-3"`).
 	 */
-	let {
-		href,
-		children,
-		class: className,
-		...rest
-	}: HTMLAnchorAttributes & { href: string; children: Snippet } = $props();
+	interface Props extends HTMLAnchorAttributes {
+		href: string;
+		children: Snippet;
+	}
+
+	let { href, children, class: className, ...rest }: Props = $props();
 </script>
 
 <a

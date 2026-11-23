@@ -7,8 +7,14 @@
 	 * вправо — убирает (логика жеста — SwipeReveal). Содержимое и действия стоят в одном ряду и
 	 * едут вместе — действия не лежат под содержимым. Скругление — как у `Card`.
 	 */
-	let { children, actions }: { children: Snippet; actions: Snippet<[close: () => void]> } =
-		$props();
+	interface Props {
+		/** Содержимое строки (обычно `Card`). */
+		children: Snippet;
+		/** Кнопки справа; получают `close`, чтобы закрыть строку после действия. */
+		actions: Snippet<[close: () => void]>;
+	}
+
+	let { children, actions }: Props = $props();
 
 	let actionsWidth = $state(0);
 	let row = $state<HTMLElement>();

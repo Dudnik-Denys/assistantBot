@@ -5,11 +5,14 @@
 	import SwipeActions from '#lib/components/ui/layout/SwipeActions.svelte';
 	import { formatShortDate } from '#lib/utils/dates.ts';
 
-	/**
-	 * В списке — только заголовок: текст открывается в редакторе.
-	 * Свайп влево — кнопка «Удалить»; `onremove` спрашивает подтверждение и удаляет.
-	 */
-	let { note, onremove }: { note: NoteDto; onremove: () => Promise<void> } = $props();
+	/** Заметка в списке: только заголовок (текст — в редакторе); свайп влево — «Удалить». */
+	interface Props {
+		note: NoteDto;
+		/** Спросить подтверждение и удалить; строка закрывается, когда промис завершится. */
+		onremove: () => Promise<void>;
+	}
+
+	let { note, onremove }: Props = $props();
 </script>
 
 <SwipeActions>

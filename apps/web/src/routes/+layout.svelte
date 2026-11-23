@@ -25,14 +25,19 @@
 {:else}
 	<Screen>
 		{#if data.access.kind === 'denied'}
-			<Message title="Нет доступа">
+			<Message title="Нет доступа" tone="error" level={1}>
 				Попросите администратора добавить ваш Telegram ID
 				{#if data.access.telegramId}<b class="font-mono text-tg-text select-all">
 						{data.access.telegramId}
 					</b>{/if}
 			</Message>
 		{:else}
-			<Message title="Не удалось открыть приложение">{data.access.message}</Message>
+			<Message
+				title="Не удалось открыть приложение"
+				text={data.access.message}
+				tone="error"
+				level={1}
+			/>
 		{/if}
 	</Screen>
 {/if}

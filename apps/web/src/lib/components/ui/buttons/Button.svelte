@@ -5,12 +5,14 @@
 
 	type Variant = 'primary' | 'secondary' | 'destructive';
 
-	let {
-		variant = 'primary',
-		children,
-		class: className,
-		...rest
-	}: HTMLButtonAttributes & { variant?: Variant; children: Snippet } = $props();
+	/** Кнопка действия; остальные атрибуты (`onclick`, `disabled`, `class`…) — как у `<button>`. */
+	interface Props extends HTMLButtonAttributes {
+		/** primary — основное действие, secondary — второстепенное, destructive — удаление. */
+		variant?: Variant;
+		children: Snippet;
+	}
+
+	let { variant = 'primary', children, class: className, ...rest }: Props = $props();
 
 	const variants: Record<Variant, string> = {
 		primary: 'bg-tg-button text-tg-button-text',

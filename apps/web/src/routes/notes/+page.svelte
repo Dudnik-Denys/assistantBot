@@ -42,7 +42,7 @@
 	</PageHeader>
 
 	{#if search.error}
-		<Message title="Ошибка">{search.error}</Message>
+		<Message title="Ошибка" text={search.error} tone="error" />
 	{:else if search.items === null}
 		<Loading title={search.reconnecting ? 'Идёт попытка соединения…' : 'Загрузка…'} />
 	{:else}
@@ -51,9 +51,9 @@
 		{/if}
 		{#if search.items.length === 0}
 			{#if search.hasQuery}
-				<Message title="Ничего не найдено">Попробуйте другой запрос</Message>
+				<Message title="Ничего не найдено" text="Попробуйте другой запрос" />
 			{:else}
-				<Message title="Заметок пока нет">Нажмите «+», чтобы создать первую</Message>
+				<Message title="Заметок пока нет" text="Нажмите «+», чтобы создать первую" />
 			{/if}
 		{:else}
 			<ul class="flex flex-col gap-2 pb-20">

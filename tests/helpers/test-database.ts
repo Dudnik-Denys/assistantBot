@@ -32,14 +32,18 @@ export class TestDatabase {
 			`postgresql://${TEST_DB_USER}:${TEST_DB_PASSWORD}@localhost:${port}/${TEST_DB_NAME}`;
 		const name = new URL(url).pathname.slice(1);
 		if (!name.endsWith(TEST_DB_NAME_SUFFIX)) {
+			const reason = 'Тесты пишут и очищают таблицы';
 			throw new Error(
-				`Тесты пишут и очищают таблицы, поэтому имя базы должно кончаться на «${TEST_DB_NAME_SUFFIX}», а не «${name}»`,
+				`${reason}, поэтому имя базы должно кончаться на «${TEST_DB_NAME_SUFFIX}», а не «${name}»`,
 			);
 		}
 		return new TestDatabase(url);
 	}
 
-	/** Готовит БД к тестам: локально поднимает контейнер (в CI базу даёт CI), затем применяет миграции. */
+	/**
+	 * Готовит БД к тестам: локально поднимает контейнер
+	 * (в CI базу даёт CI), затем применяет миграции.
+	 */
 	async prepare(): Promise<void> {
 		if (!testEnv.CI) await this.runTestContainer();
 		await this.runMigrations();
@@ -50,8 +54,9 @@ export class TestDatabase {
 	}
 
 	/**
-	 * Очищает все таблицы приложения (кроме служебной таблицы Prisma) — вызывать в `beforeEach`.
-	 * Имена таблиц берутся из каталога Postgres, а не от пользователя, поэтому `Prisma.raw` здесь безопасен.
+	 * Очищает все таблицы приложения (кроме служебной таблицы Prisma) —
+	 * вызывать в `beforeEach`. Имена таблиц берутся из каталога Postgres,
+	 * а не от пользователя, поэтому `Prisma.raw` здесь безопасен.
 	 */
 	async reset(db: PrismaClient): Promise<void> {
 		const tables = await db.$queryRaw<{ tablename: string }[]>`

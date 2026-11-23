@@ -1,26 +1,21 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
+	import type { ClassProp } from '#lib/types/props.ts';
 	import { mergeClasses } from '#lib/utils/classes.ts';
 
-	/**
-	 * Шапка экрана: прилипает к верху при прокрутке, фон во всю ширину.
-	 * onback — показать «Назад» (системная кнопка в Telegram, ссылка в браузере);
-	 * children — то, что под заголовком (поиск, фильтры); class — дополнить или переопределить стили.
-	 */
-	let {
-		title,
-		onback,
-		backLabel,
-		class: className,
-		children,
-	}: {
+	/** Шапка экрана: прилипает к верху при прокрутке, фон во всю ширину. */
+	interface Props extends ClassProp {
 		title: string;
+		/** Показать «Назад»: системная кнопка в Telegram, ссылка в браузере. */
 		onback?: () => void;
+		/** Подпись ссылки «Назад» в браузере. */
 		backLabel?: string;
-		class?: string;
+		/** Под заголовком: поиск, фильтры. */
 		children?: Snippet;
-	} = $props();
+	}
+
+	let { title, onback, backLabel, class: className, children }: Props = $props();
 </script>
 
 <header

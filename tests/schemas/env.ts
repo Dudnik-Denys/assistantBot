@@ -8,7 +8,9 @@ const PortSchema = z
 	.transform(Number)
 	.pipe(z.number().int().min(1).max(PORT_MAX));
 
-/** Переменные окружения тестов. Все необязательные: без них тесты идут на контейнер по умолчанию. */
+/**
+ * Переменные окружения тестов. Все необязательные: без них тесты идут на контейнер по умолчанию.
+ */
 export const TestEnvSchema = z.object({
 	/** Задаёт CI (GitHub Actions — `CI=true`): тестовую БД даёт CI, контейнер не поднимается. */
 	CI: optionalEnv(z.string()).transform((value) => value !== undefined && value !== 'false'),

@@ -15,7 +15,12 @@
 	 * Редактор заметки без кнопок и без индикатора сохранения, как в Заметках iOS: изменения
 	 * сохраняются сами (Autosave), если есть заголовок; под ним — время последнего изменения.
 	 */
-	let { note }: { note?: NoteDto } = $props();
+	interface Props {
+		/** Заметка для изменения; нет — новая: создаётся при первом сохранении, дальше обновляется. */
+		note?: NoteDto;
+	}
+
+	let { note }: Props = $props();
 
 	// Редактор держит локальную копию; исходная заметка нужна только для начальных значений.
 	// svelte-ignore state_referenced_locally
@@ -91,8 +96,12 @@
 		bind:value={content}
 		placeholder="Текст заметки, ссылки…"
 		maxlength={NOTE_CONTENT_MAX}
-		class="field-sizing-content min-h-[40dvh] field-bare flex-1 resize-none text-base leading-relaxed"
-	></textarea>
+		class={[
+			'field-bare flex-1',
+			// растёт по содержимому, но не ниже 40% экрана
+			'field-sizing-content min-h-[40dvh] resize-none',
+			'text-base leading-relaxed',
+		]}></textarea>
 
 	{#if links.length}
 		<section class="mt-4">

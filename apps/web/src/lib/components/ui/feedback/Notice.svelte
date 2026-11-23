@@ -2,8 +2,14 @@
 	import type { Snippet } from 'svelte';
 	import Spinner from '#lib/components/ui/feedback/Spinner.svelte';
 
-	/** Короткое сообщение над содержимым экрана; `pending` — со спиннером (идёт процесс). */
-	let { pending = false, children }: { pending?: boolean; children: Snippet } = $props();
+	/** Короткое сообщение над содержимым экрана («Нет связи. Пробуем снова…»). */
+	interface Props {
+		/** Идёт процесс — показать спиннер. */
+		pending?: boolean;
+		children: Snippet;
+	}
+
+	let { pending = false, children }: Props = $props();
 </script>
 
 <div

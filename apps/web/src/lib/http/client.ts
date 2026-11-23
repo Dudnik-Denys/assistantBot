@@ -3,7 +3,10 @@ import { HttpStatus } from '#lib/constants/http-status.ts';
 import { ApiErrorBodySchema } from '#lib/schemas/api-error.ts';
 import { webApp } from '#lib/telegram.ts';
 
-/** Ошибка ответа API: HTTP-статус, текст для пользователя и тело ответа (например, telegramId при 403). */
+/**
+ * Ошибка ответа API: HTTP-статус, текст для пользователя
+ * и тело ответа (например, telegramId при 403).
+ */
 export class ApiError extends Error {
 	constructor(
 		readonly status: number,

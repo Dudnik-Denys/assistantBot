@@ -21,9 +21,5 @@
 
 <Screen>
 	<BackButton onback={() => goto(resolve('/'))} label="В меню" />
-	{#if page.error?.message}
-		<Message {title} {caption}>{page.error.message}</Message>
-	{:else}
-		<Message {title} {caption} />
-	{/if}
+	<Message {title} {caption} text={page.error?.message} tone="error" level={1} />
 </Screen>

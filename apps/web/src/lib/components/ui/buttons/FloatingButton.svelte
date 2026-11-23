@@ -3,7 +3,15 @@
 	import { haptic } from '#lib/telegram.ts';
 
 	/** Круглая плавающая кнопка-ссылка в правом нижнем углу экрана: «+» для новой записи и т. п. */
-	let { href, label, children }: { href: string; label: string; children: Snippet } = $props();
+	interface Props {
+		href: string;
+		/** Подпись для экранного диктора: на кнопке только значок. */
+		label: string;
+		/** Значок на кнопке («+»). */
+		children: Snippet;
+	}
+
+	let { href, label, children }: Props = $props();
 </script>
 
 <a

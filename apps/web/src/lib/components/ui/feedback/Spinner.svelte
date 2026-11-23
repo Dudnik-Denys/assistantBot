@@ -1,8 +1,11 @@
 <script lang="ts">
+	import type { ClassProp } from '#lib/types/props.ts';
 	import { mergeClasses } from '#lib/utils/classes.ts';
 
 	/** Крутящийся индикатор ожидания; размер — через `class` (по умолчанию `size-6`). */
-	let { class: className = '' }: { class?: string } = $props();
+	type Props = ClassProp;
+
+	let { class: className = '' }: Props = $props();
 </script>
 
 <span

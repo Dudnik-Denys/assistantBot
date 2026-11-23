@@ -1,5 +1,15 @@
 <script lang="ts">
-	let { value = $bindable(''), label = 'Поиск' }: { value?: string; label?: string } = $props();
+	/** Поле поиска со значком и кнопкой очистки. */
+	interface Props {
+		/** Текст поиска; связывается через `bind:value`. */
+		value?: string;
+		/** Подпись для экранного диктора. */
+		label?: string;
+		/** Видимая подсказка в пустом поле. */
+		placeholder?: string;
+	}
+
+	let { value = $bindable(''), label = 'Поиск', placeholder = 'Поиск' }: Props = $props();
 </script>
 
 <label class="relative block">
@@ -19,7 +29,7 @@
 	<input
 		type="search"
 		bind:value
-		placeholder="Поиск"
+		{placeholder}
 		autocomplete="off"
 		enterkeyhint="search"
 		class={[
