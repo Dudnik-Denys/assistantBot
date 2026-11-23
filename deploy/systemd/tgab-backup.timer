@@ -1,0 +1,12 @@
+[Unit]
+Description=tgAssistantBot: ежедневный бэкап Postgres
+
+[Timer]
+# 03:15 UTC (05:15 по Киеву зимой), со случайным сдвигом до 10 минут.
+OnCalendar=*-*-* 03:15:00 UTC
+RandomizedDelaySec=10m
+# Сервер был выключен в момент запуска — бэкап сделается при включении.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

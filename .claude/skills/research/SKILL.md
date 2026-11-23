@@ -24,7 +24,7 @@ argument-hint: "[docs|tests|e2e|db|schemas|core|bot|ui|api|web|tooling|all …] 
 | `ui` | `research-ui` | `lib/components`, `app.css` |
 | `api` | `research-api` | `routes/api`, `lib/server`, хуки, HTTP-клиент |
 | `web` | `research-web` | страницы, `lib/reactive`, Telegram, утилиты, конфиг SvelteKit |
-| `tooling` | `research-tooling` | `run.sh`, `package.json`, Biome/Prettier, tsconfig, CI, compose, `.gitignore`, настройки |
+| `tooling` | `research-tooling` | `run.sh`, `deploy/`, `package.json`, Biome/Prettier, tsconfig, CI, compose, `.gitignore`, настройки |
 
 Тяжесть — примерный расход одного агента (сколько кода он читает): **тяжёлые** — `docs`, `tests`, `schemas`, `web`; **средние** — `ui`, `api`, `core`, `tooling`; **лёгкие** — `db`, `bot`, `e2e` (пока e2e-тестов нет). Подписка пользователя — Pro с небольшим 5-часовым лимитом: полный прогон занимает большую его часть, поэтому агенты не запускаются «на всякий случай».
 

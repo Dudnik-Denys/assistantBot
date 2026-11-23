@@ -1,0 +1,10 @@
+[Unit]
+Description=tgAssistantBot: еженедельная проверка восстановления бэкапа
+
+[Timer]
+# Воскресенье 04:30 UTC — после ежедневного бэкапа.
+OnCalendar=Sun *-*-* 04:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

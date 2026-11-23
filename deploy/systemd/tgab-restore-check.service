@@ -1,0 +1,8 @@
+[Unit]
+Description=tgAssistantBot: проверка восстановления последнего бэкапа
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/tgab/deploy/restore-check.sh

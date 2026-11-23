@@ -9,7 +9,7 @@ model: sonnet
 
 ## Область
 
-- `run.sh`
+- `run.sh`, `deploy/**` (скрипты сервера и таймеры systemd; когда появятся — Dockerfile, `docker-compose.prod.yml`, Caddyfile)
 - Все `package.json` (корень, `apps/*`, `packages/*`, `tests/`): скрипты, зависимости, `exports`/`imports`
 - `biome.json`, ключ `prettier` в корневом `package.json`
 - `tsconfig.base.json` и `tsconfig.json` пакетов

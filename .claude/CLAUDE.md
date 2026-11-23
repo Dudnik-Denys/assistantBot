@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Рантайм и пакеты | Bun, монорепо на Bun workspaces |
 | Бот | grammY (выбран вместо GramIO из-за зрелости и объёма информации). Структура (роутеры, middleware, клавиатуры) и правила — `.claude/rules/bot.md` |
 | Тесты | `bun:test` в общей папке `tests/` (пакет `@tgab/tests`): `unit/`, `integration/`, `e2e/` → папки модулей; интеграционные — на временном Postgres. Правила — `.claude/rules/tests.md` (unit, integration) и `.claude/rules/e2e.md` (Playwright, Page Object); покрыть модуль e2e — скилл `/cover-module <модуль>` |
-| Mini App + API | SvelteKit + Svelte 5 (`adapter-node`, серверная часть — это API) + Tailwind CSS v4. Правила вёрстки, дизайн-токены (цвета и размеры — только переменные) и структура компонентов — `.claude/rules/ui.md`; руны и практики Svelte/SvelteKit по официальной документации — `.claude/rules/svelte.md` |
+| Mini App + API | SvelteKit + Svelte 5 (`adapter-node`, серверная часть — это API) + Tailwind CSS v4. Правила вёрстки и дизайн-токены (цвета и размеры — только переменные) — `.claude/rules/ui.md`; компоненты (папки, Props, базовые компоненты) — `.claude/rules/components.md`; руны и практики Svelte/SvelteKit по официальной документации — `.claude/rules/svelte.md`; серверная часть и HTTP (эндпоинты, доступ, ошибки → HTTP, клиент API) — `.claude/rules/api.md` |
 | БД | PostgreSQL + Prisma. Модели, миграции, сырой SQL — `.claude/rules/db.md` |
 | Фоновые задачи | BullMQ + Redis |
 | Погода | Отдельный сервис на Python: FastAPI, пакеты через uv |
@@ -44,7 +44,7 @@ packages/db    # схема Prisma, миграции, клиент
 tests          # тесты всех пакетов: unit/ integration/ e2e/ → папки модулей (.claude/rules/tests.md, e2e.md)
 ```
 
-Принципы (общие правила кода — DRY, ответственность модулей, ООП/SOLID, именование — в `.claude/rules/code.md`):
+Принципы (общие правила кода — DRY, ответственность модулей, ООП/SOLID, именование — в `.claude/rules/code.md`; устройство `packages/core` — в `.claude/rules/core.md`):
 
 - Логика живёт в `packages/core`; хендлеры бота и эндпоинты SvelteKit — тонкие слои над ней.
 - Бот и воркер — отдельные процессы, не внутри SvelteKit. Бот получает обновления через long polling (`bot.start()` grammY) и в разработке, и в продакшене: при закрытом круге пользователей webhook не даёт выигрыша, а polling не требует публичного HTTPS-эндпоинта для бота. Переход на webhook (`webhookCallback`) — только при необходимости горизонтального масштабирования; хендлеры от способа получения обновлений не зависят. Polling допускает только один запущенный экземпляр бота на токен.
@@ -59,6 +59,8 @@ tests          # тесты всех пакетов: unit/ integration/ e2e/ →
 - Вакансии — предпочитать источники с официальным API или RSS; парсинг HTML хрупкий, а IP дата-центров часто блокируют.
 
 ## Хостинг
+
+Скрипты сервера — `deploy/` (`server-setup.sh` — первичная настройка Ubuntu, `backup.sh` и `restore-check.sh` — бэкапы в S3 и еженедельная проверка восстановления, `systemd/` — таймеры к ним). Ручная часть (аренда, домен, аккаунты, хранилище) — в инструкциях на рабочем столе пользователя («tgAssistantBot — настройка сервера.md», «tgAssistantBot — бэкапы.md»), не в репозитории. Подготовка продакшена — `/deploy-setup`, выпуск — `/release`, бэкапы — `/backup`.
 
 Все сервисы проекта работают на одном сервере в отдельных контейнерах одного compose-проекта: `web`, `bot`, `worker`, `weather`, `postgres`, `redis` и разовый `migrate` (`prisma migrate deploy` перед стартом остальных, через `depends_on: condition: service_completed_successfully`). Наружу доступен только `web`, остальные — только во внутренней сети compose. У всех сервисов `restart: unless-stopped`. Целевая архитектура — x86 (amd64).
 
@@ -94,6 +96,10 @@ bun run build:web && bun --cwd apps/web start   # продакшен-сборк�
 Проверки после изменений (линтер, типы, тесты, `verify-server` / `verify-ui`) основной агент сам не прогоняет — поручает их субагенту `verifier` (`.claude/agents/verifier.md`), указывая режим (`server`, `ui`, `all`, `unit`, `integration`) и при необходимости модуль; в основной контекст возвращается только короткий отчёт. Модель: для `unit` и `integration` — вызывать с `model: haiku` (механический прогон и пересказ вывода), для `server`, `ui`, `all` — модель по умолчанию из файла субагента (`sonnet`): там есть ревью кода по правилам. `bun run format` запускает основной агент — субагент файлы не меняет.
 
 Аудит проекта на соответствие правилам и этому файлу — скилл `/research [области…] [changed]`: параллельно запускает агентов-исследователей `research-*` (`.claude/agents/`, по одному на область: `docs`, `tests`, `e2e`, `db`, `schemas`, `core`, `bot`, `ui`, `api`, `web`, `tooling`) и сводит их находки в один отчёт. Без аргументов скилл ничего не запускает, а предлагает выбрать области; больше трёх агентов (в том числе `all`) — только после подтверждения: подписка Pro, полный прогон съедает большую часть 5-часового лимита. Обычный режим — `changed`. Общий протокол исследователей — `.claude/rules/research.md`. В отличие от `verifier`, исследователи не запускают проверки, а читают код области целиком и ищут то, что инструменты не ловят: расположение файлов, дублирование, устаревшие правила, пробелы в тестах. Код они не меняют.
+
+Команды Claude Code (`.claude/commands/`): `/dev-start`, `/dev-stop`, `/dev-status` — запуск, остановка и состояние (бот + web, Docker, git); `/commit-plan` — проверка на секреты и план коммитов (сам не коммитит); `/allow-user <tgId> [--admin]`; `/migration <имя>` — миграция Prisma с проверкой SQL; `/outdated` — устаревшие и расходящиеся зависимости; `/test-db-stop` — остановить `postgres-test`; `/verify-server`, `/verify-ui` — полные проверки. «Запусти / останови бота» — это `/dev-start` / `/dev-stop`.
+
+Скиллы (`.claude/skills/`): `/add-new-module`, `/add-bot-command`, `/add-worker-job`, `/add-source` — новые части проекта; `/fix-bug` — разбор ошибки по описанию, видео, скриншотам и логам до теста и исправления; `/update-deps` — обновление зависимостей группами; `/get-info`, `/get-deep-info` — обзор и разбор кода (`<файл | папка | project>`); `/research` — аудит по правилам; `/cover-module` — e2e-тесты модуля; `/deploy-setup`, `/release`, `/backup` — продакшен (см. «Хостинг»).
 
 Детали каркаса:
 
