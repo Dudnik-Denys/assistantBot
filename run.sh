@@ -23,7 +23,7 @@ if ! docker_running; then
 	step "Запускаю Docker"
 	open -a OrbStack 2>/dev/null || open -a Docker 2>/dev/null || fail "Запустите Docker вручную"
 	for _ in {1..60}; do docker_running && break; sleep 2; done
-	docker_running || fail "Docker не запустился за 2 минуты"1
+	docker_running || fail "Docker не запустился за 2 минуты"
 fi
 
 step "Postgres и Redis" && docker compose up -d --wait
