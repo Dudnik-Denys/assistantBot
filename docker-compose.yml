@@ -2,9 +2,13 @@
 # web/bot/worker запускаются напрямую через bun.
 name: tgab-dev
 
+# Версия Postgres — одна на всё: рабочая и тестовая базы. CI (.github/workflows/ci.yml) берёт
+# тот же образ — меняя версию, поправь и его; restore-check.sh берёт образ работающей базы.
+x-postgres-image: &postgres-image postgres:17-alpine
+
 services:
   postgres:
-    image: postgres:17-alpine
+    image: *postgres-image
     environment:
       POSTGRES_USER: tgab
       POSTGRES_PASSWORD: tgab
@@ -38,7 +42,7 @@ services:
   # Только для интеграционных тестов (`bun run test:integration` поднимает его сам).
   # Данные в памяти (tmpfs): после остановки ничего не остаётся, с рабочей базой не связан.
   postgres-test:
-    image: postgres:17-alpine
+    image: *postgres-image
     profiles: [test]
     environment:
       POSTGRES_USER: tgab

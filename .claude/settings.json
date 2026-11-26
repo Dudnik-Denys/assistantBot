@@ -6,10 +6,9 @@
 			"Bash(git push * --force*)",
 			"Bash(git push * -f*)",
 			"Read(**/.env)",
-			"Read(**/.env.local)",
-			"Read(**/.env.*.local)",
-			"Read(**/.env.development)",
-			"Read(**/.env.production)",
+			"Read(**/.env.*)",
+			"Bash(cat .env*)",
+			"Bash(cat */.env*)",
 			"Read(**/*.pem)",
 			"Read(**/*.key)",
 			"Read(**/*.secrets)"
@@ -22,7 +21,14 @@
 			"Bash(docker compose down -v*)",
 			"Bash(docker compose down --volumes*)",
 			"Bash(docker compose down * -v*)",
-			"Bash(docker compose down * --volumes*)"
+			"Bash(docker compose down * --volumes*)",
+			"Bash(git reset --hard*)",
+			"Bash(git clean *)",
+			"Bash(git checkout -- *)",
+			"Bash(git restore *)",
+			"Bash(git branch -D *)",
+			"Bash(rm -rf *)",
+			"Bash(rm -r *)"
 		]
 	}
 }

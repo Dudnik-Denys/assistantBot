@@ -14,29 +14,22 @@
 #   HC_URL           адрес проверки healthchecks.io (необязательно)
 set -euo pipefail
 
-CONFIG="${BACKUP_CONFIG:-/etc/tgab/backup.env}"
-# shellcheck source=/dev/null
-. "$CONFIG"
-
-: "${COMPOSE_DIR:=/opt/tgab}" "${COMPOSE_FILE:=docker-compose.prod.yml}" "${PG_SERVICE:=postgres}"
+# shellcheck source=deploy/lib.sh
+. "$(dirname "$0")/lib.sh"
 : "${KEEP_DAYS:=30}" "${KEEP_MONTHS:=12}" "${HC_URL:=}"
-: "${PG_USER:?PG_USER не задан в $CONFIG}" "${PG_DB:?PG_DB не задан в $CONFIG}"
-: "${RCLONE_REMOTE:?RCLONE_REMOTE не задан в $CONFIG}"
 
 # healthchecks.io: start / успех / ошибка. Без HC_URL — просто ничего не отправляем.
-hc_ping() { [ -z "$HC_URL" ] || curl -fsS -m 10 --retry 3 -o /dev/null "$HC_URL$1" || true; }
-trap 'hc_ping /fail' ERR
+trap 'hc_ping "$HC_URL" /fail' ERR
 
-hc_ping /start
+hc_ping "$HC_URL" /start
 stamp="$(date -u +%Y-%m-%dT%H%MZ)"
 file="tgab-${stamp}.dump"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
 # Формат custom (-Fc): сжат, восстанавливается выборочно через pg_restore.
-docker compose -f "$COMPOSE_DIR/$COMPOSE_FILE" exec -T "$PG_SERVICE" \
-	pg_dump -U "$PG_USER" -d "$PG_DB" -Fc >"$work/$file"
-[ -s "$work/$file" ] || { echo "Пустой дамп" >&2; hc_ping /fail; exit 1; }
+pg_compose pg_dump -U "$PG_USER" -d "$PG_DB" -Fc >"$work/$file"
+[ -s "$work/$file" ] || { echo "Пустой дамп" >&2; hc_ping "$HC_URL" /fail; exit 1; }
 
 rclone copy "$work/$file" "$RCLONE_REMOTE/daily/"
 # Первый бэкап месяца — ещё и в monthly: хранится дольше.
@@ -48,4 +41,4 @@ rclone delete "$RCLONE_REMOTE/daily/" --min-age "${KEEP_DAYS}d"
 rclone delete "$RCLONE_REMOTE/monthly/" --min-age "$((KEEP_MONTHS * 31))d"
 
 echo "OK: $file ($(du -h "$work/$file" | cut -f1)) → $RCLONE_REMOTE"
-hc_ping ""
+hc_ping "$HC_URL" ""

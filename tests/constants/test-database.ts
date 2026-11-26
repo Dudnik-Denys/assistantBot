@@ -18,6 +18,12 @@ export const TEST_DB_NAME_SUFFIX = '_test';
 /** Служебная таблица Prisma: при очистке БД не трогается. */
 export const PRISMA_MIGRATIONS_TABLE = '_prisma_migrations';
 
+/**
+ * Настройка сеанса Postgres, через которую `TestDatabase.reset` передаёт в блок `DO` имя
+ * таблицы, которую не очищать (параметров у `DO` нет). Должна совпадать со строкой в его SQL.
+ */
+export const RESET_KEEP_TABLE_SETTING = 'tgab.reset_keep_table';
+
 /** Пакет и его скрипт, которые применяют миграции Prisma. */
 export const MIGRATIONS_PACKAGE = '@tgab/db';
 export const MIGRATIONS_SCRIPT = 'migrate:deploy';

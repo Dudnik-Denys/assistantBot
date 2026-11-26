@@ -1,8 +1,9 @@
-import { createPrismaClient, Prisma, type PrismaClient } from '@tgab/db';
+import { createPrismaClient, type PrismaClient } from '@tgab/db';
 import {
 	MIGRATIONS_PACKAGE,
 	MIGRATIONS_SCRIPT,
 	PRISMA_MIGRATIONS_TABLE,
+	RESET_KEEP_TABLE_SETTING,
 	TEST_DB_COMPOSE_PROFILE,
 	TEST_DB_NAME,
 	TEST_DB_NAME_SUFFIX,
@@ -54,18 +55,31 @@ export class TestDatabase {
 	}
 
 	/**
-	 * Очищает все таблицы приложения (кроме служебной таблицы Prisma) —
-	 * вызывать в `beforeEach`. Имена таблиц берутся из каталога Postgres,
-	 * а не от пользователя, поэтому `Prisma.raw` здесь безопасен.
+	 * Очищает все таблицы приложения (кроме служебной таблицы Prisma) — вызывать в `beforeEach`.
+	 * Список таблиц собирает и экранирует сам Postgres (`format('%I.%I')` в блоке `DO`), так что
+	 * в текст SQL ничего не подставляется (`Prisma.raw` не нужен). Имя исключаемой таблицы —
+	 * параметром: в `DO` параметров нет, поэтому оно передаётся через `set_config` в той же
+	 * транзакции (`is_local = true` — только до её конца).
 	 */
 	async reset(db: PrismaClient): Promise<void> {
-		const tables = await db.$queryRaw<{ tablename: string }[]>`
-			SELECT tablename FROM pg_tables
-			WHERE schemaname = 'public' AND tablename <> ${PRISMA_MIGRATIONS_TABLE}
-		`;
-		if (tables.length === 0) return;
-		const list = tables.map(({ tablename }) => `"public"."${tablename}"`).join(', ');
-		await db.$executeRaw`TRUNCATE ${Prisma.raw(list)} CASCADE`;
+		await db.$transaction([
+			db.$queryRaw`SELECT set_config(${RESET_KEEP_TABLE_SETTING}, ${PRISMA_MIGRATIONS_TABLE}, true)`,
+			db.$executeRaw`
+				DO $$
+				DECLARE
+					tables text;
+				BEGIN
+					SELECT string_agg(format('%I.%I', schemaname, tablename), ', ') INTO tables
+					FROM pg_tables
+					WHERE schemaname = 'public'
+					AND tablename <> current_setting('tgab.reset_keep_table');
+					IF tables IS NOT NULL THEN
+						EXECUTE format('TRUNCATE %s CASCADE', tables);
+					END IF;
+				END
+				$$
+			`,
+		]);
 	}
 
 	private async runTestContainer(): Promise<void> {

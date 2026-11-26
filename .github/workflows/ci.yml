@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
+        # Та же версия, что в docker-compose.yml (x-postgres-image).
         image: postgres:17-alpine
         env:
           POSTGRES_USER: tgab

@@ -6,24 +6,19 @@
 # Настройки — те же, что у backup.sh (/etc/tgab/backup.env); адрес проверки — HC_RESTORE_URL.
 set -euo pipefail
 
-CONFIG="${BACKUP_CONFIG:-/etc/tgab/backup.env}"
-# shellcheck source=/dev/null
-. "$CONFIG"
-
-: "${COMPOSE_DIR:=/opt/tgab}" "${COMPOSE_FILE:=docker-compose.prod.yml}" "${PG_SERVICE:=postgres}"
+# shellcheck source=deploy/lib.sh
+. "$(dirname "$0")/lib.sh"
 : "${HC_RESTORE_URL:=}" "${MAX_AGE_HOURS:=26}"
-: "${PG_USER:?}" "${PG_DB:?}" "${RCLONE_REMOTE:?}"
 
-hc_ping() { [ -z "$HC_RESTORE_URL" ] || curl -fsS -m 10 --retry 3 -o /dev/null "$HC_RESTORE_URL$1" || true; }
-fail() { echo "✖ $*" >&2; hc_ping /fail; exit 1; }
+fail() { echo "✖ $*" >&2; hc_ping "$HC_RESTORE_URL" /fail; exit 1; }
 
-PG_IMAGE="postgres:17-alpine"
+PG_IMAGE="$(pg_image)" || fail "Не найден работающий контейнер $PG_SERVICE"
 container="tgab-restore-check-$$"
 work="$(mktemp -d)"
 cleanup() { docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$work"; }
 trap cleanup EXIT
 
-hc_ping /start
+hc_ping "$HC_RESTORE_URL" /start
 
 latest="$(rclone lsf "$RCLONE_REMOTE/daily/" --include 'tgab-*.dump' | sort | tail -1)"
 [ -n "$latest" ] || fail "В $RCLONE_REMOTE/daily/ нет бэкапов"
@@ -50,8 +45,7 @@ count() { # $1 — таблица; $2 — откуда: restored | prod
 	if [ "$2" = restored ]; then
 		docker exec "$container" psql -U postgres -d check -tAc "$sql"
 	else
-		docker compose -f "$COMPOSE_DIR/$COMPOSE_FILE" exec -T "$PG_SERVICE" \
-			psql -U "$PG_USER" -d "$PG_DB" -tAc "$sql"
+		pg_compose psql -U "$PG_USER" -d "$PG_DB" -tAc "$sql"
 	fi
 }
 
@@ -65,4 +59,4 @@ for table in User Note; do
 done
 
 echo "OK: $report"
-hc_ping ""
+hc_ping "$HC_RESTORE_URL" ""
