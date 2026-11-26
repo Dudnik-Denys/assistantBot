@@ -14,17 +14,28 @@
 		onback?: () => void;
 		/** Подпись ссылки «Назад» в браузере. */
 		backLabel?: string;
+		/** Заголовок по центру, с полями по бокам: название записи (счётчика), а не раздела. */
+		centered?: boolean;
 		/** Под заголовком: поиск, фильтры. */
 		children?: Snippet;
 	}
 
-	let { title, onback, backLabel, class: className, children }: Props = $props();
+	let { title, onback, backLabel, centered = false, class: className, children }: Props = $props();
 </script>
 
 <header class={mergeClasses('pb-3', className)}>
 	{#if onback}
 		<BackButton {onback} label={backLabel} />
 	{/if}
-	<h1 class={['text-2xl font-bold', children && 'mb-3']}>{title}</h1>
+	<!-- заголовок переносится и внутри слова: длинное слово без пробелов не шире экрана -->
+	<h1
+		class={[
+			'text-2xl font-bold wrap-break-word',
+			centered && 'px-4 text-center text-balance',
+			children && 'mb-3',
+		]}
+	>
+		{title}
+	</h1>
 	{@render children?.()}
 </header>

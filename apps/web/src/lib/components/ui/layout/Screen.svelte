@@ -20,7 +20,9 @@
 	class={[
 		'mx-auto flex flex-col',
 		fit ? 'h-dvh' : 'min-h-dvh',
-		'w-full max-w-xl',
+		// overflow-x-clip: слишком широкое содержимое (длинное слово) обрезается, а не делает
+		// экран прокручиваемым вбок; в отличие от overflow-hidden, не создаёт контейнер прокрутки
+		'w-full max-w-xl overflow-x-clip',
 		// поля страницы с учётом безопасных зон Telegram
 		'pt-page-t pr-page-r pb-page-b pl-page-l',
 	]}

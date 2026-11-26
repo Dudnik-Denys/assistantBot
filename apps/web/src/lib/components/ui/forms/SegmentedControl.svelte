@@ -20,8 +20,18 @@
 	let { options, value = $bindable(), label, class: className }: Props = $props();
 </script>
 
+<!--
+	Колонки сетки равные, но не уже своей подписи (подпись не переносится и не обрезается):
+	помещаются все — сегменты одной ширины, не помещается длинная — шире только она. Именно
+	`auto-cols-[1fr]` (= minmax(auto, 1fr)), а не `auto-cols-fr`: тот в Tailwind — minmax(0, 1fr),
+	и длинная подпись вылезала бы за свой сегмент.
+	Подписи держать короткими: иначе ряд не поместится в ширину экрана.
+-->
 <div
-	class={mergeClasses('flex gap-1 rounded-xl bg-field p-1', className)}
+	class={mergeClasses(
+		'grid auto-cols-[1fr] grid-flow-col gap-1 overflow-hidden rounded-xl bg-field p-1',
+		className,
+	)}
 	role="radiogroup"
 	aria-label={label}
 >
@@ -31,7 +41,7 @@
 			role="radio"
 			aria-checked={value === option.value}
 			class={[
-				'min-w-0 flex-1 truncate rounded-lg px-2 py-1.5 text-sm font-medium',
+				'rounded-lg px-2 py-1.5 text-sm font-medium whitespace-nowrap',
 				value === option.value
 					? 'bg-surface text-tg-text shadow-sm shadow-elevation'
 					: 'text-tg-hint',

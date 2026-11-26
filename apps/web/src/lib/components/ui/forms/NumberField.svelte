@@ -1,6 +1,6 @@
 <script lang="ts">
+	import Field from '#lib/components/ui/forms/Field.svelte';
 	import type { ClassProp } from '#lib/types/props.ts';
-	import { mergeClasses } from '#lib/utils/classes.ts';
 
 	/** Короткое поле для целого числа с подписью сверху: части срока (месяцы, дни…). */
 	interface Props extends ClassProp {
@@ -9,9 +9,18 @@
 		value: number;
 		min?: number;
 		max?: number;
+		/** Текст пустого поля (значение 0). */
+		placeholder?: string;
 	}
 
-	let { label, value = $bindable(), min = 0, max, class: className }: Props = $props();
+	let {
+		label,
+		value = $bindable(),
+		min = 0,
+		max,
+		placeholder = '–',
+		class: className,
+	}: Props = $props();
 
 	/** Пустое поле — 0, дробное — целое, вне пределов — ближайшая граница. */
 	function normalize(raw: number | null | undefined): number {
@@ -21,19 +30,14 @@
 	}
 </script>
 
-<label class={mergeClasses('flex min-w-0 flex-col gap-1', className)}>
-	<span class="truncate text-xs text-tg-hint">{label}</span>
+<Field {label} class={className}>
 	<input
 		type="number"
 		inputmode="numeric"
 		{min}
 		{max}
 		bind:value={() => value || null, (raw) => (value = normalize(raw))}
-		placeholder="0"
-		class={[
-			'h-11 w-full min-w-0 rounded-xl px-2 text-center text-base',
-			'bg-field text-tg-text outline-none placeholder:text-tg-hint',
-			'focus:ring-2 focus:ring-tg-button/40',
-		]}
+		{placeholder}
+		class="field-filled px-2 text-center"
 	/>
-</label>
+</Field>
