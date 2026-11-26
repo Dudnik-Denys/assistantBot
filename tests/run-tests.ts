@@ -5,6 +5,7 @@
 // Для integration сначала готовится тестовая БД (TestDatabase.prepare: контейнер и миграции).
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { TEST_TIME_ZONE } from './constants/env.ts';
 import { ROOT_DIR, TESTS_DIR } from './constants/paths.ts';
 import { spawnCommand } from './helpers/commands.ts';
 import { TestDatabase } from './helpers/test-database.ts';
@@ -22,7 +23,7 @@ if (moduleName && !existsSync(path.join(typeDir, moduleName))) {
 	fail(`Нет папки tests/${type.data}/${moduleName}. Модули: ${listModules(typeDir).join(', ')}`);
 }
 
-const extraEnv: Record<string, string> = {};
+const extraEnv: Record<string, string> = { TZ: TEST_TIME_ZONE };
 if (type.data === 'integration') extraEnv.TEST_DATABASE_URL = await prepareTestDatabase();
 
 const target = `./${path.relative(ROOT_DIR, path.join(typeDir, moduleName ?? ''))}`;

@@ -26,9 +26,9 @@ tests/
                             # fake-fetch.ts (createFakeFetch — подменный fetch для кода Mini App)
   schemas/                  # zod-схемы тестов: env.ts (TestEnvSchema), cli.ts (TestTypeSchema),
                             # fake-api.ts (тело запроса и ответ фейкового API в unit/http),
-                            # parse-env.ts (окружения-образцы для unit/env)
+                            # parse-env.ts (окружения-образцы для unit/env), parse-input.ts (ввод-образец)
   constants/                # константы тестов: test-database.ts (сервис, порт, имя БД), paths.ts,
-                            # http.ts (API_BASE_URL, FAKE_ORIGIN), env.ts (PORT_MAX)
+                            # http.ts (API_BASE_URL, FAKE_ORIGIN), env.ts (PORT_MAX, TEST_TIME_ZONE), parse-input.ts
   run-tests.ts              # запускалка для `bun run test:<тип>`
 ```
 
@@ -48,6 +48,7 @@ tests/
 - **integration** — каждый метод сервиса: успешный путь, чужие данные (`NotFoundError`, а не доступ к чужой записи), неверный id, некорректный ввод (`ValidationError` — сервисы разбирают ввод `parseInput`), запросы с сырым SQL (спецсимволы и попытка SQL-инъекции в поиске).
 - Prisma не подменяется (mock): integration-тест ходит в настоящую тестовую БД, иначе проверяется подмена, а не запрос.
 - Контекст grammY в тестах бота — простой объект только с теми полями, которые читает проверяемый код (`from`, `chat`, `reply`), приведённый к `BotContext` с комментарием: настоящий `Context` отправил бы ответ в Telegram.
+- Часовой пояс процесса тестов — `TEST_TIME_ZONE` (`constants/env.ts`): запускалка задаёт `TZ`, поэтому код, который смотрит на пояс устройства (`formatShortDate`), даёт один результат на маке, домашнем ПК и в CI. Тест, которому нужен другой пояс, передаёт его явно (`formatDateTime(iso, 'Asia/Tokyo')`), а не меняет `TZ`.
 - Сеть в unit-тестах Mini App — через `createFakeFetch` (`helpers/fake-fetch.ts`): передаётся как `fetchFn` в `HttpClient.request` или подменяет глобальный `fetch` (`spyOn(globalThis, 'fetch')`, в `afterEach` — `mockRestore()`).
 - Новая функция core без тестов не считается готовой. Исправленная ошибка получает тест, который её воспроизводит.
 
