@@ -3,7 +3,11 @@ import { createCountersService, createNotificationsService } from '@tgab/core';
 import { createPrismaClient } from '@tgab/db';
 import { Worker } from 'bullmq';
 import { Api } from 'grammy';
-import { NOTIFICATIONS_LIMITER, QueueName } from '#worker/constants/queues.ts';
+import {
+	NOTIFICATIONS_LIMITER,
+	QueueName,
+	WORKER_SHUTDOWN_TIMEOUT_MS,
+} from '#worker/constants/queues.ts';
 import { env } from '#worker/env.ts';
 import { createCounterNotificationJob } from '#worker/jobs/counter-notification.ts';
 import { createCountersDueJob } from '#worker/jobs/counters-due.ts';
@@ -44,10 +48,27 @@ for (const worker of workers) {
 await scheduleRepeatingJobs(queues);
 console.log('Воркер запущен: очереди', Object.values(QueueName).join(', '));
 
+let stopping = false;
+
+/**
+ * Остановка: дождаться текущих задач, закрыть очереди и БД. Второй сигнал игнорируется;
+ * зависшая остановка через `WORKER_SHUTDOWN_TIMEOUT_MS` завершает процесс принудительно.
+ */
 const shutdown = async () => {
-	await Promise.all(workers.map((worker) => worker.close()));
-	await Promise.all(Object.values(queues).map((queue) => queue.close()));
-	await db.$disconnect();
+	if (stopping) return;
+	stopping = true;
+	setTimeout(() => {
+		console.error('Воркер не остановился вовремя — завершаю принудительно');
+		process.exit(1);
+	}, WORKER_SHUTDOWN_TIMEOUT_MS).unref();
+	try {
+		await Promise.all(workers.map((worker) => worker.close()));
+		await Promise.all(Object.values(queues).map((queue) => queue.close()));
+		await db.$disconnect();
+	} catch (error) {
+		console.error('Ошибка при остановке воркера:', error);
+		process.exitCode = 1;
+	}
 };
 process.once('SIGINT', shutdown);
 process.once('SIGTERM', shutdown);

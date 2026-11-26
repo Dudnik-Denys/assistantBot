@@ -1,7 +1,10 @@
 import type { NotificationsService } from '@tgab/core';
 import { type Job, UnrecoverableError } from 'bullmq';
 import { type Api, GrammyError } from 'grammy';
-import { TELEGRAM_FORBIDDEN_CODE } from '#worker/constants/telegram.ts';
+import {
+	TELEGRAM_UNAUTHORIZED_CODE,
+	TELEGRAM_UNDELIVERABLE_CODES,
+} from '#worker/constants/telegram.ts';
 import { openNotificationKeyboard } from '#worker/keyboards/open-notification.ts';
 import { counterFinishedMessage } from '#worker/messages/counter-finished.ts';
 import { NotificationJobDataSchema } from '#worker/schemas/jobs.ts';
@@ -30,11 +33,16 @@ export function createCounterNotificationJob({
 				reply_markup: miniAppUrl ? openNotificationKeyboard(miniAppUrl, notificationId) : undefined,
 			});
 		} catch (error) {
-			// Бот заблокирован: повторы не помогут — пометить, чтобы outbox больше не досылал.
-			// Уведомление остаётся в Mini App.
-			if (error instanceof GrammyError && error.error_code === TELEGRAM_FORBIDDEN_CODE) {
+			if (!(error instanceof GrammyError)) throw error;
+			// Этому пользователю не доставить (бот заблокирован, чат не найден): повторы не помогут —
+			// пометить, чтобы outbox больше не досылал. Уведомление остаётся в Mini App.
+			if (TELEGRAM_UNDELIVERABLE_CODES.includes(error.error_code)) {
 				await notifications.markUndeliverable(notificationId);
 				throw new UnrecoverableError(`Сообщение не доставлено: ${error.description}`);
+			}
+			// Неверный токен — сбой настройки, а не пользователя: без повторов и без пометки.
+			if (error.error_code === TELEGRAM_UNAUTHORIZED_CODE) {
+				throw new UnrecoverableError(`Telegram отклонил токен бота: ${error.description}`);
 			}
 			throw error;
 		}
