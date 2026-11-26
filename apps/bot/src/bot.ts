@@ -5,7 +5,8 @@ import type { BotContext } from '#bot/context.ts';
 import { handleBotError } from '#bot/errors.ts';
 import { createAllowlist } from '#bot/middlewares/allowlist.ts';
 import { logApiCalls, logUpdates } from '#bot/middlewares/logging.ts';
-import { createPrivateRouter, publicRouter, type RouterDeps } from '#bot/routers/index.ts';
+import type { RouterDeps } from '#bot/routers/deps.ts';
+import { createPrivateRouter, publicRouter } from '#bot/routers/index.ts';
 
 export interface BotDeps extends RouterDeps {
 	token: string;
