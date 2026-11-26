@@ -23,22 +23,24 @@ tests/
   e2e/<модуль>/…            # Playwright (появится позже) — правила в e2e.md
   helpers/                  # test-database.ts (класс TestDatabase), factories.ts (тестовые записи),
                             # test-env.ts (env тестов через parseEnv), commands.ts (spawnCommand),
-                            # fake-fetch.ts (createFakeFetch — подменный fetch для кода Mini App)
+                            # fake-fetch.ts (createFakeFetch — подменный fetch для кода Mini App),
+                            # fake-bot.ts (createFakeBot — бот grammY без сети для роутеров и middleware)
   schemas/                  # zod-схемы тестов: env.ts (TestEnvSchema), cli.ts (TestTypeSchema),
                             # fake-api.ts (тело запроса и ответ фейкового API в unit/http),
                             # parse-env.ts (окружения-образцы для unit/env), parse-input.ts (ввод-образец)
   constants/                # константы тестов: test-database.ts (сервис, порт, имя БД), paths.ts,
-                            # http.ts (API_BASE_URL, FAKE_ORIGIN), env.ts (PORT_MAX, TEST_TIME_ZONE), parse-input.ts
+                            # http.ts (API_BASE_URL, FAKE_ORIGIN), env.ts (PORT_MAX, TEST_TIME_ZONE), parse-input.ts,
+                            # bot.ts (токен и id фейкового бота)
   run-tests.ts              # запускалка для `bun run test:<тип>`
 ```
 
-- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders` (и уведомления этого раздела — `notifications/` в core: `tests/integration/reminders/notifications.test.ts`), `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код вне модулей — папкой по его месту в `src`: core — `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`); Mini App — `tests/unit/http/` (`lib/http/` и `lib/errors.ts`), `tests/unit/utils/` (`lib/utils/`), `tests/unit/telegram/` (`lib/telegram.ts`, без обращений к самому Telegram — чистые решения вроде `shouldUseFullscreen`). Код бота — в папке своего модуля (`tests/integration/users/allowlist.test.ts` → `middlewares/allowlist.ts`).
+- Модуль — функциональная часть приложения: `notes`, `counters`, `reminders` (и уведомления этого раздела — `notifications/` в core: `tests/integration/reminders/notifications.test.ts`), `users`, `auth`. Папка модуля одна на тип и собирает тесты этого модуля из всех пакетов (core, bot, web). Общий код вне модулей — папкой по его месту в `src`: core — `tests/unit/common/` (`common/` и `schemas/common/`), `tests/unit/env/` (`schemas/env/`); Mini App — `tests/unit/http/` (`lib/http/` и `lib/errors.ts`), `tests/unit/utils/` (`lib/utils/`), `tests/unit/telegram/` (`lib/telegram.ts`, без обращений к самому Telegram — чистые решения вроде `shouldUseFullscreen`). Код бота — в папке своего модуля (`tests/integration/users/allowlist.test.ts` → `middlewares/allowlist.ts`), а общий, вне модулей (`/start`, `/id`, логирование, `handleBotError`), — `tests/unit/bot/`. Задачи воркера — в папке модуля, который они обслуживают (`tests/unit/counters/counters-due-job.test.ts` → `jobs/counters-due.ts`, `tests/unit/reminders/counter-notification-job.test.ts`).
 - Файл называется по тому, что проверяет: `tests/unit/notes/search.test.ts` → `packages/core/src/notes/search.ts`, `tests/unit/notes/note-input.test.ts` → `schemas/notes/note-input.ts`, `tests/integration/notes/service.test.ts` → `notes/service.ts`, `tests/unit/telegram/telegram.test.ts` → `lib/telegram.ts`. Unit и integration — `*.test.ts` (e2e — `*.spec.ts`, см. `e2e.md`).
 - Новый модуль — новые папки `tests/unit/<модуль>/` и `tests/integration/<модуль>/`; в `package.json` ничего добавлять не нужно.
 
 ## Импорты
 
-- Внутренности core — через алиас `#core/…` (`#core/notes/search.ts`), код Mini App — через `#web/…` (`#web/lib/http/client.ts`), бота — через `#bot/…` (`#bot/middlewares/allowlist.ts`); алиасы заданы в `tests/tsconfig.json` (`paths`), а не в `package.json`: путь за пределы пакета там запрещён. Unit-тестами покрывается код Mini App без рун и DOM (`lib/http/`, `lib/errors.ts`, `lib/utils/`); классы с рунами (`lib/reactive/`) и компоненты — e2e (`e2e.md`).
+- Внутренности core — через алиас `#core/…` (`#core/notes/search.ts`), код Mini App — через `#web/…` (`#web/lib/http/client.ts`), бота — через `#bot/…` (`#bot/middlewares/allowlist.ts`), воркера — через `#worker/…` (`#worker/jobs/counters-due.ts`); алиасы заданы в `tests/tsconfig.json` (`paths`), а не в `package.json`: путь за пределы пакета там запрещён. Unit-тестами покрывается код Mini App без рун и DOM (`lib/http/`, `lib/errors.ts`, `lib/utils/`); классы с рунами (`lib/reactive/`) и компоненты — e2e (`e2e.md`).
 - Integration-тесты по возможности импортируют публичный API (`@tgab/core`) — так проверяется то, чем пользуются приложения. `#core/…` — для того, что наружу не экспортируется (константы, внутренние функции).
 - Хелперы — относительным путём (`../../helpers/test-database.ts`).
 
@@ -47,7 +49,8 @@ tests/
 - **unit** — чистые функции и схемы: валидные и невалидные данные, граничные значения (пустая строка, лимит, лимит + 1), даты и часовые пояса (переход на летнее время, конец месяца, 29 февраля).
 - **integration** — каждый метод сервиса: успешный путь, чужие данные (`NotFoundError`, а не доступ к чужой записи), неверный id, некорректный ввод (`ValidationError` — сервисы разбирают ввод `parseInput`), запросы с сырым SQL (спецсимволы и попытка SQL-инъекции в поиске).
 - Prisma не подменяется (mock): integration-тест ходит в настоящую тестовую БД, иначе проверяется подмена, а не запрос.
-- Контекст grammY в тестах бота — простой объект только с теми полями, которые читает проверяемый код (`from`, `chat`, `reply`), приведённый к `BotContext` с комментарием: настоящий `Context` отправил бы ответ в Telegram.
+- Контекст grammY в тестах бота — простой объект только с теми полями, которые читает проверяемый код (`from`, `chat`, `reply`), приведённый к `BotContext` с комментарием: настоящий `Context` отправил бы ответ в Telegram. Роутеры команд и middleware, которым нужен разбор настоящего апдейта, — через `createFakeBot(...middleware)` (`helpers/fake-bot.ts`): `send('/start')` прогоняет апдейт, а вызовы Bot API перехватываются в `calls` и в Telegram не уходят.
+- Задачи воркера — unit-тесты с подменами: сервисы core, очередь BullMQ и `Api` grammY — объекты только с вызываемыми методами, приведённые к типу с комментарием; логика сервисов проверена их integration-тестами. Пакеты `grammy` и `bullmq` — в devDependencies `@tgab/tests` (установка изолирована: из чужого пакета их не видно), версии — те же, что у бота и воркера.
 - Часовой пояс процесса тестов — `TEST_TIME_ZONE` (`constants/env.ts`): запускалка задаёт `TZ`, поэтому код, который смотрит на пояс устройства (`formatShortDate`), даёт один результат на маке, домашнем ПК и в CI. Тест, которому нужен другой пояс, передаёт его явно (`formatDateTime(iso, 'Asia/Tokyo')`), а не меняет `TZ`.
 - Сеть в unit-тестах Mini App — через `createFakeFetch` (`helpers/fake-fetch.ts`): передаётся как `fetchFn` в `HttpClient.request` или подменяет глобальный `fetch` (`spyOn(globalThis, 'fetch')`, в `afterEach` — `mockRestore()`).
 - Новая функция core без тестов не считается готовой. Исправленная ошибка получает тест, который её воспроизводит.

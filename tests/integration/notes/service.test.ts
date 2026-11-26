@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import { createNotesService, NotFoundError, ValidationError } from '@tgab/core';
 import type { User } from '@tgab/db';
+import { LIST_LIMIT_MAX, SEARCH_QUERY_MAX } from '#core/constants/list.ts';
 import { createTestNote, createTestUser } from '../../helpers/factories.ts';
 import { TestDatabase } from '../../helpers/test-database.ts';
 
@@ -64,6 +65,15 @@ describe('list', () => {
 		expect(list.map((note) => note.id)).toEqual([second.id, first.id]);
 	});
 
+	test('Отклонение некорректных параметров списка', async () => {
+		for (const query of [{ limit: '0' }, { limit: 'abc' }, { limit: String(LIST_LIMIT_MAX + 1) }]) {
+			await expect(notes.list(owner.id, query)).rejects.toThrow(ValidationError);
+		}
+		await expect(notes.list(owner.id, { q: 'а'.repeat(SEARCH_QUERY_MAX + 1) })).rejects.toThrow(
+			ValidationError,
+		);
+	});
+
 	test('Учёт limit', async () => {
 		await createTestNote(db, owner.id, { title: 'Первая' });
 		await createTestNote(db, owner.id, { title: 'Вторая' });
@@ -122,6 +132,20 @@ describe('update', () => {
 		);
 		expect((await notes.get(owner.id, created.id)).title).toBe('Было');
 	});
+
+	test('Отклонение некорректного ввода без изменения заметки', async () => {
+		const created = await createTestNote(db, owner.id, { title: 'Было' });
+		await expect(notes.update(owner.id, created.id, { title: ' ' })).rejects.toThrow(
+			ValidationError,
+		);
+		expect((await notes.get(owner.id, created.id)).title).toBe('Было');
+	});
+
+	test('Выброс NotFoundError для id не в формате UUID', async () => {
+		await expect(notes.update(owner.id, 'not-a-uuid', { title: 'Т' })).rejects.toThrow(
+			NotFoundError,
+		);
+	});
 });
 
 describe('remove', () => {
@@ -135,5 +159,9 @@ describe('remove', () => {
 		const created = await createTestNote(db, owner.id);
 		await expect(notes.remove(stranger.id, created.id)).rejects.toThrow(NotFoundError);
 		expect(await notes.get(owner.id, created.id)).toEqual(created);
+	});
+
+	test('Выброс NotFoundError для id не в формате UUID', async () => {
+		await expect(notes.remove(owner.id, 'not-a-uuid')).rejects.toThrow(NotFoundError);
 	});
 });

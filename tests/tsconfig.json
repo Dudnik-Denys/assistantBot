@@ -3,12 +3,14 @@
 	"compilerOptions": {
 		// Алиасы для тестов: `#core/notes/search.ts` → packages/core/src/notes/search.ts,
 		// `#web/lib/http/client.ts` → apps/web/src/lib/http/client.ts,
-		// `#bot/middlewares/allowlist.ts` → apps/bot/src/middlewares/allowlist.ts.
+		// `#bot/middlewares/allowlist.ts` → apps/bot/src/middlewares/allowlist.ts,
+		// `#worker/jobs/counters-due.ts` → apps/worker/src/jobs/counters-due.ts.
 		// Через `paths`, а не `imports` в package.json: путь за пределы пакета (`../`) там запрещён.
 		"paths": {
 			"#core/*": ["../packages/core/src/*"],
 			"#web/*": ["../apps/web/src/*"],
-			"#bot/*": ["../apps/bot/src/*"]
+			"#bot/*": ["../apps/bot/src/*"],
+			"#worker/*": ["../apps/worker/src/*"]
 		},
 		// DOM — для кода Mini App, который тестируется (window, Headers в lib/http, lib/telegram.ts).
 		"lib": ["ES2023", "DOM"]
