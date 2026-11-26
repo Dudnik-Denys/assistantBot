@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./env": "./src/env/index.ts",
+		"./dto": "./src/schemas/dto.ts",
 		"./constants/notes": "./src/constants/notes.ts",
 		"./constants/counters": "./src/constants/counters.ts",
 		"./constants/users": "./src/constants/users.ts",

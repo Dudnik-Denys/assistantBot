@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type { HttpClient } from '#lib/http/client.ts';
 
 export interface ResourceOptions {
@@ -20,12 +21,17 @@ export interface ResourceOptions {
  */
 export class ReadResource<Dto extends { id: string }> {
 	#cachedList: Dto[] | null = null;
+	readonly #listSchema: z.ZodType<Dto[]>;
 
+	/** schema — схема DTO из `@tgab/core/dto`: ею проверяется каждый ответ. */
 	constructor(
 		protected readonly http: HttpClient,
 		protected readonly path: string,
+		protected readonly schema: z.ZodType<Dto>,
 		private readonly options: ResourceOptions = {},
-	) {}
+	) {
+		this.#listSchema = z.array(schema);
+	}
 
 	/** Последний загруженный общий список; null — ещё не загружался. */
 	get cachedList(): Dto[] | null {
@@ -35,18 +41,21 @@ export class ReadResource<Dto extends { id: string }> {
 	/** Список; searchQuery — поисковый запрос, signal — отмена устаревшего запроса. */
 	async list(searchQuery = '', signal?: AbortSignal): Promise<Dto[]> {
 		const queryString = searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : '';
-		const items = await this.http.request<Dto[]>(`${this.path}${queryString}`, { signal });
+		const items = await this.http.request(`${this.path}${queryString}`, {
+			signal,
+			schema: this.#listSchema,
+		});
 		if (!searchQuery) this.#cachedList = items;
 		return items;
 	}
 
 	/** Элемент по id; fetchFn — `fetch` из `load`. */
 	get(id: string, fetchFn?: typeof fetch): Promise<Dto> {
-		return this.http.request<Dto>(`${this.path}/${id}`, { fetchFn });
+		return this.http.request(`${this.path}/${id}`, { fetchFn, schema: this.schema });
 	}
 
 	async remove(id: string): Promise<void> {
-		await this.http.request<void>(`${this.path}/${id}`, { method: 'DELETE' });
+		await this.http.request(`${this.path}/${id}`, { method: 'DELETE' });
 		if (this.#cachedList) this.#cachedList = this.#cachedList.filter((item) => item.id !== id);
 	}
 

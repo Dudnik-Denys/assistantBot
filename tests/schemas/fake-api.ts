@@ -4,3 +4,8 @@ import { z } from 'zod';
 export const FakeItemInputSchema = z.object({ title: z.string() });
 
 export type FakeItemInput = z.infer<typeof FakeItemInputSchema>;
+
+/** Запись фейкового API в ответе — схема, которой клиент проверяет ответы (unit/http). */
+export const FakeItemDtoSchema = FakeItemInputSchema.extend({ id: z.string() });
+
+export type FakeItemDto = z.infer<typeof FakeItemDtoSchema>;

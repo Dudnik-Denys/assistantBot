@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { createHmac } from 'node:crypto';
 import { validateInitData } from '#core/auth/init-data.ts';
-import { INIT_DATA_MAX_AGE_SECONDS } from '#core/constants/auth.ts';
+import {
+	INIT_DATA_MAX_AGE_SECONDS,
+	INIT_DATA_MAX_CLOCK_SKEW_SECONDS,
+} from '#core/constants/auth.ts';
 import { InitDataError } from '#core/errors.ts';
 
 const BOT_TOKEN = '123456:TEST-token';
@@ -74,6 +77,16 @@ describe('validateInitData', () => {
 	test('Отклонение initData старше срока на секунду', () => {
 		const authDate = String(NOW_SECONDS - INIT_DATA_MAX_AGE_SECONDS - 1);
 		expectRejected(sign({ auth_date: authDate, user: USER_JSON }), 'initData устарели');
+	});
+
+	test('Принятие auth_date в будущем в пределах допуска на расхождение часов', () => {
+		const authDate = String(NOW_SECONDS + INIT_DATA_MAX_CLOCK_SKEW_SECONDS);
+		expect(validate(sign({ auth_date: authDate, user: USER_JSON })).user.id).toBe(TEST_USER_ID);
+	});
+
+	test('Отклонение auth_date дальше допуска в будущем', () => {
+		const authDate = String(NOW_SECONDS + INIT_DATA_MAX_CLOCK_SKEW_SECONDS + 1);
+		expectRejected(sign({ auth_date: authDate, user: USER_JSON }), 'auth_date в будущем');
 	});
 
 	test('Отклонение некорректного auth_date', () => {

@@ -1,5 +1,6 @@
 import type { User } from '@tgab/db';
 import { ERROR_STATUSES } from '#lib/constants/error-statuses.server.ts';
+import { INVALID_JSON_MESSAGE } from '#lib/constants/errors.ts';
 import { HttpStatus } from '#lib/constants/http-status.ts';
 
 /**
@@ -45,8 +46,23 @@ export async function handleApi(handler: () => Promise<Response>): Promise<Respo
 	}
 }
 
+/**
+ * Эндпоинт действия над записью (`POST /<раздел>/[id]/<действие>`, `api.md`): берёт пользователя
+ * и id из пути, вызывает метод сервиса и отвечает изменённым DTO. Файл действия — одна строка:
+ * `export const POST: RequestHandler = recordAction((userId, id) => counters.pause(userId, id));`
+ */
+export function recordAction(action: (userId: string, id: string) => Promise<unknown>) {
+	return ({ locals, params }: { locals: App.Locals; params: { id: string } }) =>
+		handleApi(async () => Response.json(await action(requireUser(locals).id, params.id)));
+}
+
+/** Тело запроса как JSON; не JSON — 400 «Некорректный JSON» (ошибка ввода, а не сервера). */
 export async function readJson(request: Request): Promise<unknown> {
-	return request.json();
+	try {
+		return await request.json();
+	} catch {
+		throw new HttpStatusError(HttpStatus.BadRequest, INVALID_JSON_MESSAGE);
+	}
 }
 
 function jsonError(status: number, message: string, details: Record<string, unknown> = {}) {

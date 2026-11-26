@@ -1,5 +1,6 @@
 import { type Note, Prisma, type PrismaClient } from '@tgab/db';
 import { assertId } from '../common/id.ts';
+import { parseInput } from '../common/parse-input.ts';
 import { NotFoundError } from '../errors.ts';
 import { ListQuerySchema } from '../schemas/common/list-query.ts';
 import { NoteInputSchema } from '../schemas/notes/note-input.ts';
@@ -35,7 +36,7 @@ function escapeLike(text: string): string {
 export function createNotesService(db: PrismaClient) {
 	return {
 		async list(userId: string, query: unknown = {}): Promise<NoteDto[]> {
-			const { q: searchQuery, limit } = ListQuerySchema.parse(query);
+			const { q: searchQuery, limit } = parseInput(ListQuerySchema, query);
 			if (!searchQuery) {
 				const rows = await db.note.findMany({
 					where: { userId },
@@ -76,14 +77,14 @@ export function createNotesService(db: PrismaClient) {
 		},
 
 		async create(userId: string, input: unknown): Promise<NoteDto> {
-			const data = NoteInputSchema.parse(input);
+			const data = parseInput(NoteInputSchema, input);
 			const note = await db.note.create({ data: { ...data, userId }, select });
 			return toNoteDto(note);
 		},
 
 		async update(userId: string, id: string, input: unknown): Promise<NoteDto> {
 			assertId(id, NOT_FOUND);
-			const data = NoteInputSchema.parse(input);
+			const data = parseInput(NoteInputSchema, input);
 			const { count } = await db.note.updateMany({ where: { id, userId }, data });
 			if (count === 0) throw new NotFoundError(NOT_FOUND);
 			return this.get(userId, id);

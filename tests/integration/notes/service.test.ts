@@ -1,7 +1,6 @@
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
-import { createNotesService, NotFoundError } from '@tgab/core';
+import { createNotesService, NotFoundError, ValidationError } from '@tgab/core';
 import type { User } from '@tgab/db';
-import { z } from 'zod';
 import { createTestNote, createTestUser } from '../../helpers/factories.ts';
 import { TestDatabase } from '../../helpers/test-database.ts';
 
@@ -29,12 +28,12 @@ describe('create', () => {
 
 	test('Отклонение заметки без заголовка', async () => {
 		await expect(notes.create(owner.id, { title: ' ', content: 'Текст' })).rejects.toThrow(
-			z.ZodError,
+			ValidationError,
 		);
 	});
 
 	test('Отклонение ввода не той формы', async () => {
-		await expect(notes.create(owner.id, { title: 42 })).rejects.toThrow(z.ZodError);
+		await expect(notes.create(owner.id, { title: 42 })).rejects.toThrow(ValidationError);
 	});
 });
 

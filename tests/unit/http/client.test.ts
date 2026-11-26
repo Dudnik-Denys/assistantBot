@@ -4,18 +4,38 @@ import {
 	ApiError,
 	HttpClient,
 	NetworkError,
+	ResponseFormatError,
 	ServerUnavailableError,
 } from '#web/lib/http/client.ts';
 import { API_BASE_URL } from '../../constants/http.ts';
 import { createFakeFetch } from '../../helpers/fake-fetch.ts';
+import { FakeItemDtoSchema } from '../../schemas/fake-api.ts';
+
+const ITEM = { id: '1', title: 'Покупки' };
 
 const client = new HttpClient(API_BASE_URL);
 
 describe('HttpClient.request', () => {
-	test('Возврат тела успешного ответа', async () => {
-		const fake = createFakeFetch(() => Response.json({ id: '1' }));
-		expect(await client.request('/notes/1', { fetchFn: fake.fetch })).toEqual({ id: '1' });
+	test('Возврат тела успешного ответа, проверенного схемой', async () => {
+		const fake = createFakeFetch(() => Response.json(ITEM));
+		const item = await client.request('/notes/1', {
+			fetchFn: fake.fetch,
+			schema: FakeItemDtoSchema,
+		});
+		expect(item).toEqual(ITEM);
 		expect(fake.calls[0]?.url).toBe(`${API_BASE_URL}/notes/1`);
+	});
+
+	test('Выброс ResponseFormatError на успешный ответ не по схеме', async () => {
+		const fake = createFakeFetch(() => Response.json({ id: 1 }));
+		const request = client.request('/notes/1', { fetchFn: fake.fetch, schema: FakeItemDtoSchema });
+		await expect(request).rejects.toThrow(ResponseFormatError);
+	});
+
+	test('Выброс ServerUnavailableError на успешный ответ не в JSON', async () => {
+		const fake = createFakeFetch(() => new Response('<html>туннель</html>'));
+		const request = client.request('/notes/1', { fetchFn: fake.fetch, schema: FakeItemDtoSchema });
+		await expect(request).rejects.toThrow(ServerUnavailableError);
 	});
 
 	test('Возврат undefined на ответ без тела (204)', async () => {

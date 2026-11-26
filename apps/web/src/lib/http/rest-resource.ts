@@ -11,15 +11,20 @@ import { ReadResource } from '#lib/http/read-resource.ts';
  */
 export class RestResource<Dto extends { id: string }, Input> extends ReadResource<Dto> {
 	async create(input: Input): Promise<Dto> {
-		const created = await this.http.request<Dto>(this.path, { method: 'POST', body: input });
+		const created = await this.http.request(this.path, {
+			method: 'POST',
+			body: input,
+			schema: this.schema,
+		});
 		this.putFirst(created);
 		return created;
 	}
 
 	async update(id: string, input: Input): Promise<Dto> {
-		const updated = await this.http.request<Dto>(`${this.path}/${id}`, {
+		const updated = await this.http.request(`${this.path}/${id}`, {
 			method: 'PUT',
 			body: input,
+			schema: this.schema,
 		});
 		this.cacheItem(updated);
 		return updated;

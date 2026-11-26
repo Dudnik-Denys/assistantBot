@@ -1,6 +1,7 @@
 import type { Counter, PrismaClient } from '@tgab/db';
 import { startOfMinute } from 'date-fns';
 import { assertId } from '../common/id.ts';
+import { parseInput } from '../common/parse-input.ts';
 import {
 	COUNTER_ALREADY_RUNNING_MESSAGE,
 	COUNTER_DUE_BATCH_SIZE,
@@ -24,7 +25,7 @@ import {
 	type CounterTimerInput,
 } from '../schemas/counters/counter-input.ts';
 import { addDuration, type CycleSource, finishCycle, localToUtc, nextCycle } from './timer.ts';
-import type { CounterDto } from './types.ts';
+import type { CounterDto, ProcessDueResult } from './types.ts';
 
 const NOT_FOUND = 'Счётчик не найден';
 
@@ -178,11 +179,12 @@ export function createCountersService(db: PrismaClient) {
 	}
 
 	/**
-	 * Окончание цикла одного счётчика в транзакции: строка блокируется `FOR UPDATE SKIP LOCKED`
+	 * Окончание цикла одного счётчика в транзакции (true — завершён, false — не наступил или
+	 * его уже обрабатывает другой процесс): строка блокируется `FOR UPDATE SKIP LOCKED`
 	 * (её уже обрабатывает другой воркер — пропускаем), число +1, следующий цикл (автоповтор)
 	 * или статус FINISHED, уведомление — если включено.
 	 */
-	function finishDue(id: string, now: Date): Promise<void> {
+	function finishDue(id: string, now: Date): Promise<boolean> {
 		return db.$transaction(
 			async (tx) => {
 				const locked = await tx.$queryRaw<{ id: string }[]>`
@@ -193,13 +195,13 @@ export function createCountersService(db: PrismaClient) {
 					AND "targetAt" <= ${now}
 					FOR UPDATE SKIP LOCKED
 				`;
-				if (locked.length === 0) return;
+				if (locked.length === 0) return false;
 				const row = await tx.counter.findUniqueOrThrow({
 					where: { id },
 					include: { user: { select: { timezone: true } } },
 				});
 				const { timerMode, startAt, targetAt } = row;
-				if (!timerMode || !startAt || !targetAt) return;
+				if (!timerMode || !startAt || !targetAt) return false;
 				const finished = finishCycle(
 					{
 						timerMode,
@@ -222,7 +224,7 @@ export function createCountersService(db: PrismaClient) {
 						finishedAt: finished.finishedAt,
 					},
 				});
-				if (!row.notify) return;
+				if (!row.notify) return true;
 				await tx.counterNotification.create({
 					data: {
 						userId: row.userId,
@@ -231,6 +233,7 @@ export function createCountersService(db: PrismaClient) {
 						finishedAt: finished.finishedAt,
 					},
 				});
+				return true;
 			},
 			{ timeout: COUNTER_TRANSACTION_TIMEOUT_MS },
 		);
@@ -252,7 +255,7 @@ export function createCountersService(db: PrismaClient) {
 		},
 
 		async create(userId: string, input: unknown): Promise<CounterDto> {
-			const { timer, ...fields } = CounterInputSchema.parse(input);
+			const { timer, ...fields } = parseInput(CounterInputSchema, input);
 			const timeZone = await timeZoneOf(userId);
 			const row = await db.counter.create({
 				data: {
@@ -270,7 +273,7 @@ export function createCountersService(db: PrismaClient) {
 		 * (поменялись только название или флаги), текущий цикл продолжается как был.
 		 */
 		async update(userId: string, id: string, input: unknown): Promise<CounterDto> {
-			const { timer, ...fields } = CounterInputSchema.parse(input);
+			const { timer, ...fields } = parseInput(CounterInputSchema, input);
 			const row = await findOwn(userId, id);
 			const timeZone = await timeZoneOf(userId);
 			const { count } = await db.counter.updateMany({
@@ -431,19 +434,27 @@ export function createCountersService(db: PrismaClient) {
 		/**
 		 * Для воркера (все пользователи): окончание циклов, наступивших к `now`. Берёт пачку
 		 * до `COUNTER_DUE_BATCH_SIZE`; каждый счётчик — в своей короткой транзакции
-		 * (`finishDue`), так что сбой одного не откатывает остальные. Уведомления создаются
-		 * в той же транзакции, а в Telegram их отправляет воркер отдельно (outbox,
-		 * `notifications.listUnsent`). Возвращает размер пачки: полная — могут быть ещё.
+		 * (`finishDue`), и ошибка одного (сбой БД, таймаут, испорченная запись) не прерывает
+		 * остальные — она возвращается в `failed`, а запись попадёт в следующий проход.
+		 * Уведомления создаются в той же транзакции, а в Telegram их отправляет воркер отдельно
+		 * (outbox, `notifications.listUnsent`).
 		 */
-		async processDue(now: Date): Promise<number> {
+		async processDue(now: Date): Promise<ProcessDueResult> {
 			const due = await db.counter.findMany({
 				where: { timerStatus: COUNTER_TIMER_STATUS.Running, targetAt: { lte: now } },
 				orderBy: { targetAt: 'asc' },
 				take: COUNTER_DUE_BATCH_SIZE,
 				select: { id: true },
 			});
-			for (const { id } of due) await finishDue(id, now);
-			return due.length;
+			const result: ProcessDueResult = { selected: due.length, finished: 0, failed: [] };
+			for (const { id } of due) {
+				try {
+					if (await finishDue(id, now)) result.finished++;
+				} catch (error) {
+					result.failed.push({ id, error });
+				}
+			}
+			return result;
 		},
 	};
 }

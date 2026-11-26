@@ -14,6 +14,7 @@ export {
 	type NotificationsService,
 } from './notifications/service.ts';
 export type { NotificationDelivery, NotificationDto } from './notifications/types.ts';
+export { IdSchema } from './schemas/common/id.ts';
 export type { CounterInput } from './schemas/counters/counter-input.ts';
 export type { NoteInput } from './schemas/notes/note-input.ts';
 export {

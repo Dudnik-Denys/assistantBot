@@ -1,10 +1,8 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { INIT_DATA_MAX_AGE_SECONDS } from '../constants/auth.ts';
+import { INIT_DATA_MAX_AGE_SECONDS, INIT_DATA_MAX_CLOCK_SKEW_SECONDS } from '../constants/auth.ts';
 import { MS_PER_SECOND } from '../constants/time.ts';
 import { InitDataError } from '../errors.ts';
 import { type TelegramUser, TelegramUserSchema } from '../schemas/users/telegram-user.ts';
-
-/** auth_date в initData — в секундах, Date — в миллисекундах. */
 
 export interface ValidatedInitData {
 	user: TelegramUser;
@@ -41,8 +39,11 @@ export function validateInitData(
 	if (!Number.isFinite(authDateSeconds) || authDateSeconds <= 0) {
 		throw new InitDataError('Некорректный auth_date');
 	}
-	if (now.getTime() / MS_PER_SECOND - authDateSeconds > maxAgeSeconds) {
-		throw new InitDataError('initData устарели');
+	// auth_date в initData — в секундах, Date — в миллисекундах.
+	const ageSeconds = now.getTime() / MS_PER_SECOND - authDateSeconds;
+	if (ageSeconds > maxAgeSeconds) throw new InitDataError('initData устарели');
+	if (ageSeconds < -INIT_DATA_MAX_CLOCK_SKEW_SECONDS) {
+		throw new InitDataError('auth_date в будущем');
 	}
 
 	const rawUser = params.get('user');

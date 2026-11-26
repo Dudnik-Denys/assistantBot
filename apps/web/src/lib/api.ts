@@ -7,6 +7,13 @@ import type {
 	UserDto,
 } from '@tgab/core';
 import { DEFAULT_TIMEZONE } from '@tgab/core/constants/users';
+import {
+	CounterDtoSchema,
+	NoteDtoSchema,
+	NotificationDtoSchema,
+	UserDtoSchema,
+} from '@tgab/core/dto';
+import { z } from 'zod';
 import { HttpClient } from '#lib/http/client.ts';
 import { ReadResource } from '#lib/http/read-resource.ts';
 import { RestResource } from '#lib/http/rest-resource.ts';
@@ -35,7 +42,7 @@ class UserApi {
 
 	/** Профиль текущего пользователя; 403 — нет в allowlist. fetchFn — `fetch` из `load`. */
 	async get(fetchFn?: typeof fetch): Promise<UserDto> {
-		this.#current = await this.http.request<UserDto>('/user', { fetchFn });
+		this.#current = await this.http.request('/user', { fetchFn, schema: UserDtoSchema });
 		return this.#current;
 	}
 }
@@ -75,16 +82,18 @@ class CountersApi extends RestResource<CounterDto, CounterInput> {
 
 	/** То же для всех наступивших циклов; ответ — изменённые счётчики (они же — в кеш). */
 	async finishDue(): Promise<CounterDto[]> {
-		const counters = await this.http.request<CounterDto[]>(`${this.path}/finish-due`, {
+		const counters = await this.http.request(`${this.path}/finish-due`, {
 			method: 'POST',
+			schema: z.array(this.schema),
 		});
 		for (const counter of counters) this.cacheItem(counter);
 		return counters;
 	}
 
 	async #act(id: string, action: CounterAction): Promise<CounterDto> {
-		const counter = await this.http.request<CounterDto>(`${this.path}/${id}/${action}`, {
+		const counter = await this.http.request(`${this.path}/${id}/${action}`, {
 			method: 'POST',
+			schema: this.schema,
 		});
 		this.cacheItem(counter);
 		return counter;
@@ -97,8 +106,9 @@ class CountersApi extends RestResource<CounterDto, CounterInput> {
  */
 class NotificationsApi extends ReadResource<NotificationDto> {
 	async markRead(id: string): Promise<NotificationDto> {
-		const notification = await this.http.request<NotificationDto>(`${this.path}/${id}/read`, {
+		const notification = await this.http.request(`${this.path}/${id}/read`, {
 			method: 'POST',
+			schema: this.schema,
 		});
 		this.cacheItem(notification);
 		return notification;
@@ -107,10 +117,15 @@ class NotificationsApi extends ReadResource<NotificationDto> {
 
 const http = new HttpClient('/api');
 
-/** API Mini App. Новый раздел: `<раздел>: new RestResource<Dto, Input>(http, '/<раздел>')`. */
+/**
+ * API Mini App. Новый раздел: `<раздел>: new RestResource<Dto, Input>(http, '/<раздел>', XDtoSchema)`
+ * — схема DTO из `@tgab/core/dto` проверяет каждый ответ.
+ */
 export const api = {
 	user: new UserApi(http),
-	notes: new RestResource<NoteDto, NoteInput>(http, '/notes'),
-	counters: new CountersApi(http, '/counters', { stableOrder: true }),
-	notifications: new NotificationsApi(http, '/notifications', { stableOrder: true }),
+	notes: new RestResource<NoteDto, NoteInput>(http, '/notes', NoteDtoSchema),
+	counters: new CountersApi(http, '/counters', CounterDtoSchema, { stableOrder: true }),
+	notifications: new NotificationsApi(http, '/notifications', NotificationDtoSchema, {
+		stableOrder: true,
+	}),
 };

@@ -1,3 +1,4 @@
+import type { z } from 'zod';
 import { TMA_AUTH_SCHEME } from '#lib/constants/auth.ts';
 import { HttpStatus } from '#lib/constants/http-status.ts';
 import { ApiErrorBodySchema } from '#lib/schemas/api-error.ts';
@@ -35,6 +36,19 @@ export class ServerUnavailableError extends Error {
 	}
 }
 
+/**
+ * Наш API ответил, но тело не совпало со схемой ответа: обычно клиент устарел после обновления
+ * сервера (новое поле, другой формат). Подробности — в `cause` и консоли.
+ */
+export class ResponseFormatError extends Error {
+	constructor(
+		readonly path: string,
+		cause: z.ZodError,
+	) {
+		super('Приложение устарело. Закройте и откройте его снова', { cause });
+	}
+}
+
 /** Параметры одного запроса. */
 export interface RequestOptions {
 	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -48,14 +62,24 @@ export interface RequestOptions {
 
 /**
  * Транспорт к API Mini App: подставляет `Authorization: tma <initData>`,
- * сериализует тело в JSON, разбирает ответ и превращает ошибки в `ApiError` (наш API ответил
- * ошибкой), `ServerUnavailableError` (ответил не наш API: туннель, прокси) или `NetworkError`
- * (ответа нет).
+ * сериализует тело в JSON, проверяет тело ответа схемой и превращает ошибки в `ApiError` (наш API
+ * ответил ошибкой), `ResponseFormatError` (ответ не по схеме), `ServerUnavailableError` (ответил не
+ * наш API: туннель, прокси) или `NetworkError` (ответа нет).
  */
 export class HttpClient {
 	constructor(private readonly baseUrl: string) {}
 
-	async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+	/** Запрос с телом ответа: оно проверяется схемой `schema` (DTO из `@tgab/core/dto`). */
+	request<S extends z.ZodType>(
+		path: string,
+		options: RequestOptions & { schema: S },
+	): Promise<z.output<S>>;
+	/** Запрос без тела ответа (`DELETE` → 204): тело, если есть, не читается. */
+	request(path: string, options?: RequestOptions): Promise<void>;
+	async request(
+		path: string,
+		options: RequestOptions & { schema?: z.ZodType } = {},
+	): Promise<unknown> {
 		const { method = 'GET', body, signal, fetchFn = fetch } = options;
 		const headers = new Headers();
 		const initData = webApp()?.initData;
@@ -75,9 +99,15 @@ export class HttpClient {
 			if (signal?.aborted) throw cause;
 			throw new NetworkError(cause);
 		}
-		if (response.status === HttpStatus.NoContent) return undefined as T;
-		const data = await response.json().catch(() => ({}));
-		if (response.ok) return data as T;
+		if (response.ok && (response.status === HttpStatus.NoContent || !options.schema)) return;
+		// Не JSON (страница туннеля, прокси) — ответил не наш API, даже при коде 2xx.
+		const data: unknown = await response.json().catch(() => undefined);
+		if (data === undefined) throw new ServerUnavailableError(response.status);
+		if (response.ok && options.schema) {
+			const parsed = options.schema.safeParse(data);
+			if (!parsed.success) throw new ResponseFormatError(path, parsed.error);
+			return parsed.data;
+		}
 		const errorBody = ApiErrorBodySchema.safeParse(data);
 		if (!errorBody.success) throw new ServerUnavailableError(response.status);
 		throw new ApiError(response.status, errorBody.data.error, errorBody.data);

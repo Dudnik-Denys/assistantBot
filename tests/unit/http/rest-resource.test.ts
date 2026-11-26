@@ -4,11 +4,12 @@ import { ApiError, HttpClient } from '#web/lib/http/client.ts';
 import { RestResource } from '#web/lib/http/rest-resource.ts';
 import { API_BASE_URL, FAKE_ORIGIN } from '../../constants/http.ts';
 import { createFakeFetch } from '../../helpers/fake-fetch.ts';
-import { type FakeItemInput, FakeItemInputSchema } from '../../schemas/fake-api.ts';
-
-interface ItemDto extends FakeItemInput {
-	id: string;
-}
+import {
+	FakeItemDtoSchema,
+	type FakeItemInput,
+	FakeItemInputSchema,
+	type FakeItemDto as ItemDto,
+} from '../../schemas/fake-api.ts';
 
 const PATH = '/items';
 
@@ -61,7 +62,11 @@ let fetchSpy: ReturnType<typeof spyOn>;
 
 beforeEach(() => {
 	fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(createFakeApi([SECOND, FIRST]).fetch);
-	resource = new RestResource<ItemDto, FakeItemInput>(new HttpClient(API_BASE_URL), PATH);
+	resource = new RestResource<ItemDto, FakeItemInput>(
+		new HttpClient(API_BASE_URL),
+		PATH,
+		FakeItemDtoSchema,
+	);
 });
 
 afterEach(() => {
