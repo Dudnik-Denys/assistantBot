@@ -30,7 +30,7 @@ export function addDuration(start: Date, duration: CounterDuration, timeZone: st
 }
 
 /** Параметры, по которым строится следующий цикл. */
-interface CycleSource {
+export interface CycleSource {
 	timerMode: CounterTimerMode;
 	startAt: Date;
 	targetAt: Date;

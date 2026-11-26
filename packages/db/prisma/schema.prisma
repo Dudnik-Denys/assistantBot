@@ -50,9 +50,10 @@ enum CounterTimerMode {
   DATE
 }
 
-/// Состояние таймера: идёт цикл или цикл закончился и ждёт «Продолжить».
+/// Состояние таймера: цикл идёт, стоит на паузе или закончился и ждёт «Старт».
 enum CounterTimerStatus {
   RUNNING
+  PAUSED
   FINISHED
 }
 
@@ -79,6 +80,12 @@ model Counter {
   startAt         DateTime?           @db.Timestamptz(3)
   targetAt        DateTime?           @db.Timestamptz(3)
   timerStatus     CounterTimerStatus?
+  /// Когда таймер поставлен на паузу (статус PAUSED); «Старт» на срок сдвигает цикл на длину паузы.
+  pausedAt        DateTime?           @db.Timestamptz(3)
+  /// Старт цикла «на срок» задан вручную; false — старт в момент сохранения настроек.
+  customStart     Boolean             @default(false)
+  /// Скрыть кнопки «Старт» и «Стоп» (у таймера на паузе «Старт» видна всегда).
+  startStopHidden Boolean             @default(false)
   /// Когда закончился последний цикл.
   finishedAt      DateTime?           @db.Timestamptz(3)
   /// Следующий цикл — с теми же параметрами (той же длины), без выбора новой даты.

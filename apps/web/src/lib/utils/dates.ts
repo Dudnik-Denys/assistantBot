@@ -21,31 +21,6 @@ export function formatShortDate(iso: string, now = new Date()): string {
 	return full.format(date);
 }
 
-/**
- * Локальные дата и время в часовом поясе `timeZone` в формате поля `datetime-local`
- * (`2026-11-24T12:00`) — так их принимает API счётчиков.
- */
-export function toLocalDateTime(date: Date | string, timeZone: string): string {
-	const parts = new Intl.DateTimeFormat('en-CA', {
-		timeZone,
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit',
-		hour: '2-digit',
-		minute: '2-digit',
-		hourCycle: 'h23',
-	}).formatToParts(new Date(date));
-	const part = (type: Intl.DateTimeFormatPartTypes) =>
-		parts.find((item) => item.type === type)?.value ?? '';
-	return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}`;
-}
-
-/** Сегодняшняя дата в поясе `timeZone` с заданным временем `HH:mm`: `2026-11-24T12:00`. */
-export function todayAt(time: string, timeZone: string, now = new Date()): string {
-	const [date] = toLocalDateTime(now, timeZone).split('T');
-	return `${date}T${time}`;
-}
-
 /** Дата и время в часовом поясе пользователя: «24 нояб. 2026 г., 12:00». */
 export function formatDateTime(iso: string, timeZone: string): string {
 	return new Intl.DateTimeFormat('ru', {

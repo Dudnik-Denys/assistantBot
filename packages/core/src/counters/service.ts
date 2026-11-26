@@ -2,11 +2,13 @@ import type { Counter, PrismaClient } from '@tgab/db';
 import { startOfMinute } from 'date-fns';
 import { assertId } from '../common/id.ts';
 import {
+	COUNTER_ALREADY_RUNNING_MESSAGE,
 	COUNTER_DUE_BATCH_SIZE,
 	COUNTER_DURATION_PARTS,
 	COUNTER_EMPTY_DURATION,
 	COUNTER_INITIAL_VALUE,
-	COUNTER_NOT_FINISHED_MESSAGE,
+	COUNTER_NO_TIMER_MESSAGE,
+	COUNTER_NOT_RUNNING_MESSAGE,
 	COUNTER_RESTART_NEEDS_PARAMS_MESSAGE,
 	COUNTER_TARGET_PASSED_MESSAGE,
 	COUNTER_TIMER_MODE,
@@ -21,7 +23,7 @@ import {
 	CounterInputSchema,
 	type CounterTimerInput,
 } from '../schemas/counters/counter-input.ts';
-import { addDuration, finishCycle, localToUtc, nextCycle } from './timer.ts';
+import { addDuration, type CycleSource, finishCycle, localToUtc, nextCycle } from './timer.ts';
 import type { CounterDto } from './types.ts';
 
 const NOT_FOUND = 'Счётчик не найден';
@@ -47,7 +49,7 @@ function durationColumns(duration: CounterDuration) {
 }
 
 export function toCounterDto(row: Counter): CounterDto {
-	const { timerMode, startAt, targetAt, timerStatus } = row;
+	const { timerMode, startAt, targetAt, timerStatus, pausedAt } = row;
 	return {
 		id: row.id,
 		title: row.title,
@@ -62,20 +64,24 @@ export function toCounterDto(row: Counter): CounterDto {
 						startAt: startAt.toISOString(),
 						targetAt: targetAt.toISOString(),
 						status: timerStatus,
+						pausedAt: pausedAt?.toISOString() ?? null,
+						customStart: row.customStart,
 					}
 				: null,
 		finishedAt: row.finishedAt?.toISOString() ?? null,
 		repeatSame: row.repeatSame,
 		autoRestart: row.autoRestart,
 		notify: row.notify,
+		startStopHidden: row.startStopHidden,
 		createdAt: row.createdAt.toISOString(),
 		updatedAt: row.updatedAt.toISOString(),
 	};
 }
 
 /**
- * Колонки таймера по вводу: новый цикл запускается сейчас. Время ввода — локальное время
- * пользователя; окончание, которое уже прошло, — `ValidationError`.
+ * Колонки таймера по вводу: новый цикл запускается сейчас. Старт — свой (`customStart`, время
+ * ввода — локальное время пользователя) или начало текущей минуты; окончание, которое уже
+ * прошло, — `ValidationError`.
  */
 function timerColumns(timer: CounterTimerInput | null, timeZone: string, now: Date) {
 	if (!timer) {
@@ -85,14 +91,15 @@ function timerColumns(timer: CounterTimerInput | null, timeZone: string, now: Da
 			startAt: null,
 			targetAt: null,
 			timerStatus: null,
+			pausedAt: null,
+			customStart: false,
 		};
 	}
+	const customStart = timer.mode === COUNTER_TIMER_MODE.Duration && timer.customStart;
 	const duration =
 		timer.mode === COUNTER_TIMER_MODE.Duration ? timer.duration : COUNTER_EMPTY_DURATION;
 	const startAt =
-		timer.mode === COUNTER_TIMER_MODE.Duration
-			? localToUtc(timer.startAt, timeZone)
-			: startOfMinute(now);
+		customStart && timer.startAt ? localToUtc(timer.startAt, timeZone) : startOfMinute(now);
 	const targetAt =
 		timer.mode === COUNTER_TIMER_MODE.Duration
 			? addDuration(startAt, duration, timeZone)
@@ -104,7 +111,20 @@ function timerColumns(timer: CounterTimerInput | null, timeZone: string, now: Da
 		startAt,
 		targetAt,
 		timerStatus: COUNTER_TIMER_STATUS.Running,
+		pausedAt: null,
+		customStart,
 	};
+}
+
+/**
+ * Локальное время формы и сохранённый момент — одна минута. Форма показывает время с точностью
+ * до минуты, а после паузы цикл сдвинут на её длину с секундами: неизменённая форма иначе
+ * выглядела бы как новый старт.
+ */
+function sameMinute(local: string, timeZone: string, stored: Date | null): boolean {
+	return (
+		stored !== null && localToUtc(local, timeZone).getTime() === startOfMinute(stored).getTime()
+	);
 }
 
 /** Изменились ли параметры таймера: если нет, текущий цикл (и его статус) не трогаем. */
@@ -112,13 +132,27 @@ function timerChanged(row: Counter, timer: CounterTimerInput | null, timeZone: s
 	if (!timer) return row.timerMode !== null;
 	if (row.timerMode !== timer.mode) return true;
 	if (timer.mode === COUNTER_TIMER_MODE.Date) {
-		return localToUtc(timer.targetAt, timeZone).getTime() !== row.targetAt?.getTime();
+		return !sameMinute(timer.targetAt, timeZone, row.targetAt);
 	}
 	const stored = durationOf(row);
 	const sameDuration = COUNTER_DURATION_PARTS.every(
 		(part) => stored[part] === timer.duration[part],
 	);
-	return !sameDuration || localToUtc(timer.startAt, timeZone).getTime() !== row.startAt?.getTime();
+	if (!sameDuration || row.customStart !== timer.customStart) return true;
+	// Старт «в момент сохранения» не меняется от сохранения: цикл уже начался тогда.
+	if (!timer.customStart || !timer.startAt) return false;
+	return !sameMinute(timer.startAt, timeZone, row.startAt);
+}
+
+/**
+ * Цикл после «Сбросить», с `from`: на срок — полный срок; до даты — до той же даты, а если
+ * она уже прошла — цикл той же длины, что прошлый.
+ */
+function resetCycle(source: CycleSource, from: Date, timeZone: string) {
+	if (source.timerMode === COUNTER_TIMER_MODE.Date && source.targetAt > from) {
+		return { startAt: from, targetAt: source.targetAt };
+	}
+	return nextCycle(source, from, timeZone);
 }
 
 /**
@@ -266,44 +300,95 @@ export function createCountersService(db: PrismaClient) {
 			return this.get(userId, id);
 		},
 
+		/**
+		 * «Сбросить»: число — к начальному, таймер — новый цикл с текущего момента (`resetCycle`)
+		 * на паузе: отсчёт пойдёт по «Старт». Пауза — с того же момента, а не с начала минуты:
+		 * иначе на паузе осталось бы больше времени, чем на самом деле (у таймера до даты).
+		 */
 		async reset(userId: string, id: string): Promise<CounterDto> {
-			assertId(id, NOT_FOUND);
-			await db.counter.updateMany({
+			const row = await findOwn(userId, id);
+			const { timerMode, startAt, targetAt } = row;
+			const from = new Date();
+			const timer =
+				timerMode && startAt && targetAt
+					? {
+							...resetCycle(
+								{ timerMode, startAt, targetAt, duration: durationOf(row) },
+								from,
+								await timeZoneOf(userId),
+							),
+							timerStatus: COUNTER_TIMER_STATUS.Paused,
+							pausedAt: from,
+						}
+					: {};
+			const { count } = await db.counter.updateMany({
 				where: { id, userId },
-				data: { value: COUNTER_INITIAL_VALUE },
+				data: { value: COUNTER_INITIAL_VALUE, ...timer },
 			});
+			if (count === 0) throw new NotFoundError(NOT_FOUND);
+			return this.get(userId, id);
+		},
+
+		/** «Стоп»: идущий таймер — на паузу; отсчёт замирает на `pausedAt`. */
+		async pause(userId: string, id: string): Promise<CounterDto> {
+			assertId(id, NOT_FOUND);
+			const now = new Date();
+			// Только идущий и ещё не закончившийся цикл: закончившийся ждёт воркера.
+			const { count } = await db.counter.updateMany({
+				where: { id, userId, timerStatus: COUNTER_TIMER_STATUS.Running, targetAt: { gt: now } },
+				data: { timerStatus: COUNTER_TIMER_STATUS.Paused, pausedAt: now },
+			});
+			if (count === 0) {
+				await findOwn(userId, id);
+				throw new ValidationError(COUNTER_NOT_RUNNING_MESSAGE);
+			}
 			return this.get(userId, id);
 		},
 
 		/**
-		 * «Продолжить» закончившийся цикл с теми же параметрами — от текущего момента.
-		 * Без `repeatSame` новый срок или дату задают в настройках (`update`).
+		 * «Старт»: таймер на паузе продолжается. На срок — цикл сдвигается на длину паузы
+		 * (оставшийся срок сохраняется); до даты — дата не сдвигается, пауза лишь не давала циклу
+		 * закончиться (прошла во время паузы — цикл закончится сразу). Закончившийся
+		 * цикл с «теми же параметрами» начинается заново с текущей минуты. Без `repeatSame`
+		 * новый срок или дату задают в настройках (`update`).
 		 */
-		async restart(userId: string, id: string): Promise<CounterDto> {
+		async start(userId: string, id: string): Promise<CounterDto> {
 			const row = await findOwn(userId, id);
-			const { timerMode, startAt, targetAt } = row;
+			const { timerMode, startAt, targetAt, pausedAt } = row;
+			if (!timerMode || !startAt || !targetAt) throw new ValidationError(COUNTER_NO_TIMER_MESSAGE);
+
+			let data: Partial<Counter>;
 			if (
-				!timerMode ||
-				!startAt ||
-				!targetAt ||
-				row.timerStatus !== COUNTER_TIMER_STATUS.Finished
+				row.timerStatus === COUNTER_TIMER_STATUS.Paused &&
+				timerMode === COUNTER_TIMER_MODE.Date
 			) {
-				throw new ValidationError(COUNTER_NOT_FINISHED_MESSAGE);
+				data = { pausedAt: null };
+			} else if (row.timerStatus === COUNTER_TIMER_STATUS.Paused && pausedAt) {
+				const shift = Date.now() - pausedAt.getTime();
+				data = {
+					startAt: new Date(startAt.getTime() + shift),
+					targetAt: new Date(targetAt.getTime() + shift),
+					pausedAt: null,
+				};
+			} else if (row.timerStatus === COUNTER_TIMER_STATUS.Finished) {
+				if (!row.repeatSame) throw new ValidationError(COUNTER_RESTART_NEEDS_PARAMS_MESSAGE);
+				// С начала минуты: время в форме — с точностью до минуты, и сохранение формы
+				// без изменений не должно считаться новыми параметрами таймера.
+				data = nextCycle(
+					{ timerMode, startAt, targetAt, duration: durationOf(row) },
+					startOfMinute(new Date()),
+					await timeZoneOf(userId),
+				);
+			} else {
+				throw new ValidationError(COUNTER_ALREADY_RUNNING_MESSAGE);
 			}
-			if (!row.repeatSame) throw new ValidationError(COUNTER_RESTART_NEEDS_PARAMS_MESSAGE);
-			// С начала минуты: время в форме — с точностью до минуты, и сохранение формы
-			// без изменений не должно считаться новыми параметрами таймера.
-			const cycle = nextCycle(
-				{ timerMode, startAt, targetAt, duration: durationOf(row) },
-				startOfMinute(new Date()),
-				await timeZoneOf(userId),
-			);
-			// Условие на статус — в самом запросе: из двух одновременных «Продолжить» сработает одно.
+			// Условие на прежнее состояние — в самом запросе: из двух одновременных «Старт»
+			// сработает одно.
 			const { count } = await db.counter.updateMany({
-				where: { id, userId, timerStatus: COUNTER_TIMER_STATUS.Finished },
-				data: { ...cycle, timerStatus: COUNTER_TIMER_STATUS.Running },
+				where: { id, userId, timerStatus: row.timerStatus, pausedAt },
+				data: { ...data, timerStatus: COUNTER_TIMER_STATUS.Running },
 			});
-			if (count === 0) throw new ValidationError(COUNTER_NOT_FINISHED_MESSAGE);
+			if (count === 0) throw new ValidationError(COUNTER_ALREADY_RUNNING_MESSAGE);
 			return this.get(userId, id);
 		},
 
@@ -311,6 +396,36 @@ export function createCountersService(db: PrismaClient) {
 			assertId(id, NOT_FOUND);
 			const { count } = await db.counter.deleteMany({ where: { id, userId } });
 			if (count === 0) throw new NotFoundError(NOT_FOUND);
+		},
+
+		/**
+		 * «Завершить, если пора»: окончание наступившего цикла сразу, не дожидаясь воркера
+		 * (экран счётчика вызывает его, когда отсчёт дошёл до нуля). Та же транзакция, что у
+		 * воркера (`finishDue`), поэтому двойного +1 не будет; цикл не наступил или его прямо
+		 * сейчас обрабатывает воркер — счётчик возвращается как есть.
+		 */
+		async finish(userId: string, id: string): Promise<CounterDto> {
+			await findOwn(userId, id);
+			await finishDue(id, new Date());
+			return this.get(userId, id);
+		},
+
+		/**
+		 * То же для всех наступивших циклов пользователя (список счётчиков). Возвращает
+		 * обработанные счётчики — клиент заменяет их в списке.
+		 */
+		async finishDueOf(userId: string): Promise<CounterDto[]> {
+			const now = new Date();
+			const due = await db.counter.findMany({
+				where: { userId, timerStatus: COUNTER_TIMER_STATUS.Running, targetAt: { lte: now } },
+				take: COUNTER_DUE_BATCH_SIZE,
+				select: { id: true },
+			});
+			for (const { id } of due) await finishDue(id, now);
+			const rows = await db.counter.findMany({
+				where: { userId, id: { in: due.map(({ id }) => id) } },
+			});
+			return rows.map(toCounterDto);
 		},
 
 		/**

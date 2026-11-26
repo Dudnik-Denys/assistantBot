@@ -12,10 +12,18 @@
 	import ScrollArea from '#lib/components/ui/layout/ScrollArea.svelte';
 	import {
 		COUNTER_EMPTY_TAB_MESSAGES,
+		COUNTER_REFRESH_DELAY_MS,
 		COUNTER_TABS,
 		type CounterTab,
 	} from '#lib/constants/counters.ts';
-	import { isFinished, isRunning, removeCounter } from '#lib/counters.ts';
+	import {
+		isDue,
+		isFinished,
+		isPaused,
+		isRunning,
+		removeCounter,
+		replaceCounters,
+	} from '#lib/counters.ts';
 	import { holdKeyboard } from '#lib/keyboard.ts';
 	import { Clock } from '#lib/reactive/clock.svelte.ts';
 	import { DebouncedSearch } from '#lib/reactive/debounced-search.svelte.ts';
@@ -32,8 +40,27 @@
 	const visible = $derived.by(() => {
 		const items = loader.items ?? [];
 		if (tab === 'running') return items.filter(isRunning);
+		if (tab === 'paused') return items.filter(isPaused);
 		if (tab === 'finished') return items.filter(isFinished);
 		return items;
+	});
+
+	/** Есть счётчики, время цикла которых вышло, а сервер ещё отдаёт их идущими. */
+	const hasDue = $derived(loader.items?.some((counter) => isDue(counter, clock.now)) ?? false);
+
+	// Как на экране счётчика: завершить наступившие циклы сразу, не дожидаясь воркера.
+	$effect(() => {
+		if (!hasDue) return;
+		const finish = () =>
+			api.counters.finishDue().then(
+				(updated) => {
+					if (loader.items) loader.items = replaceCounters(loader.items, updated);
+				},
+				() => {},
+			);
+		void finish();
+		const retry = setInterval(finish, COUNTER_REFRESH_DELAY_MS);
+		return () => clearInterval(retry);
 	});
 
 	async function remove(counter: CounterDto) {

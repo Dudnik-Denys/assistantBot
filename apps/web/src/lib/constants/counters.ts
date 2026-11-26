@@ -2,11 +2,15 @@ import { COUNTER_TIMER_MODE } from '@tgab/core/constants/counters';
 
 // Константы раздела «Счётчики» Mini App (только для него).
 
-/** Вкладки списка счётчиков. */
+/**
+ * Вкладки списка счётчиков. Подписи короткие: четыре сегмента в одну строку должны помещаться
+ * и на телефоне шириной 320 pt, иначе ряд `SegmentedControl` не поместится в ширину экрана.
+ */
 export const COUNTER_TABS = [
 	{ value: 'all', label: 'Все' },
-	{ value: 'running', label: 'Запущенные' },
-	{ value: 'finished', label: 'Завершённые' },
+	{ value: 'running', label: 'Идут' },
+	{ value: 'paused', label: 'Пауза' },
+	{ value: 'finished', label: 'Завершены' },
 ] as const;
 
 export type CounterTab = (typeof COUNTER_TABS)[number]['value'];
@@ -14,6 +18,7 @@ export type CounterTab = (typeof COUNTER_TABS)[number]['value'];
 /** Сообщение пустой вкладки. */
 export const COUNTER_EMPTY_TAB_MESSAGES: Record<Exclude<CounterTab, 'all'>, string> = {
 	running: 'Сейчас нет запущенных счётчиков',
+	paused: 'Нет счётчиков на паузе',
 	finished: 'Нет счётчиков, которые ждут продолжения',
 };
 
@@ -39,10 +44,7 @@ export const COUNTER_DURATION_FIELDS = [
 ] as const;
 
 /**
- * Через сколько после окончания цикла на экране перезапросить счётчик: окончание обрабатывает
- * воркер раз в минуту, до этого сервер ещё отдаёт идущий цикл.
+ * Повтор «завершить цикл» (`api.counters.finish`), если первый запрос не завершил его: цикл
+ * в этот момент обрабатывал воркер или не было связи.
  */
-export const COUNTER_REFRESH_DELAY_MS = 10_000;
-
-/** Ключ зависимости `load` экрана счётчика: `invalidate(COUNTER_DEPENDENCY)` — перезапрос. */
-export const COUNTER_DEPENDENCY = 'app:counter';
+export const COUNTER_REFRESH_DELAY_MS = 3_000;

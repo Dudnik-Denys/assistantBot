@@ -41,9 +41,9 @@ class UserApi {
 }
 
 /** Действие над счётчиком: `POST /counters/:id/<действие>`. */
-type CounterAction = 'increment' | 'decrement' | 'reset' | 'restart';
+type CounterAction = 'increment' | 'decrement' | 'reset' | 'pause' | 'start' | 'finish';
 
-/** Счётчики: CRUD и действия (−1, +1, сброс, «Продолжить»); результат действия — в кеш списка. */
+/** Счётчики: CRUD и действия (−1, +1, сброс, «Стоп», «Старт»); результат действия — в кеш списка. */
 class CountersApi extends RestResource<CounterDto, CounterInput> {
 	increment(id: string): Promise<CounterDto> {
 		return this.#act(id, 'increment');
@@ -53,13 +53,33 @@ class CountersApi extends RestResource<CounterDto, CounterInput> {
 		return this.#act(id, 'decrement');
 	}
 
+	/** Число — к начальному, таймер — новый цикл на паузе. */
 	reset(id: string): Promise<CounterDto> {
 		return this.#act(id, 'reset');
 	}
 
-	/** Новый цикл с теми же параметрами (только у закончившегося таймера). */
-	restart(id: string): Promise<CounterDto> {
-		return this.#act(id, 'restart');
+	/** «Стоп»: таймер на паузу. */
+	pause(id: string): Promise<CounterDto> {
+		return this.#act(id, 'pause');
+	}
+
+	/** «Старт»: продолжить после паузы или новый цикл с теми же параметрами после окончания. */
+	start(id: string): Promise<CounterDto> {
+		return this.#act(id, 'start');
+	}
+
+	/** Завершить наступивший цикл сразу, не дожидаясь воркера; не наступил — без изменений. */
+	finish(id: string): Promise<CounterDto> {
+		return this.#act(id, 'finish');
+	}
+
+	/** То же для всех наступивших циклов; ответ — изменённые счётчики (они же — в кеш). */
+	async finishDue(): Promise<CounterDto[]> {
+		const counters = await this.http.request<CounterDto[]>(`${this.path}/finish-due`, {
+			method: 'POST',
+		});
+		for (const counter of counters) this.cacheItem(counter);
+		return counters;
 	}
 
 	async #act(id: string, action: CounterAction): Promise<CounterDto> {

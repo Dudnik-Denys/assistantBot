@@ -34,7 +34,7 @@
 		const { id, repeatSame } = notification.counter;
 		if (!repeatSame) return goto(resolve('/counters/[id]/edit', { id }));
 		busy = true;
-		if (await runWithFeedback(() => api.counters.restart(id))) finished = false;
+		if (await runWithFeedback(() => api.counters.start(id))) finished = false;
 		busy = false;
 	}
 </script>
@@ -47,7 +47,7 @@
 
 <div class="flex flex-1 flex-col gap-4">
 	<Panel>
-		<p class="text-lg font-semibold">⏱ {notification.counter.title}</p>
+		<p class="text-lg font-semibold wrap-break-word">⏱ {notification.counter.title}</p>
 		<p class="flex justify-between gap-2 text-sm">
 			<span class="text-tg-hint">Окончание цикла</span>
 			<span>{formatDateTime(notification.finishedAt, api.user.timeZone)}</span>

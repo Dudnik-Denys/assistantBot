@@ -3,4 +3,4 @@ import { counters } from '#lib/server/services.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = ({ locals, params }) =>
-	handleApi(async () => Response.json(await counters.restart(requireUser(locals).id, params.id)));
+	handleApi(async () => Response.json(await counters.start(requireUser(locals).id, params.id)));

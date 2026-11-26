@@ -1,7 +1,8 @@
 // Константы счётчиков. Файл без зависимостей: его импортирует и сервер (схема, таймер),
 // и Mini App (лимиты полей, время по умолчанию) — через вход `@tgab/core/constants/counters`.
 
-export const COUNTER_TITLE_MAX = 100;
+/** Длина названия: оно — заголовок экрана счётчика и должно помещаться в пару строк. */
+export const COUNTER_TITLE_MAX = 30;
 
 /**
  * Режим таймера: на срок (длительность от старта) или до даты. Значения совпадают с enum
@@ -12,15 +13,22 @@ export const COUNTER_TIMER_MODE = { Duration: 'DURATION', Date: 'DATE' } as cons
 export type CounterTimerMode = (typeof COUNTER_TIMER_MODE)[keyof typeof COUNTER_TIMER_MODE];
 
 /**
- * Состояние таймера: цикл идёт или закончился и ждёт «Продолжить». Значения совпадают
- * с enum `CounterTimerStatus` в схеме Prisma.
+ * Состояние таймера: цикл идёт, стоит на паузе («Стоп», «Сбросить») или закончился и ждёт
+ * «Старт». Значения совпадают с enum `CounterTimerStatus` в схеме Prisma.
  */
-export const COUNTER_TIMER_STATUS = { Running: 'RUNNING', Finished: 'FINISHED' } as const;
+export const COUNTER_TIMER_STATUS = {
+	Running: 'RUNNING',
+	Paused: 'PAUSED',
+	Finished: 'FINISHED',
+} as const;
 
 export type CounterTimerStatus = (typeof COUNTER_TIMER_STATUS)[keyof typeof COUNTER_TIMER_STATUS];
 
 /** Текст ошибки: счётчик без названия. */
 export const COUNTER_TITLE_REQUIRED_MESSAGE = 'Укажите название';
+
+/** Текст ошибки: название длиннее `COUNTER_TITLE_MAX`. */
+export const COUNTER_TITLE_TOO_LONG_MESSAGE = `Название — не длиннее ${COUNTER_TITLE_MAX} символов`;
 
 /** Число нового счётчика и число после «Сбросить». */
 export const COUNTER_INITIAL_VALUE = 0;
@@ -51,12 +59,24 @@ export const COUNTER_DURATION_REQUIRED_MESSAGE = 'Укажите срок бол
 export const COUNTER_TARGET_PASSED_MESSAGE =
 	'Время окончания уже прошло — выберите время в будущем';
 
-/** Текст ошибки: «Продолжить» без «тех же параметров» — нужен новый срок или дата. */
+/** Текст ошибки: таймер на срок со своим стартом, но дата и время старта не указаны. */
+export const COUNTER_START_REQUIRED_MESSAGE = 'Укажите дату и время старта';
+
+/** Текст ошибки: таймер до даты, но дата или время окончания не указаны. */
+export const COUNTER_TARGET_REQUIRED_MESSAGE = 'Укажите дату и время окончания';
+
+/** Текст ошибки: «Старт» без «тех же параметров» — нужен новый срок или дата. */
 export const COUNTER_RESTART_NEEDS_PARAMS_MESSAGE =
 	'Задайте новую дату или срок в настройках счётчика';
 
-/** Текст ошибки: «Продолжить» у счётчика, цикл которого не закончился. */
-export const COUNTER_NOT_FINISHED_MESSAGE = 'Цикл счётчика ещё не закончился';
+/** Текст ошибки: «Старт» у счётчика без таймера. */
+export const COUNTER_NO_TIMER_MESSAGE = 'У счётчика нет таймера';
+
+/** Текст ошибки: «Старт» у таймера, который уже идёт. */
+export const COUNTER_ALREADY_RUNNING_MESSAGE = 'Таймер счётчика уже идёт';
+
+/** Текст ошибки: «Стоп» у таймера, который не идёт (на паузе, закончился или таймера нет). */
+export const COUNTER_NOT_RUNNING_MESSAGE = 'Таймер счётчика сейчас не идёт';
 
 /** Сколько наступивших счётчиков воркер берёт за один проход (каждый — в своей транзакции). */
 export const COUNTER_DUE_BATCH_SIZE = 50;

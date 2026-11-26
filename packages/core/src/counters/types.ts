@@ -9,8 +9,12 @@ interface CounterTimerDto {
 	/** Начало и конец текущего цикла. */
 	startAt: string;
 	targetAt: string;
-	/** RUNNING — цикл идёт, FINISHED — закончился и ждёт «Продолжить». */
+	/** RUNNING — цикл идёт, PAUSED — на паузе, FINISHED — закончился и ждёт «Старт». */
 	status: CounterTimerStatus;
+	/** Когда поставлен на паузу (только у PAUSED): отсчёт на экране замирает на этом моменте. */
+	pausedAt: string | null;
+	/** Старт цикла на срок задан вручную; false — старт в момент сохранения настроек. */
+	customStart: boolean;
 }
 
 /** Счётчик в ответе API: даты — ISO-строки. */
@@ -29,6 +33,8 @@ export interface CounterDto {
 	repeatSame: boolean;
 	autoRestart: boolean;
 	notify: boolean;
+	/** Скрыть кнопки «Старт» и «Стоп» (у таймера на паузе «Старт» видна всегда). */
+	startStopHidden: boolean;
 	createdAt: string;
 	updatedAt: string;
 }

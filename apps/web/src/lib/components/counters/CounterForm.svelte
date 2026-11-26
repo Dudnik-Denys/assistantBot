@@ -9,14 +9,17 @@
 	import { api, type CounterDto } from '#lib/api.ts';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
 	import Button from '#lib/components/ui/buttons/Button.svelte';
+	import DateField from '#lib/components/ui/forms/DateField.svelte';
 	import NumberField from '#lib/components/ui/forms/NumberField.svelte';
 	import SegmentedControl from '#lib/components/ui/forms/SegmentedControl.svelte';
 	import Switch from '#lib/components/ui/forms/Switch.svelte';
 	import TextField from '#lib/components/ui/forms/TextField.svelte';
+	import TimeField from '#lib/components/ui/forms/TimeField.svelte';
 	import ActionBar from '#lib/components/ui/layout/ActionBar.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
 	import { COUNTER_DURATION_FIELDS, COUNTER_TIMER_MODES } from '#lib/constants/counters.ts';
+	import { isFinished } from '#lib/counters.ts';
 	import { errorMessage } from '#lib/errors.ts';
 	import { focusField } from '#lib/keyboard.ts';
 	import { CounterFormState } from '#lib/reactive/counter-form.svelte.ts';
@@ -26,7 +29,8 @@
 	 * Настройки счётчика: название, таймер (без таймера, на срок, до даты), ручное управление,
 	 * показ счёта, повтор и уведомления. Состояние и проверки — `CounterFormState`.
 	 * Сохраняется кнопкой: с автосохранением таймер перезапускался бы на каждом
-	 * промежуточном вводе даты или срока.
+	 * промежуточном вводе даты или срока. Кнопка — последний элемент формы, а не
+	 * панель у низа окна: прилипшая, она лежала поверх полей.
 	 */
 	interface Props {
 		/** Счётчик для изменения; нет — новый. */
@@ -43,8 +47,14 @@
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
 
+	/** Идущий (или на паузе) таймер с новыми параметрами начнётся заново — спросить. */
+	async function confirmTimerRestart(): Promise<boolean> {
+		if (!initial?.timer || isFinished(initial) || !form.timerDirty) return true;
+		return confirmDialog('Таймер начнётся заново, число циклов сохранится. Сохранить?');
+	}
+
 	async function save() {
-		if (form.problem) return;
+		if (form.problem || !(await confirmTimerRestart())) return;
 		saving = true;
 		saveError = null;
 		try {
@@ -90,7 +100,7 @@
 			label="Название"
 			bind:value={form.title}
 			maxlength={COUNTER_TITLE_MAX}
-			placeholder="Например, «Без сахара»"
+			placeholder="Название"
 		/>
 	</Panel>
 
@@ -113,23 +123,47 @@
 						/>
 					{/each}
 				</div>
+				<Switch
+					label="Старт — текущее время"
+					description="Цикл начнётся в момент сохранения"
+					checked={!form.customStart}
+					onchange={(checked) => (form.customStart = !checked)}
+				/>
 				<div class="grid grid-cols-2 gap-2">
-					<TextField label="Начало, дата" type="date" bind:value={form.startDate} required />
-					<TextField label="Время" type="time" bind:value={form.startTime} required />
+					<DateField
+						label="Начало, дата"
+						bind:value={form.startDate}
+						disabled={!form.customStart}
+						required
+					/>
+					<TimeField
+						label="Время"
+						bind:value={form.startTime}
+						disabled={!form.customStart}
+						required
+					/>
 				</div>
 			{:else if form.mode === COUNTER_TIMER_MODE.Date}
 				<div class="grid grid-cols-2 gap-2">
-					<TextField
+					<DateField
 						label="Окончание, дата"
-						type="date"
 						min={form.today}
 						bind:value={form.targetDate}
 						required
 					/>
-					<TextField label="Время" type="time" bind:value={form.targetTime} required />
+					<TimeField label="Время" bind:value={form.targetTime} required />
 				</div>
 			{:else}
 				<p class="text-sm text-tg-hint">Счётчик без таймера — только ручной: − число +</p>
+			{/if}
+
+			{#if form.hasTimer}
+				<Switch
+					label="Кнопки «Старт» и «Стоп»"
+					description="Пауза и продолжение на экране счётчика"
+					checked={!form.startStopHidden}
+					onchange={(checked) => (form.startStopHidden = !checked)}
+				/>
 			{/if}
 		</Panel>
 	</section>
@@ -165,20 +199,21 @@
 		<section>
 			<SectionTitle>Окончание цикла</SectionTitle>
 			<Panel>
-				<Switch
-					label="Продолжать с теми же параметрами"
-					description={form.mode === COUNTER_TIMER_MODE.Date
-						? 'Следующий цикл той же длины, без выбора новой даты'
-						: 'Следующий цикл на тот же срок'}
-					bind:checked={form.repeatSame}
-				/>
-				<Switch
-					label="Продолжать автоматически"
-					description="Новый цикл начнётся сразу после окончания"
-					checked={form.repeatSame && form.autoRestart}
-					disabled={!form.repeatSame}
-					onchange={(checked) => (form.autoRestart = checked)}
-				/>
+				<!-- до даты продолжения нет: следующий цикл вёл бы к дате, которую не выбирали -->
+				{#if form.mode === COUNTER_TIMER_MODE.Duration}
+					<Switch
+						label="Продолжать с теми же параметрами"
+						description="Следующий цикл на тот же срок"
+						bind:checked={form.repeatSame}
+					/>
+					<Switch
+						label="Продолжать автоматически"
+						description="Новый цикл начнётся сразу после окончания"
+						checked={form.repeatSame && form.autoRestart}
+						disabled={!form.repeatSame}
+						onchange={(checked) => (form.autoRestart = checked)}
+					/>
+				{/if}
 				<Switch
 					label="Уведомлять"
 					description="Сообщение в боте и в разделе «Напоминания»"
@@ -187,7 +222,6 @@
 			</Panel>
 		</section>
 	{/if}
-
 	<p class="min-h-5 text-sm" role="alert">
 		{#if saveError}
 			<span class="text-tg-destructive">{saveError}</span>
@@ -196,7 +230,8 @@
 		{/if}
 	</p>
 
-	<ActionBar class="mt-auto">
+	<!-- static: не прилипает к низу окна, стоит после всех настроек -->
+	<ActionBar class="static mt-auto">
 		<Button type="submit" class="flex-1" disabled={saving || form.problem !== null}>
 			{initial ? 'Сохранить' : 'Создать'}
 		</Button>

@@ -4,7 +4,7 @@
 	import SwipeDeleteButton from '#lib/components/ui/buttons/SwipeDeleteButton.svelte';
 	import Card from '#lib/components/ui/layout/Card.svelte';
 	import SwipeActions from '#lib/components/ui/layout/SwipeActions.svelte';
-	import { isFinished, isValueVisible } from '#lib/counters.ts';
+	import { isFinished, isPaused, isValueVisible, timerMoment } from '#lib/counters.ts';
 	import { formatRemaining } from '#lib/utils/dates.ts';
 
 	/** Счётчик в списке: название, состояние таймера и число; свайп влево — «Удалить». */
@@ -21,7 +21,10 @@
 	const status = $derived.by(() => {
 		if (!counter.timer) return 'Ручной счётчик';
 		if (isFinished(counter)) return 'Цикл завершён';
-		return `Осталось ${formatRemaining(new Date(counter.timer.targetAt).getTime() - now)}`;
+		const remaining = formatRemaining(
+			new Date(counter.timer.targetAt).getTime() - timerMoment(counter, now),
+		);
+		return isPaused(counter) ? `На паузе · осталось ${remaining}` : `Осталось ${remaining}`;
 	});
 </script>
 

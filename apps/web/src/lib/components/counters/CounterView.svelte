@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { goto, invalidate } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { untrack } from 'svelte';
 	import { api, type CounterDto } from '#lib/api.ts';
 	import CounterStepper from '#lib/components/counters/CounterStepper.svelte';
 	import Button from '#lib/components/ui/buttons/Button.svelte';
@@ -8,8 +9,16 @@
 	import ActionBar from '#lib/components/ui/layout/ActionBar.svelte';
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
-	import { COUNTER_DEPENDENCY, COUNTER_REFRESH_DELAY_MS } from '#lib/constants/counters.ts';
-	import { isFinished, isRunning, isValueVisible, removeCounter } from '#lib/counters.ts';
+	import { COUNTER_REFRESH_DELAY_MS } from '#lib/constants/counters.ts';
+	import {
+		isDue,
+		isFinished,
+		isPaused,
+		isRunning,
+		isValueVisible,
+		removeCounter,
+		timerMoment,
+	} from '#lib/counters.ts';
 	import { runWithFeedback } from '#lib/feedback.ts';
 	import { Clock } from '#lib/reactive/clock.svelte.ts';
 	import { confirmDialog } from '#lib/telegram.ts';
@@ -17,7 +26,9 @@
 
 	/**
 	 * Экран счётчика: круговой прогресс цикла с обратным отсчётом (если есть таймер),
-	 * «− число +» и «Сбросить» (ручное управление), «Продолжить» после окончания цикла.
+	 * «− число +» и «Сбросить» (ручное управление), «Стоп» и «Старт» (пауза и продолжение,
+	 * новый цикл после окончания; можно скрыть в настройках — тогда после окончания «Продолжить»,
+	 * а у таймера на паузе «Старт» остаётся).
 	 */
 	interface Props {
 		counter: CounterDto;
@@ -32,14 +43,27 @@
 	const clock = new Clock();
 	const timeZone = api.user.timeZone;
 	const timer = $derived(current.timer);
-	const remainingMs = $derived(timer ? new Date(timer.targetAt).getTime() - clock.now : 0);
-	/** Время цикла вышло, но сервер ещё не обработал окончание (воркер — раз в минуту). */
-	const awaitingWorker = $derived(isRunning(current) && remainingMs <= 0);
+	/** На паузе отсчёт стоит на её начале. */
+	const moment = $derived(timerMoment(current, clock.now));
+	const remainingMs = $derived(timer ? new Date(timer.targetAt).getTime() - moment : 0);
+	/** Время цикла вышло, а сервер ещё отдаёт его идущим — завершаем сами (`finish`). */
+	const awaitingWorker = $derived(isDue(current, clock.now));
 
+	// Отсчёт дошёл до нуля — сразу завершить цикл на сервере, не дожидаясь воркера (он — раз
+	// в минуту); не вышло (цикл в этот момент обрабатывал воркер, нет связи) — повторить.
 	$effect(() => {
 		if (!awaitingWorker) return;
-		const refresh = setInterval(() => invalidate(COUNTER_DEPENDENCY), COUNTER_REFRESH_DELAY_MS);
-		return () => clearInterval(refresh);
+		// untrack: ответ `finish` заменяет `current` — эффект не должен перезапускаться от этого,
+		// иначе, пока цикл не завершён, запросы шли бы друг за другом без паузы.
+		const id = untrack(() => current.id);
+		const finish = () =>
+			api.counters.finish(id).then(
+				(counter) => (current = counter),
+				() => {},
+			);
+		void finish();
+		const retry = setInterval(finish, COUNTER_REFRESH_DELAY_MS);
+		return () => clearInterval(retry);
 	});
 
 	async function act(action: (id: string) => Promise<CounterDto>) {
@@ -49,14 +73,20 @@
 		busy = false;
 	}
 
-	/** «Продолжить»: с теми же параметрами — сразу, иначе — в настройки за новой датой или сроком. */
+	/**
+	 * «Старт» после окончания цикла: с теми же параметрами — сразу, иначе — в настройки за новой
+	 * датой или сроком.
+	 */
 	function proceed() {
-		if (current.repeatSame) return act((id) => api.counters.restart(id));
+		if (current.repeatSame) return act((id) => api.counters.start(id));
 		return goto(resolve('/counters/[id]/edit', { id: current.id }));
 	}
 
 	async function reset() {
-		if (!(await confirmDialog(`Сбросить счёт «${current.title}»?`))) return;
+		const question = timer
+			? `Сбросить счёт и таймер «${current.title}»? Таймер встанет на паузу.`
+			: `Сбросить счёт «${current.title}»?`;
+		if (!(await confirmDialog(question))) return;
 		await act((id) => api.counters.reset(id));
 	}
 
@@ -67,6 +97,7 @@
 
 <PageHeader
 	title={current.title}
+	centered
 	onback={() => goto(resolve('/counters'))}
 	backLabel="К счётчикам"
 />
@@ -75,7 +106,7 @@
 	{#if timer}
 		<ProgressRing
 			class="mx-auto w-64 max-w-full"
-			progress={cycleProgress(timer.startAt, timer.targetAt, clock.now)}
+			progress={cycleProgress(timer.startAt, timer.targetAt, moment)}
 			label="Прошедшая часть цикла"
 		>
 			{#if isFinished(current)}
@@ -83,7 +114,7 @@
 			{:else}
 				<span class="text-3xl font-bold tabular-nums">{formatRemaining(remainingMs)}</span>
 				<span class="text-sm text-tg-hint">
-					{awaitingWorker ? 'Завершаем цикл…' : 'осталось'}
+					{awaitingWorker ? 'Завершаем цикл…' : isPaused(current) ? 'на паузе' : 'осталось'}
 				</span>
 			{/if}
 			{#if isValueVisible(current) && !current.manual}
@@ -102,7 +133,13 @@
 	{/if}
 
 	{#if isFinished(current)}
-		<Button disabled={busy} onclick={proceed}>Продолжить</Button>
+		<Button disabled={busy} onclick={proceed}>
+			{current.startStopHidden ? 'Продолжить' : 'Старт'}
+		</Button>
+	{:else if isPaused(current)}
+		<Button disabled={busy} onclick={() => act((id) => api.counters.start(id))}>Старт</Button>
+	{:else if isRunning(current) && !awaitingWorker && !current.startStopHidden}
+		<Button disabled={busy} onclick={() => act((id) => api.counters.pause(id))}>Стоп</Button>
 	{/if}
 
 	{#if timer}
@@ -124,13 +161,9 @@
 
 <ActionBar>
 	{#if current.manual}
-		<Button variant="secondary" class="flex-1" disabled={busy} onclick={reset}>Сбросить</Button>
+		<Button class="flex-1" disabled={busy} onclick={reset}>Сбросить</Button>
 	{/if}
-	<Button
-		variant="secondary"
-		class="flex-1"
-		onclick={() => goto(resolve('/counters/[id]/edit', { id: current.id }))}
-	>
+	<Button class="flex-1" onclick={() => goto(resolve('/counters/[id]/edit', { id: current.id }))}>
 		Изменить
 	</Button>
 	<Button variant="destructive" class="flex-1" onclick={remove}>Удалить</Button>
