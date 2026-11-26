@@ -21,9 +21,9 @@
 ## Схемы zod
 
 - zod-схема объявляется только в папке `schemas/` своего пакета — не в файле сервиса, роутера, env или теста. Внутри — папки модулей или групп (`schemas/notes/`, `schemas/common/`), файл — по теме схемы (`note-input.ts`, `list-query.ts`); в маленьком пакете без модулей — файл по теме прямо в `schemas/` (`apps/bot/src/schemas/env.ts`, `tests/schemas/env.ts`).
-- В файле схемы — только схемы и выведенные из них типы (`z.infer` / `z.input`). Константы — в `constants/`, интерфейсы DTO — в `types.ts` модуля, разбор и обработка ошибок (`safeParse`, `prettifyError`) — в коде, который схему использует. Env приложения разбирается одной общей функцией `parseEnv(схема, заголовок)` из `@tgab/core/env` (`env.ts` бота, `helpers/test-env.ts`): у приложения — только своя схема и заголовок сообщения.
+- В файле схемы — только схемы и выведенные из них типы (`z.infer` / `z.input`). Константы — в `constants/`, DTO — схемой ответа (`schemas/<модуль>/<сущность>-dto.ts`, тип выводится из неё), интерфейсы, которые из схем не выводятся, — в `types.ts` модуля, разбор и обработка ошибок (`safeParse`, `prettifyError`) — в коде, который схему использует. Env приложения разбирается одной общей функцией `parseEnv(схема, заголовок)` из `@tgab/core/env` (`env.ts` бота и воркера, `helpers/test-env.ts`): у приложения — только своя схема и заголовок сообщения.
 - Схема, нужная нескольким пакетам, — в `packages/core/src/schemas/`; приложения и тесты импортируют её из core, а не пишут свою.
-- Где лежат `schemas/`: core — `packages/core/src/schemas/`, бот — `apps/bot/src/schemas/`, Mini App — `apps/web/src/lib/schemas/` (схемы только для web: `api-error.ts`), тесты — `tests/schemas/`. Исключение — `apps/web/src/env.ts`: SvelteKit ищет его по этому пути; схемы внутри него собираются из `@tgab/core/env`.
+- Где лежат `schemas/`: core — `packages/core/src/schemas/`, бот — `apps/bot/src/schemas/`, воркер — `apps/worker/src/schemas/`, Mini App — `apps/web/src/lib/schemas/` (схемы только для web: `api-error.ts`), тесты — `tests/schemas/`. Исключение — `apps/web/src/env.ts`: SvelteKit ищет его по этому пути; схемы внутри него собираются из `@tgab/core/env`.
 
 ## ООП и паттерны
 

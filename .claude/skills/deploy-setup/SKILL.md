@@ -10,6 +10,8 @@ argument-hint: "[images | compose | caddy | ci | server | monitoring | backups]"
 
 Источник требований — `.claude/CLAUDE.md`, разделы «Хостинг», «Окружение», «Architecture». Ручная часть (сервер, домен, DNS, аккаунты) — в инструкции `~/Desktop/tgAssistantBot — настройка сервера.md`; первичная настройка сервера — `deploy/server-setup.sh`. Это делается один раз; регулярный выпуск — `/release`, бэкапы — `/backup`.
 
+> **Сначала — список «Перед запуском в продакшен» в CLAUDE.md («Хостинг»).** Решено (2026-11-27): Cloudflare для всего — Cloudflare Tunnel (`cloudflared` в compose) вместо Caddy и открытых портов. Разделы этого скилла про Caddy (шаг `caddy`, публикация `80`/`443`) устарели: перед работой переделай их под Tunnel вместе с пользователем, а не выполняй как есть. Там же — `/healthz`, сигналы «жив» бота и воркера и оповещение о повторяющихся ошибках воркера.
+
 ## 0. Решения до начала
 
 Спроси и зафиксируй (в `CLAUDE.md`, «Хостинг»), если ещё не решено:
@@ -23,7 +25,7 @@ argument-hint: "[images | compose | caddy | ci | server | monitoring | backups]"
 
 ## 1. Образы (`images`)
 
-- `apps/web/Dockerfile`, `apps/bot/Dockerfile` (позже `apps/worker/Dockerfile`): многоэтапная сборка на официальном образе Bun (версия — как в CI), `bun install --frozen-lockfile` по workspace, `prisma generate`, сборка web (`adapter-node`), запуск не от root, `NODE_ENV=production`. Контекст — корень монорепо; `.dockerignore` (без `node_modules`, `.env*`, `.git`, `tests`, `.claude`).
+- `apps/web/Dockerfile`, `apps/bot/Dockerfile`, `apps/worker/Dockerfile`: многоэтапная сборка на официальном образе Bun (версия — как в CI), `bun install --frozen-lockfile` по workspace, `prisma generate`, сборка web (`adapter-node`), запуск не от root, `NODE_ENV=production`. Контекст — корень монорепо; `.dockerignore` (без `node_modules`, `.env*`, `.git`, `tests`, `.claude`).
 - Образ миграций — `migrate`: `prisma migrate deploy` (можно на базе образа web/bot с другой командой).
 - Проверь сборку локально под amd64: `docker buildx build --platform linux/amd64 …` (CLAUDE.md, «Окружение»).
 - Эндпоинт здоровья web без авторизации (`/healthz` вне `/api/`, отвечает 200 без обращения к данным пользователей) — для Caddy, мониторинга и `/release`. Правило доступа к `/api/*` (`api.md`) не нарушается.

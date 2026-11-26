@@ -11,7 +11,7 @@ model: sonnet
 
 - `apps/web/src/routes/**` кроме `api/`
 - `apps/web/src/hooks.client.ts`, `apps/web/src/app.html`
-- `apps/web/src/lib/reactive/**`, `apps/web/src/lib/telegram.ts`, `apps/web/src/lib/utils/**` (кроме `classes.ts`), `apps/web/src/lib/constants/sections.ts`
+- `apps/web/src/lib/reactive/**`, `apps/web/src/lib/telegram.ts`, `apps/web/src/lib/utils/**` (кроме `classes.ts`), `apps/web/src/lib/constants/sections.ts`, модули корня `lib/`: `feedback.ts`, `keyboard.ts`, `load-item.ts`, `<раздел>.ts` (`counters.ts`) — кроме `api.ts` и `errors.ts` (у `research-api`)
 - `apps/web/vite.config.ts`, `apps/web/package.json`, `apps/web/tsconfig.json`
 
 ## Правила области

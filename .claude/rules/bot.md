@@ -17,7 +17,7 @@ paths:
 | `env.ts` | Разбор переменных окружения: `parseEnv(EnvSchema, заголовок)` из `@tgab/core/env`, схема — `schemas/env.ts`; при ошибке бот не стартует и перечисляет все проблемы. Общие схемы — из `@tgab/core/env`: `optionalEnv(…)` для необязательных (пустая строка = не задано), `TelegramIdSchema` для telegramId. Новая переменная — в схему и сразу в таблицу README |
 | `errors.ts` | `handleBotError` — единственное место, где разбираются ошибки (`GrammyError`, `HttpError`, остальные) |
 | `middlewares/` | Промежуточные обработчики для всех апдейтов: логирование (тип апдейта и команда — без текста сообщений: там личные данные), allowlist, в будущем ограничение частоты |
-| `routers/` | Обработчики: один файл — одна команда или один раздел (`commands/start.ts`, `counters.ts`). `routers/index.ts` — какие роутеры и в каком порядке подключаются |
+| `routers/` | Обработчики: один файл — одна команда или один раздел (`commands/start.ts`; раздел — например, будущий `counters.ts`, пока такого нет). `routers/index.ts` — какие роутеры и в каком порядке подключаются, `routers/deps.ts` — тип `RouterDeps` |
 | `keyboards/` | Функции, которые строят клавиатуры (`InlineKeyboard`, `Keyboard`). Данные для кнопок получают аргументами |
 | `schemas/` | zod-схемы только для бота (`env.ts` — `EnvSchema`, позже — данные кнопок и ввода); общие с Mini App — в `packages/core/src/schemas/` (`code.md`, «Схемы zod») |
 | `constants/` | Значения без логики: имена команд (`BotCommand`) и меню (`COMMAND_MENU`), префиксы данных кнопок. Объекты `as const`, не `enum` |
@@ -34,8 +34,8 @@ paths:
 ## Как добавить команду или раздел
 
 1. Имя команды — в `BotCommand`; видимую пользователю — ещё и в `COMMAND_MENU` (описание по-русски).
-2. Роутер — `routers/commands/<команда>.ts` для одиночной команды или `routers/<раздел>.ts` для раздела с несколькими командами и кнопками (например, `counters.ts`).
-3. Нужен сервис из `packages/core` — добавь его в `RouterDeps` (`routers/index.ts`) и `BotDeps`, создай в `index.ts` и передай в `createBot`; роутер делай фабрикой `createXRouter(deps)`.
+2. Роутер — `routers/commands/<команда>.ts` для одиночной команды или `routers/<раздел>.ts` для раздела с несколькими командами и кнопками (пример — будущий раздел счётчиков `counters.ts`: в боте его пока нет, это образец структуры, а не существующий файл).
+3. Нужен сервис из `packages/core` — добавь его в `RouterDeps` (`routers/deps.ts` — отдельно от `routers/index.ts`, чтобы роутеры и `index.ts` не импортировали друг друга) и `BotDeps`, создай в `index.ts` и передай в `createBot`; роутер делай фабрикой `createXRouter(deps)`.
 4. Подключи роутер в `createPrivateRouter` (или в `publicRouter`, если команда нужна до входа).
 5. Клавиатуры раздела — `keyboards/<раздел>.ts`, префиксы данных кнопок — в `constants/`.
 6. `bun run format`, `bun run lint`, `bun run check`; бота сам не запускай (он читает `.env`) — дай пользователю список ручных проверок в Telegram.

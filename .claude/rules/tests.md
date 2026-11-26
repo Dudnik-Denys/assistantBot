@@ -25,9 +25,10 @@ tests/
                             # test-env.ts (env тестов через parseEnv), commands.ts (spawnCommand),
                             # fake-fetch.ts (createFakeFetch — подменный fetch для кода Mini App)
   schemas/                  # zod-схемы тестов: env.ts (TestEnvSchema), cli.ts (TestTypeSchema),
-                            # fake-api.ts (тело запроса к фейковому API в unit/http)
+                            # fake-api.ts (тело запроса и ответ фейкового API в unit/http),
+                            # parse-env.ts (окружения-образцы для unit/env)
   constants/                # константы тестов: test-database.ts (сервис, порт, имя БД), paths.ts,
-                            # http.ts (API_BASE_URL, FAKE_ORIGIN)
+                            # http.ts (API_BASE_URL, FAKE_ORIGIN), env.ts (PORT_MAX)
   run-tests.ts              # запускалка для `bun run test:<тип>`
 ```
 
@@ -44,7 +45,7 @@ tests/
 ## Что каким тестом проверять
 
 - **unit** — чистые функции и схемы: валидные и невалидные данные, граничные значения (пустая строка, лимит, лимит + 1), даты и часовые пояса (переход на летнее время, конец месяца, 29 февраля).
-- **integration** — каждый метод сервиса: успешный путь, чужие данные (`NotFoundError`, а не доступ к чужой записи), неверный id, некорректный ввод (`ZodError`), запросы с сырым SQL (спецсимволы и попытка SQL-инъекции в поиске).
+- **integration** — каждый метод сервиса: успешный путь, чужие данные (`NotFoundError`, а не доступ к чужой записи), неверный id, некорректный ввод (`ValidationError` — сервисы разбирают ввод `parseInput`), запросы с сырым SQL (спецсимволы и попытка SQL-инъекции в поиске).
 - Prisma не подменяется (mock): integration-тест ходит в настоящую тестовую БД, иначе проверяется подмена, а не запрос.
 - Контекст grammY в тестах бота — простой объект только с теми полями, которые читает проверяемый код (`from`, `chat`, `reply`), приведённый к `BotContext` с комментарием: настоящий `Context` отправил бы ответ в Telegram.
 - Сеть в unit-тестах Mini App — через `createFakeFetch` (`helpers/fake-fetch.ts`): передаётся как `fetchFn` в `HttpClient.request` или подменяет глобальный `fetch` (`spyOn(globalThis, 'fetch')`, в `afterEach` — `mockRestore()`).

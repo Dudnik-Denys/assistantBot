@@ -49,8 +49,8 @@ argument-hint: "<модуль, например: счётчики>"
 | Нужно модулю | Что использовать | Образец |
 |---|---|---|
 | Экран списка | `<Screen fit>` + `PageHeader` (поиск — в его `children`) + `ScrollArea` со списком и сообщениями (`Message class="flex-none"`); правило — `components.md`, «Экран с прокруткой» | `routes/notes/+page.svelte` |
-| Список с поиском | `DebouncedSearch` (`lib/reactive/debounced-search.svelte.ts`): задержка ввода, отмена устаревших запросов, повторы при обрыве связи (`reconnecting`), `initialItems` | `routes/notes/+page.svelte` |
-| Список без поиска | тот же `DebouncedSearch` с пустым запросом (`(_, signal) => api.x.list('', signal)`) — загрузка, повторы связи, кеш; фильтр по вкладкам — `$derived` над `items` + `SegmentedControl` в шапке | `routes/counters/+page.svelte` |
+| Список с поиском | `DebouncedSearch` (`lib/reactive/debounced-search.svelte.ts`, поверх `ListLoader`): задержка ввода, отмена устаревших запросов, повторы при обрыве связи (`reconnecting`), `initialItems` | `routes/notes/+page.svelte` |
+| Список без поиска | `ListLoader` (`lib/reactive/list-loader.svelte.ts`): `new ListLoader((signal) => api.x.list('', signal), { initialItems })` — загрузка, повторы связи, кеш; фильтр по вкладкам — функция раздела (`filterCounters`) в `$derived` + `SegmentedControl` в шапке | `routes/counters/+page.svelte` |
 | Мгновенный показ списка при возврате | кеш `RestResource.cachedList` → `initialItems` | `routes/notes/+page.svelte` |
 | Состояния экрана | `ui/feedback/ListState` (ошибка, загрузка, «Нет связи…», пусто) — экран передаёт только snippets `empty` и `children` | `routes/notes/+page.svelte` |
 | Удаление свайпом | `ui/layout/SwipeActions` + `ui/buttons/SwipeDeleteButton`; подтверждение, вибрация и ошибка — `removeWithConfirm` из `lib/feedback.ts` | `NoteCard.svelte`, `removeNote` в списке заметок |
@@ -71,7 +71,7 @@ argument-hint: "<модуль, например: счётчики>"
 ### Всегда
 
 1. **Модель и миграция** — `templates/prisma-model.prisma.tpl` → `packages/db/prisma/schema.prisma`, обратная связь в `User`. Миграция — по `db.md`: при запущенном Postgres `bun run db:migrate -- --name add___entities__` (с подтверждения пользователя), без него — `prisma migrate diff`; ручной SQL помечается комментарием.
-2. **Константы, схема, DTO** (раскладка — `core.md`, «Где что лежит»): `templates/core-constants.ts.tpl` → `packages/core/src/constants/__entities__.ts` и вход `./constants/__entities__` в `packages/core/package.json`; `templates/core-schema.ts.tpl` → `packages/core/src/schemas/__entities__/__entity__-input.ts`; `templates/core-types.ts.tpl` → `packages/core/src/__entities__/types.ts`.
+2. **Константы, схема, DTO** (раскладка — `core.md`, «Где что лежит»): `templates/core-constants.ts.tpl` → `packages/core/src/constants/__entities__.ts` и вход `./constants/__entities__` в `packages/core/package.json`; `templates/core-schema.ts.tpl` → `packages/core/src/schemas/__entities__/__entity__-input.ts`; `templates/core-dto.ts.tpl` → `packages/core/src/schemas/__entities__/__entity__-dto.ts` и строка `export { __Entity__DtoSchema } …` во входе `packages/core/src/schemas/dto.ts` (`@tgab/core/dto`); `templates/core-types.ts.tpl` → `packages/core/src/__entities__/types.ts`.
 3. **Сервис** — `templates/core-service.ts.tpl` → `packages/core/src/__entities__/service.ts`. `assertId` и `ListQuerySchema` — общие, свои не пиши. В `packages/core/src/index.ts` — именованные экспорты только нужного приложениям (`create__Entities__Service`, `__Entity__Dto`, `__Entity__Input`).
 4. **Регистрация сервиса** — `apps/web/src/lib/server/services.ts`: `export const __entities__ = create__Entities__Service(db);`
 5. **API** — `templates/api-collection.server.ts.tpl` → `apps/web/src/routes/api/__entities__/+server.ts`, `templates/api-item.server.ts.tpl` → `…/api/__entities__/[id]/+server.ts`. Лишние методы (например, `GET` элемента, если нет экрана элемента) не создавай.

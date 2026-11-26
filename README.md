@@ -76,8 +76,8 @@ MINI_APP_URL=
 ## Команды
 
 ```bash
-./run.sh                # всё сразу: Docker, БД, зависимости, миграции, web + bot
-bun run dev             # все приложения apps/* (web + bot) без подготовки БД
+./run.sh                # всё сразу: Docker, БД, зависимости, миграции, web + bot + worker
+bun run dev             # все приложения apps/* (web + bot + worker) без подготовки БД
 bun run db:deploy       # применить миграции
 bun run check           # проверка типов
 bun run test:unit [модуль]         # unit-тесты (без БД)
