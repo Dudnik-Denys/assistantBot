@@ -6,6 +6,7 @@
 	import Message from '#lib/components/ui/feedback/Message.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
 	import { HttpStatus } from '#lib/constants/http-status.ts';
+	import { TestId } from '#lib/constants/test-ids.ts';
 
 	/**
 	 * Ошибки load и неизвестные адреса. «Назад» ведёт в главное меню.
@@ -21,5 +22,12 @@
 
 <Screen>
 	<BackButton onback={() => goto(resolve('/'))} label="В меню" />
-	<Message {title} {caption} text={page.error?.message} tone="error" level={1} />
+	<Message
+		{title}
+		{caption}
+		text={page.error?.message}
+		tone="error"
+		level={1}
+		data-testid={TestId.ErrorPage.Message}
+	/>
 </Screen>

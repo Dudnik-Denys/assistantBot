@@ -13,6 +13,8 @@
 		"check": "bun --filter '*' check",
 		"test:unit": "bun tests/run-tests.ts unit",
 		"test:integration": "bun tests/run-tests.ts integration",
+		"test:e2e": "bun tests/run-tests.ts e2e",
+		"test:e2e:report": "bun run --cwd tests e2e:report",
 		"db:generate": "bun --filter @tgab/db generate",
 		"db:migrate": "bun --filter @tgab/db migrate:dev",
 		"db:deploy": "bun --filter @tgab/db migrate:deploy",

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { HTMLAttributes } from 'svelte/elements';
 	import type { ClassProp } from '#lib/types/props.ts';
 	import { mergeClasses } from '#lib/utils/classes.ts';
 
@@ -7,7 +8,10 @@
 	 * Состояние экрана вместо содержимого: загрузка, пусто, ничего не найдено, ошибка.
 	 * По умолчанию — по центру свободного места; `class="flex-none"` — сразу под шапкой.
 	 */
-	interface Props extends ClassProp {
+	interface Props
+		extends
+			ClassProp,
+			Omit<HTMLAttributes<HTMLDivElement>, 'class' | 'children' | 'title' | 'role'> {
 		title: string;
 		/** Простой текст под заголовком; пустой не выводится. */
 		text?: string;
@@ -32,6 +36,7 @@
 		icon,
 		children,
 		class: className,
+		...rest
 	}: Props = $props();
 </script>
 
@@ -41,6 +46,7 @@
 		className,
 	)}
 	role={tone === 'error' ? 'alert' : 'status'}
+	{...rest}
 >
 	{#if icon}
 		<div class="mb-2">{@render icon()}</div>

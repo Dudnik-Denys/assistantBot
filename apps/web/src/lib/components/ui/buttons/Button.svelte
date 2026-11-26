@@ -26,7 +26,7 @@
 	class={mergeClasses(
 		'flex items-center justify-center',
 		'h-12 rounded-xl px-4 text-base font-semibold',
-		'transition active:scale-[0.98] active:opacity-80',
+		'transition active:scale-[0.98] active:opacity-80 motion-reduce:transition-none',
 		'disabled:opacity-40 disabled:active:scale-100',
 		variants[variant],
 		className,

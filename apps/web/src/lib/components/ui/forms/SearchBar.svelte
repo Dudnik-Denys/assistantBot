@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { UiText } from '#lib/constants/ui-texts.ts';
 
 	/** Поле поиска со значком и кнопкой очистки. */
@@ -41,6 +42,7 @@
 		{placeholder}
 		autocomplete="off"
 		enterkeyhint="search"
+		data-testid={TestId.Common.Search}
 		class={[
 			'h-10 w-full rounded-xl pr-3 pl-9 text-base',
 			'bg-surface text-tg-text outline-none placeholder:text-tg-hint',
@@ -58,6 +60,7 @@
 				'bg-tg-hint/30 text-tg-bg',
 			]}
 			aria-label={clearLabel}
+			data-testid={TestId.Common.SearchClear}
 			onclick={() => (value = '')}
 		>
 			✕

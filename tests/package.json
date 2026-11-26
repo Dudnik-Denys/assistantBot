@@ -4,7 +4,8 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"check": "tsc -p tsconfig.json"
+		"check": "tsc -p tsconfig.json",
+		"e2e:report": "allure generate allure-results --output allure-report --clean --open --host 127.0.0.1"
 	},
 	"dependencies": {
 		"@tgab/core": "workspace:*",
@@ -12,7 +13,11 @@
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {
+		"@playwright/test": "1.65.0",
 		"@types/bun": "1.4.4",
+		"allure": "3.33.0",
+		"allure-js-commons": "3.14.0",
+		"allure-playwright": "3.14.0",
 		"bullmq": "^6.7.8",
 		"grammy": "^1.46.0",
 		"typescript": "^6.0.3"

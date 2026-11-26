@@ -10,6 +10,7 @@
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
 	import ScrollArea from '#lib/components/ui/layout/ScrollArea.svelte';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { removeWithConfirm } from '#lib/feedback.ts';
 	import { holdKeyboard } from '#lib/keyboard.ts';
 	import { DebouncedSearch } from '#lib/reactive/debounced-search.svelte.ts';
@@ -37,12 +38,18 @@
 		<ListState items={search.items} error={search.error} reconnecting={search.reconnecting}>
 			{#snippet empty()}
 				{#if search.hasQuery}
-					<Message class="flex-none" title="Ничего не найдено" text="Попробуйте другой запрос" />
+					<Message
+						class="flex-none"
+						title="Ничего не найдено"
+						text="Попробуйте другой запрос"
+						data-testid={TestId.NotesList.NotFound}
+					/>
 				{:else}
 					<Message
 						class="flex-none"
 						title="У вас пока нет ни одной заметки"
 						text="Нажмите «+», чтобы создать первую"
+						data-testid={TestId.NotesList.Empty}
 					/>
 				{/if}
 			{/snippet}

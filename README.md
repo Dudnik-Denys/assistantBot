@@ -26,7 +26,7 @@ apps/bot       # бот на grammY
 apps/worker    # фоновые задачи на BullMQ: циклы счётчиков, уведомления в Telegram
 packages/core  # бизнес-логика и типы
 packages/db    # схема Prisma, миграции, клиент
-tests          # тесты всех пакетов: unit/, integration/ (позже e2e/)
+tests          # тесты всех пакетов: unit/, integration/, e2e/
 ```
 
 ## Быстрый старт
@@ -82,6 +82,8 @@ bun run db:deploy       # применить миграции
 bun run check           # проверка типов
 bun run test:unit [модуль]         # unit-тесты (без БД)
 bun run test:integration [модуль]  # интеграционные тесты (нужен Docker: поднимут временный Postgres)
+bun run test:e2e [модуль]          # e2e Mini App в Playwright (WebKit, три iPhone; Docker; не в CI)
+bun run test:e2e:report            # открыть Allure-отчёт последнего прогона e2e
 bun run lint            # линтер и формат (Biome + Prettier для .svelte)
 bun run format          # автоисправление формата
 ```

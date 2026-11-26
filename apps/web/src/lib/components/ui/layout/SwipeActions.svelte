@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { SwipeReveal } from '#lib/reactive/swipe-reveal.svelte.ts';
 
 	/**
@@ -24,12 +25,12 @@
 	);
 </script>
 
-<div class="overflow-hidden rounded-2xl" bind:this={row}>
+<div class="overflow-hidden rounded-2xl" bind:this={row} data-testid={TestId.Common.SwipeRow}>
 	<div
 		class={[
 			'flex touch-pan-y',
 			'translate-x-(--swipe-offset)',
-			!swipe.dragging && 'transition-transform',
+			!swipe.dragging && 'transition-transform motion-reduce:transition-none',
 		]}
 		style:--swipe-offset="{swipe.offset}px"
 	>

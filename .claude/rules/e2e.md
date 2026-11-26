@@ -5,7 +5,7 @@ paths:
 
 # e2e-тесты (Playwright)
 
-Правила unit- и интеграционных тестов — в `tests.md`; здесь — только сценарии в Mini App через браузер. Покрыть модуль e2e-тестами по этим правилам — скилл `/cover-module <модуль>`. Playwright в проект ещё не подключён: правила готовы заранее, при подключении — `tests/playwright.config.ts` (см. «Конфиг»), тип `e2e` в `tests/run-tests.ts` (`bun run test:e2e [модуль]`), правило Biome `noFloatingPromises` (см. «Гонки»), `motion-reduce:` у анимированных компонентов (см. «Конфиг») и строка в README/CLAUDE.md.
+Правила unit- и интеграционных тестов — в `tests.md`; здесь — только сценарии в Mini App через браузер. Покрыть модуль e2e-тестами по этим правилам — скилл `/cover-module <модуль>`. Конфиг — `tests/playwright.config.ts`, константы — `tests/constants/e2e.ts`; правило Biome `noFloatingPromises` включено для `tests/e2e/**` (`biome.json`, `overrides`).
 
 ## Когда и как запускаются
 
@@ -16,9 +16,27 @@ paths:
 - Наборы — тегами Playwright: `test('…', { tag: '@smoke' }, …)`, запуск части — `bun run test:e2e --grep @smoke`. Теги: `@smoke` — основной путь каждого модуля (создать → открыть → удалить); остальное — без тега. Новый тег — сюда же, с назначением.
 - Отчёт — Allure: репортер `allure-playwright` пишет результаты в `tests/allure-results/`, отчёт собирается и открывается командой `bun run test:e2e:report` (обе папки — в `.gitignore`). Шаги `step()` попадают в Allure как шаги с номерами; модуль теста — метка `feature` (ставится в фикстурах по папке модуля, вручную в тестах не пишется). Встроенный HTML-отчёт Playwright с трассировкой остаётся для отладки упавшего теста.
 
+## Запуск и отчёт
+
+```
+bun run test:e2e                         # все e2e на трёх устройствах (поднимет тестовую БД и web)
+bun run test:e2e notes                   # только tests/e2e/notes
+bun run test:e2e notes --project small   # только на маленьком iPhone
+bun run test:e2e --grep @smoke           # только основной путь каждого модуля
+bun run test:e2e notes --repeat-each=3   # поиск нестабильности (гонок)
+bun run test:e2e notes --headed          # с окном браузера; --debug — пошагово в инспекторе
+bun run test:e2e:report                  # Allure-отчёт последнего прогона (откроется в браузере)
+```
+
+- Нужен Docker: запускалка (`tests/run-tests.ts`) поднимает `postgres-test` и применяет миграции, как для интеграционных тестов, затем — Playwright. Web-сервер тестов (`vite dev` на порту `E2E_PORT` = 5183) Playwright запускает и останавливает сам; `bun run dev` для разработки на 5173 ему не мешает.
+- Web тестов не читает `.env`: каталог `.env` подменяется (`TGAB_ENV_DIR`), а `DATABASE_URL` (тестовая БД) и `DEV_TELEGRAM_ID` (`E2E_TELEGRAM_ID`) передаются в `webServer.env`. Вход — по `DEV_TELEGRAM_ID`, без Telegram и `BOT_TOKEN`.
+- e2e всегда идут локально на тестовой БД, против продакшена не запускаются: они очищают базу и входят через `DEV_TELEGRAM_ID`, который работает только в `vite dev`. Выпуск проверяют `/healthz` и ручная проверка в Telegram (`/release`).
+- Упал тест — в Allure у него скриншот и трассировка; трассировку можно открыть и отдельно: `bunx playwright show-trace tests/test-results/<тест>/trace.zip` (из папки `tests`). HTML-отчёт Playwright — `tests/playwright-report/`.
+- Результаты (`tests/allure-results/`, `allure-report/`, `playwright-report/`, `test-results/`) — в `.gitignore`; каждый прогон перезаписывает прошлый.
+
 ## Конфиг Playwright
 
-- **Устройства — три проекта на WebKit** (движок Safari и WebView Telegram на iOS; пользователи — в основном на iPhone, см. `ui.md`): маленький — iPhone SE 2/3 (375 × 667), средний — iPhone 15/16 (393 × 852), большой — iPhone 15/16 Pro Max (430 × 932). Размеры — из описаний устройств Playwright (`devices[...]`), а где нужного нет — `viewport` и `isMobile`/`hasTouch` константами в конфиге. Шапку Telegram не моделируем: размер — экран устройства. Каждый сценарий проходит на всех трёх; Chromium — только для отладки (`--project`).
+- **Устройства — три проекта на WebKit** (движок Safari и WebView Telegram на iOS; пользователи — в основном на iPhone, см. `ui.md`): `small` — iPhone 12 Mini, `medium` — iPhone 16, `large` — iPhone 16 Pro Max (`E2E_DEVICES`, описания устройств Playwright `devices[...]`; высота в них — видимая область браузера, а не весь экран, что близко к Mini App под шапкой Telegram). Каждый сценарий проходит на всех трёх. Android (WebView — Chromium) — проекты на Chromium с Android-устройствами, когда до него дойдём; Gecko Telegram не использует.
 - **При падении** — скриншот и трассировка (`screenshot: 'only-on-failure'`, `trace: 'retain-on-failure'`): Allure прикладывает их к упавшему тесту, у прошедших ничего не хранится.
 - **Без анимаций**: `reducedMotion: 'reduce'` в `use`. Анимированные компоненты Mini App (переходы `SwipeActions`, `transition-*`) уважают это через `motion-reduce:transition-none` — тесты не ждут конца перехода, а пользователи с настройкой «Уменьшить движение» его не видят.
 - `workers: 1`, `fullyParallel: false` — см. «Гонки», п. 5.
@@ -55,7 +73,7 @@ tests/e2e/
 
 ## Экраны: BasePage и компоненты
 
-- `BasePage` (абстрактный класс в `base.page.ts`) — только то, что есть у **каждого** экрана: `page`, адрес экрана (`path`), `open()`, `expectOpened()`, `goBack()`. Кнопка «Назад» Telegram нативная и живёт вне страницы — Playwright её не видит, поэтому `goBack()` идёт по истории браузера.
+- `BasePage` (абстрактный класс в `base.page.ts`) — только то, что есть у **каждого** экрана: `page`, адрес экрана (`path`), `open()`, `expectOpened()`, `goBack()`, `answerDialog()`. Кнопка «Назад» Telegram нативная и живёт вне страницы, но вне Telegram `BackButton` рисует на странице кнопку «‹ Назад» (`TestId.Common.Back`) с тем же обработчиком — досохранить, спросить подтверждение. `goBack()` нажимает её; «Назад» браузера (`goBackInBrowser()`, жест или история) обходит обработчик экрана и проверяется отдельным сценарием, если он важен.
 - Экран наследует `BasePage` и добавляет своё: `CounterPage.increment()` есть только у экрана счётчика.
 - Элемент, который есть лишь на части экранов (поиск, строка со свайпом, пустое состояние списка), — объект компонента в `components/` (`<элемент>.component.ts`), экран подключает его полем (`readonly searchBar = new SearchBarComponent(this.page)`). В `BasePage` такие методы не добавляются: у экрана без поиска не должно быть `search()`.
 
@@ -68,7 +86,7 @@ tests/e2e/
 3. **Проверки** — методы `expect…` (см. ниже).
 4. **Удобные методы** — цепочки действий *этого* экрана, которые повторяются в тестах (`fillAndWaitSaved(title, content)` — заполнить и дождаться автосохранения).
 
-Адрес экрана — полем `path` класса, а не строкой в тестах.
+Адрес экрана — полем `path` класса, а не строкой в тестах. Поля-элементы в `BasePage` и компонентах (их `page` — параметр конструктора) задаются в конструкторе, а не инициализатором поля: инициализаторы полей выполняются раньше, чем параметр конструктора записывается в поле (`this.page` там ещё `undefined`; TypeScript ловит это как TS2729). В классах экранов-наследников инициализатор поля можно: `page` уже записан в `BasePage`.
 
 ## Элементы и `data-testid`
 

@@ -50,11 +50,11 @@
 				'relative h-7 w-12 shrink-0 rounded-full',
 				'bg-tg-hint/30 peer-checked:bg-switch-on',
 				'peer-focus-visible:ring-2 peer-focus-visible:ring-tg-button/40',
-				'transition-colors',
+				'transition-colors motion-reduce:transition-none',
 				// бегунок
 				'after:absolute after:top-0.5 after:left-0.5 after:size-6 after:rounded-full',
 				'after:bg-switch-knob after:shadow after:shadow-elevation',
-				'after:transition-transform peer-checked:after:translate-x-5',
+				'after:transition-transform peer-checked:after:translate-x-5 motion-reduce:after:transition-none',
 			]}
 		></span>
 	</label>

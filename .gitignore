@@ -16,6 +16,12 @@ apps/*/build
 # Prisma
 packages/db/src/generated
 
+# Результаты e2e (Playwright, Allure)
+tests/allure-results/
+tests/allure-report/
+tests/playwright-report/
+tests/test-results/
+
 # VS Code: настройки проекта — только в корне, вложенные .vscode не коммитятся
 .vscode/
 !/.vscode/

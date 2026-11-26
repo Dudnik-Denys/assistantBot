@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { TestId } from '#lib/constants/test-ids.ts';
+
 	/**
 	 * Кнопка «Удалить» в действиях `SwipeActions`: выполняет `onremove`
 	 * (подтверждение и запрос) и закрывает строку, когда он завершится.
@@ -17,6 +19,7 @@
 <button
 	type="button"
 	class="w-24 bg-tg-destructive font-semibold text-on-destructive"
+	data-testid={TestId.Common.SwipeDelete}
 	onclick={async () => {
 		await onremove();
 		close();

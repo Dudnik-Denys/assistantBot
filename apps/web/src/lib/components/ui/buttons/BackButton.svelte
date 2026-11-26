@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { isInTelegram, useBackButton } from '#lib/telegram.ts';
 
 	/**
@@ -17,5 +18,12 @@
 </script>
 
 {#if !isInTelegram()}
-	<button type="button" class="mb-2 self-start text-tg-link" onclick={onback}>‹ {label}</button>
+	<button
+		type="button"
+		class="mb-2 self-start text-tg-link"
+		onclick={onback}
+		data-testid={TestId.Common.Back}
+	>
+		‹ {label}
+	</button>
 {/if}

@@ -41,7 +41,7 @@
 				'stroke-tg-button',
 				// незаполненная часть — сдвиг штриха на (100 − процент)
 				'[stroke-dashoffset:calc(100-var(--ring-percent))]',
-				'transition-[stroke-dashoffset] duration-1000 ease-linear',
+				'transition-[stroke-dashoffset] duration-1000 ease-linear motion-reduce:transition-none',
 			]}
 			style:--ring-percent={percent}
 		/>

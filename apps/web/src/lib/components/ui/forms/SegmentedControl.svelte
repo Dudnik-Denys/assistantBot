@@ -45,7 +45,7 @@
 				value === option.value
 					? 'bg-surface text-tg-text shadow-sm shadow-elevation'
 					: 'text-tg-hint',
-				'transition',
+				'transition motion-reduce:transition-none',
 			]}
 			onclick={() => (value = option.value)}
 		>

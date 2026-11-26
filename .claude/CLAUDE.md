@@ -95,6 +95,8 @@ bun run dev                  # все приложения apps/* вместе: 
 bun run check                # типы во всех пакетах (tsc / svelte-check)
 bun run test:unit [модуль]   # unit-тесты (tests/unit/<модуль>); -t "текст" — по описанию теста
 bun run test:integration [модуль]  # интеграционные: сами поднимут временный Postgres (tests/integration)
+bun run test:e2e [модуль]    # e2e Mini App (Playwright, WebKit, три iPhone; тестовая БД); --grep @smoke — основной путь
+bun run test:e2e:report      # Allure-отчёт последнего прогона e2e
 bun run lint                 # проверка: Biome (TS, JSON, CSS) + Prettier --check (.svelte)
 bun run format               # автоисправление: форматирование, безопасные фиксы Biome, порядок импортов
 bun run build:web && bun --cwd apps/web start   # продакшен-сборка web

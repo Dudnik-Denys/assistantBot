@@ -1,15 +1,16 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { HTMLAttributes } from 'svelte/elements';
 	import Spinner from '#lib/components/ui/feedback/Spinner.svelte';
 
 	/** Короткое сообщение над содержимым экрана («Нет связи. Пробуем снова…»). */
-	interface Props {
+	interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'class' | 'children' | 'role'> {
 		/** Идёт процесс — показать спиннер. */
 		pending?: boolean;
 		children: Snippet;
 	}
 
-	let { pending = false, children }: Props = $props();
+	let { pending = false, children, ...rest }: Props = $props();
 </script>
 
 <div
@@ -19,6 +20,7 @@
 		'bg-surface text-tg-hint',
 	]}
 	role="status"
+	{...rest}
 >
 	{#if pending}<Spinner class="size-4" />{/if}
 	<span>{@render children()}</span>

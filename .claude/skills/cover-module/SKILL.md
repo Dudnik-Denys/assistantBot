@@ -16,25 +16,9 @@ argument-hint: "<модуль, например: notes>"
 - **Модуля нет** (нет `apps/web/src/routes/<модуль>/`) → перечисли существующие и попроси выбрать. Сам не выбирай.
 - **`tests/e2e/<модуль>/` уже есть** → ничего не меняй сразу. Сообщи, что у модуля уже есть e2e-тесты (перечисли сценарии — файлы `*.spec.ts` и описания `test`), и спроси: дополнить их или выбрать другой модуль (перечисли модули без e2e-тестов). Только после ответа «дополнить» — режим дополнения: прочитай существующие экраны и сценарии, добавляй недостающее, не переписывай рабочее без причины.
 
-## 2. Инфраструктура (только если Playwright ещё не подключён)
+## 2. Инфраструктура
 
-Признак: нет `tests/playwright.config.ts`. Тогда сначала **покажи пользователю план и дождись подтверждения** — ставятся зависимости и скачивается браузер (~150 МБ):
-
-1. `@playwright/test`, `allure-playwright` и CLI Allure Report — в devDependencies пакета `tests` (`bun add -d … --cwd tests`), браузер — `bunx playwright install chromium`. Для CLI предпочтителен Allure Report 3 (npm-пакет `allure`, без Java); проверь актуальную версию и способ генерации отчёта по документации Allure перед установкой. Если нужна Java — сначала скажи пользователю.
-2. `tests/playwright.config.ts`:
-   - `testDir: './e2e'`, `testMatch: '**/*.spec.ts'`, `workers: 1`, `fullyParallel: false` (одна тестовая БД — `e2e.md`, «Гонки», п. 5);
-   - `reporter`: `allure-playwright` (результаты — `tests/allure-results`) и `html` (`open: 'never'`, для трассировок); `trace: 'retain-on-failure'`, `screenshot: 'only-on-failure'`;
-   - проект `chromium` с мобильным вьюпортом (Mini App открывается в телефоне), `baseURL` — адрес `webServer`;
-   - `webServer`: `bun --filter @tgab/web dev` на отдельном порту, с env `DATABASE_URL` = адрес тестовой БД (`TestDatabase.fromEnv().url` из `tests/helpers/test-database.ts`) и `DEV_TELEGRAM_ID` = фиксированный тестовый id (константа в `tests/e2e/`).
-3. **Сервер e2e не читает `.env`.** Web берёт `.env` из корня (`env.dir` в `apps/web/vite.config.ts`). Сделай каталог переопределяемым (например, `env: { dir: process.env.TGAB_ENV_DIR ?? '../..' }`) и в `webServer` укажи каталог без `.env`; все нужные переменные — через `webServer.env`. `.env` не открывать и не читать (запрет на секреты).
-4. `tests/run-tests.ts`: тип `e2e` в `TestTypeSchema` (`tests/schemas/cli.ts`); для него — та же подготовка тестовой БД, что для `integration` (`TestDatabase.prepare()`), и запуск `bunx playwright test -c tests/playwright.config.ts [tests/e2e/<модуль>] [флаги]` вместо `bun test`. Скрипты в корневом `package.json`: `"test:e2e": "bun tests/run-tests.ts e2e"` и `"test:e2e:report"` — собрать и открыть Allure-отчёт из `tests/allure-results`. Папки `tests/allure-results/`, `tests/allure-report/`, `tests/playwright-report/`, `tests/test-results/` — в `.gitignore`. `bun test` не должен подхватывать `*.spec.ts` из `tests/e2e`.
-5. Общие файлы по `e2e.md`, «Структура»: `tests/e2e/base.page.ts` (`BasePage`), `tests/e2e/step.ts` (`step()` с автонумерацией шагов верхнего уровня и `box: true`), `tests/e2e/fixtures.ts` (`test.extend`, очистка БД `testDatabase.reset()` и создание пользователя с `DEV_TELEGRAM_ID` в allowlist перед каждым тестом, метка Allure `feature` по папке модуля теста), `tests/e2e/main-menu/main-menu.page.ts` (`MainMenuPage` — главная `/`: `expectSections(titles)`; пункт меню — `getByTestId(TestId.MainMenu.Section).filter({ hasText: title })`, атрибут — в `routes/+page.svelte`) и flow `openSection` для входа в модуль из меню.
-6. Алиас `#web/*` → `../apps/web/src/*` уже есть в `paths` `tests/tsconfig.json` (`TestId` — `#web/lib/constants/test-ids.ts`); проверь, что Playwright его понимает (он читает `paths` из tsconfig).
-7. Фабрика пользователя с заданным telegramId — в `tests/helpers/factories.ts` (расширь `createTestUser`, а не пиши вторую).
-8. Правило Biome `noFloatingPromises`: проверь, есть ли оно в установленной версии Biome (`node_modules/@biomejs/biome/configuration_schema.json`); если есть — включи для `tests/e2e/**` (`overrides` в `biome.json`), если нет — скажи пользователю.
-9. Документация: команда `bun run test:e2e [модуль]` — в README и CLAUDE.md («Commands»); в `e2e.md` убери фразу «Playwright ещё не подключён» и сверь раздел «Когда и как запускаются» с тем, что получилось.
-
-Проверь инфраструктуру пустым прогоном (`bun run test:e2e`) до написания тестов модуля.
+Playwright подключён (`tests/playwright.config.ts`, `bun run test:e2e`, общие файлы `tests/e2e/`: `base.page.ts`, `step.ts`, `fixtures.ts`, `main-menu/`). Как устроено и как запускать — `e2e.md`, «Запуск и отчёт» и «Конфиг Playwright». Если чего-то из этого нет — сначала скажи пользователю, не восстанавливай молча.
 
 ## 3. Изучи модуль
 

@@ -16,10 +16,16 @@ import type { PrismaClient, User } from '@tgab/db';
 
 let nextTelegramId = 1_000_000n;
 
-/** Пользователь из allowlist с уникальным telegramId. */
-export function createTestUser(db: PrismaClient, { isAdmin = false } = {}): Promise<User> {
+/**
+ * Пользователь из allowlist: telegramId — уникальный или заданный (e2e входят от имени
+ * `E2E_TELEGRAM_ID` — `DEV_TELEGRAM_ID` web-сервера тестов).
+ */
+export function createTestUser(
+	db: PrismaClient,
+	{ isAdmin = false, telegramId }: { isAdmin?: boolean; telegramId?: bigint } = {},
+): Promise<User> {
 	nextTelegramId += 1n;
-	return createUsersService(db).allow(nextTelegramId, { isAdmin });
+	return createUsersService(db).allow(telegramId ?? nextTelegramId, { isAdmin });
 }
 
 export function createTestNote(

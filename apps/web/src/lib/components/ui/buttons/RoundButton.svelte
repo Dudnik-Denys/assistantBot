@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { HTMLAttributes } from 'svelte/elements';
 	import type { ClassProp } from '#lib/types/props.ts';
 	import { mergeClasses } from '#lib/utils/classes.ts';
 
@@ -10,7 +11,10 @@
 	 * между местами — снаружи: цвет — `variant`, положение, тень, скрытие при вводе — `class`
 	 * (как у `FloatingButton`).
 	 */
-	interface Props extends ClassProp {
+	interface Props
+		extends
+			ClassProp,
+			Omit<HTMLAttributes<HTMLElement>, 'class' | 'children' | 'onclick' | 'title'> {
 		/** Подпись для экранного диктора: на кнопке только значок. */
 		label: string;
 		/** primary — основное действие (цвет кнопки), secondary — второстепенное (на поверхности). */
@@ -31,6 +35,7 @@
 		disabled = false,
 		class: className,
 		children,
+		...rest
 	}: Props = $props();
 
 	const variants: Record<Variant, string> = {
@@ -42,16 +47,16 @@
 		mergeClasses(
 			'flex size-14 items-center justify-center rounded-full text-3xl leading-none',
 			variants[variant],
-			'transition active:scale-95 disabled:opacity-40',
+			'transition active:scale-95 disabled:opacity-40 motion-reduce:transition-none',
 			className,
 		),
 	);
 </script>
 
 {#if href}
-	<a {href} aria-label={label} {onclick} class={classes}>{@render children()}</a>
+	<a {href} aria-label={label} {onclick} class={classes} {...rest}>{@render children()}</a>
 {:else}
-	<button type="button" aria-label={label} {disabled} {onclick} class={classes}>
+	<button type="button" aria-label={label} {disabled} {onclick} class={classes} {...rest}>
 		{@render children()}
 	</button>
 {/if}

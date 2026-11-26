@@ -6,6 +6,7 @@
 	import { api, type NoteDto } from '#lib/api.ts';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { focusField } from '#lib/keyboard.ts';
 	import { Autosave } from '#lib/reactive/autosave.svelte.ts';
 	import { confirmDialog, openLink } from '#lib/telegram.ts';
@@ -92,8 +93,9 @@
 		placeholder="Заголовок"
 		maxlength={NOTE_TITLE_MAX}
 		class="field-bare text-2xl font-bold"
+		data-testid={TestId.NoteEditor.Title}
 	/>
-	<p class="mb-2 min-h-4 text-xs text-tg-hint">
+	<p class="mb-2 min-h-4 text-xs text-tg-hint" data-testid={TestId.NoteEditor.Hint}>
 		{#if untitled && !empty}
 			Укажите заголовок — без него заметка не сохранится
 		{:else if autosave.error}
@@ -106,6 +108,7 @@
 		bind:value={content}
 		aria-label="Текст заметки"
 		placeholder="Текст заметки, ссылки…"
+		data-testid={TestId.NoteEditor.Content}
 		maxlength={NOTE_CONTENT_MAX}
 		class={[
 			'field-bare flex-1',

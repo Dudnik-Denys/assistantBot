@@ -3,6 +3,7 @@
 	import Loading from '#lib/components/ui/feedback/Loading.svelte';
 	import Message from '#lib/components/ui/feedback/Message.svelte';
 	import Notice from '#lib/components/ui/feedback/Notice.svelte';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { UiText } from '#lib/constants/ui-texts.ts';
 
 	/**
@@ -44,12 +45,18 @@
 </script>
 
 {#if error}
-	<Message class="flex-none" title={errorTitle} text={error} tone="error" />
+	<Message
+		class="flex-none"
+		title={errorTitle}
+		text={error}
+		tone="error"
+		data-testid={TestId.Common.ListError}
+	/>
 {:else if items === null}
 	<Loading title={reconnecting ? reconnectingTitle : loadingTitle} />
 {:else}
 	{#if reconnecting}
-		<Notice pending>{offlineText}</Notice>
+		<Notice pending data-testid={TestId.Common.Offline}>{offlineText}</Notice>
 	{/if}
 	{#if items.length === 0}
 		{@render empty()}

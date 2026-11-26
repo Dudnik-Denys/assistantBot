@@ -3,6 +3,7 @@
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
 	import { sections } from '#lib/constants/sections.ts';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { haptic } from '#lib/telegram.ts';
 </script>
 
@@ -10,10 +11,14 @@
 	<PageHeader title="Ассистент" />
 
 	<nav>
-		<ul class="flex flex-col gap-2">
+		<ul class="flex flex-col gap-2" data-testid={TestId.MainMenu.List}>
 			{#each sections as section (section.href)}
 				<li>
-					<Card href={section.href} onclick={() => haptic('light')}>
+					<Card
+						href={section.href}
+						onclick={() => haptic('light')}
+						data-testid={TestId.MainMenu.Section}
+					>
 						<span class="flex items-center gap-3">
 							<span class="text-2xl leading-none" aria-hidden="true">{section.icon}</span>
 							<span class="min-w-0 flex-1">

@@ -13,8 +13,9 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
 			},
 			adapter: adapter(),
-			// Общий .env лежит в корне монорепо.
-			env: { dir: '../..' },
+			// Общий .env лежит в корне монорепо. e2e задают каталог без .env (TGAB_ENV_DIR) и
+			// передают переменные сами — тесты не читают рабочие секреты.
+			env: { dir: process.env.TGAB_ENV_DIR ?? '../..' },
 		}),
 	],
 	server: {

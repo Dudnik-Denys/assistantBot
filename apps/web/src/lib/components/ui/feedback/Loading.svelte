@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Message from '#lib/components/ui/feedback/Message.svelte';
 	import Spinner from '#lib/components/ui/feedback/Spinner.svelte';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { UiText } from '#lib/constants/ui-texts.ts';
 	import { DelayedFlag } from '#lib/reactive/delayed-flag.svelte.ts';
 
@@ -19,7 +20,7 @@
 </script>
 
 {#if visible.value}
-	<Message {title}>
+	<Message {title} data-testid={TestId.Common.Loading}>
 		{#snippet icon()}<Spinner />{/snippet}
 	</Message>
 {/if}

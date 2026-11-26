@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import RoundButton from '#lib/components/ui/buttons/RoundButton.svelte';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { haptic } from '#lib/telegram.ts';
 
 	/**
@@ -35,6 +36,7 @@
 		onopen?.();
 	}}
 	class={FLOATING_CLASSES}
+	data-testid={TestId.Common.FloatingButton}
 >
 	{@render children()}
 </RoundButton>

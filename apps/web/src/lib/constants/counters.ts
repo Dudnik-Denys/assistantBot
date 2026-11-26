@@ -4,7 +4,7 @@ import { COUNTER_TIMER_MODE } from '@tgab/core/constants/counters';
 
 /**
  * Вкладки списка счётчиков. Подписи короткие: четыре сегмента в одну строку должны помещаться
- * и на телефоне шириной 375 pt (iPhone SE 2/3 — самый маленький, `ui.md`), иначе ряд `SegmentedControl` не поместится в ширину экрана.
+ * и на телефоне шириной 375 pt (iPhone 12 mini — самый маленький, `ui.md`), иначе ряд `SegmentedControl` не поместится в ширину экрана.
  */
 export const COUNTER_TABS = [
 	{ value: 'all', label: 'Все' },

@@ -39,6 +39,18 @@
 			"preset": "recommended"
 		}
 	},
+	"overrides": [
+		{
+			"includes": ["tests/e2e/**"],
+			"linter": {
+				"rules": {
+					"nursery": {
+						"noFloatingPromises": "error"
+					}
+				}
+			}
+		}
+	],
 	"assist": {
 		"enabled": true,
 		"actions": {
