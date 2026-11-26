@@ -110,7 +110,7 @@ bun run build:web && bun --cwd apps/web start   # продакшен-сборк�
 
 Команды Claude Code (`.claude/commands/`): `/dev-start`, `/dev-stop`, `/dev-status` — запуск, остановка и состояние (бот + web + воркер, Docker, git); `/commit-plan` — проверка на секреты и план коммитов (сам не коммитит); `/allow-user <tgId> [--admin]`; `/migration <имя>` — миграция Prisma с проверкой SQL; `/outdated` — устаревшие и расходящиеся зависимости; `/test-db-stop` — остановить `postgres-test`; `/verify-server`, `/verify-ui` — полные проверки. «Запусти / останови бота» — это `/dev-start` / `/dev-stop`.
 
-Скиллы (`.claude/skills/`): `/add-new-module`, `/add-bot-command`, `/add-worker-job`, `/add-source` — новые части проекта; `/fix-bug` — разбор ошибки по описанию, видео, скриншотам и логам до теста и исправления; `/update-deps` — обновление зависимостей группами; `/get-info`, `/get-deep-info` — обзор и разбор кода (`<файл | папка | project>`); `/research` — аудит по правилам; `/cover-module` — e2e-тесты модуля; `/deploy-setup`, `/release`, `/backup` — продакшен (см. «Хостинг»).
+Скиллы (`.claude/skills/`): `/add-new-module`, `/add-bot-command`, `/add-worker-job`, `/add-source` — новые части проекта; `/fix-bug` — разбор ошибки по описанию, видео, скриншотам и логам до теста и исправления; `/update-deps` — обновление зависимостей группами; `/get-info`, `/get-deep-info` — обзор и разбор кода (`<файл | папка | project>`); `/research` — аудит по правилам; `/inspect-external <путь> [область]` — изучение чужого кода (другой проект, фреймворк) и перенятие подходящих практик в наши правила по согласованию; `/cover-module` — e2e-тесты модуля; `/deploy-setup`, `/release`, `/backup` — продакшен (см. «Хостинг»).
 
 Детали каркаса:
 
