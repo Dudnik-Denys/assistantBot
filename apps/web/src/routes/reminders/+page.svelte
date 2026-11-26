@@ -9,14 +9,12 @@
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
 	import ScrollArea from '#lib/components/ui/layout/ScrollArea.svelte';
 	import { removeWithConfirm } from '#lib/feedback.ts';
-	import { DebouncedSearch } from '#lib/reactive/debounced-search.svelte.ts';
+	import { ListLoader } from '#lib/reactive/list-loader.svelte.ts';
 
-	// Пока в разделе только уведомления об окончании циклов счётчиков.
-	// Без поиска: DebouncedSearch с пустым запросом — загрузка с повторами и кешем.
-	const loader = new DebouncedSearch<NotificationDto>(
-		(_, signal) => api.notifications.list('', signal),
-		{ initialItems: api.notifications.cachedList },
-	);
+	// Пока в разделе только уведомления об окончании циклов счётчиков; поиска нет.
+	const loader = new ListLoader((signal) => api.notifications.list('', signal), {
+		initialItems: api.notifications.cachedList,
+	});
 
 	async function remove(notification: NotificationDto) {
 		const subject = `уведомление о счётчике «${notification.counter.title}»`;

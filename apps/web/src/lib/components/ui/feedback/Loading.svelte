@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Message from '#lib/components/ui/feedback/Message.svelte';
 	import Spinner from '#lib/components/ui/feedback/Spinner.svelte';
+	import { UiText } from '#lib/constants/ui-texts.ts';
 	import { DelayedFlag } from '#lib/reactive/delayed-flag.svelte.ts';
 
 	/** Задержка перед показом: быстрый ответ приходит раньше, и индикатор не мелькает. */
@@ -12,7 +13,7 @@
 		title?: string;
 	}
 
-	let { title = 'Загрузка…' }: Props = $props();
+	let { title = UiText.Loading }: Props = $props();
 
 	const visible = new DelayedFlag(() => true, SHOW_DELAY_MS);
 </script>

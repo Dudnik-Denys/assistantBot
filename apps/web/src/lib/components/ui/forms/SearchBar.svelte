@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { UiText } from '#lib/constants/ui-texts.ts';
+
 	/** Поле поиска со значком и кнопкой очистки. */
 	interface Props {
 		/** Текст поиска; связывается через `bind:value`. */
@@ -7,9 +9,16 @@
 		label?: string;
 		/** Видимая подсказка в пустом поле. */
 		placeholder?: string;
+		/** Подпись кнопки очистки для экранного диктора. */
+		clearLabel?: string;
 	}
 
-	let { value = $bindable(''), label = 'Поиск', placeholder = 'Поиск' }: Props = $props();
+	let {
+		value = $bindable(''),
+		label = UiText.Search,
+		placeholder = UiText.Search,
+		clearLabel = UiText.ClearSearch,
+	}: Props = $props();
 </script>
 
 <label class="relative block">
@@ -48,7 +57,7 @@
 				'size-6 rounded-full text-xs',
 				'bg-tg-hint/30 text-tg-bg',
 			]}
-			aria-label="Очистить"
+			aria-label={clearLabel}
 			onclick={() => (value = '')}
 		>
 			✕

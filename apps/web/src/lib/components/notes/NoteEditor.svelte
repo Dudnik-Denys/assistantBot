@@ -83,9 +83,12 @@
 <BackButton onback={back} />
 
 <div class="flex flex-1 flex-col">
+	<!-- Заголовок страницы для экранного диктора: видимый заголовок — само поле ввода. -->
+	<h1 class="sr-only">{title.trim() || 'Новая заметка'}</h1>
 	<input
 		{@attach focusIfNew}
 		bind:value={title}
+		aria-label="Заголовок"
 		placeholder="Заголовок"
 		maxlength={NOTE_TITLE_MAX}
 		class="field-bare text-2xl font-bold"
@@ -101,6 +104,7 @@
 	</p>
 	<textarea
 		bind:value={content}
+		aria-label="Текст заметки"
 		placeholder="Текст заметки, ссылки…"
 		maxlength={NOTE_CONTENT_MAX}
 		class={[

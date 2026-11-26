@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { untrack } from 'svelte';
 	import { api, type CounterDto } from '#lib/api.ts';
 	import CounterStepper from '#lib/components/counters/CounterStepper.svelte';
 	import Button from '#lib/components/ui/buttons/Button.svelte';
@@ -21,6 +20,7 @@
 	} from '#lib/counters.ts';
 	import { runWithFeedback } from '#lib/feedback.ts';
 	import { Clock } from '#lib/reactive/clock.svelte.ts';
+	import { RepeatWhile } from '#lib/reactive/repeat-while.svelte.ts';
 	import { confirmDialog } from '#lib/telegram.ts';
 	import { cycleProgress, formatDateTime, formatRemaining } from '#lib/utils/dates.ts';
 
@@ -51,20 +51,13 @@
 
 	// Отсчёт дошёл до нуля — сразу завершить цикл на сервере, не дожидаясь воркера (он — раз
 	// в минуту); не вышло (цикл в этот момент обрабатывал воркер, нет связи) — повторить.
-	$effect(() => {
-		if (!awaitingWorker) return;
-		// untrack: ответ `finish` заменяет `current` — эффект не должен перезапускаться от этого,
-		// иначе, пока цикл не завершён, запросы шли бы друг за другом без паузы.
-		const id = untrack(() => current.id);
-		const finish = () =>
-			api.counters.finish(id).then(
-				(counter) => (current = counter),
-				() => {},
-			);
-		void finish();
-		const retry = setInterval(finish, COUNTER_REFRESH_DELAY_MS);
-		return () => clearInterval(retry);
-	});
+	new RepeatWhile(
+		() => awaitingWorker,
+		async () => {
+			current = await api.counters.finish(current.id);
+		},
+		COUNTER_REFRESH_DELAY_MS,
+	);
 
 	async function act(action: (id: string) => Promise<CounterDto>) {
 		busy = true;

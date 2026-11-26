@@ -16,52 +16,34 @@
 		COUNTER_TABS,
 		type CounterTab,
 	} from '#lib/constants/counters.ts';
-	import {
-		isDue,
-		isFinished,
-		isPaused,
-		isRunning,
-		removeCounter,
-		replaceCounters,
-	} from '#lib/counters.ts';
+	import { filterCounters, isDue, removeCounter, replaceCounters } from '#lib/counters.ts';
 	import { holdKeyboard } from '#lib/keyboard.ts';
 	import { Clock } from '#lib/reactive/clock.svelte.ts';
-	import { DebouncedSearch } from '#lib/reactive/debounced-search.svelte.ts';
+	import { ListLoader } from '#lib/reactive/list-loader.svelte.ts';
+	import { RepeatWhile } from '#lib/reactive/repeat-while.svelte.ts';
 
-	// Без поиска: DebouncedSearch с пустым запросом — загрузка с повторами при обрыве связи
-	// и показ последнего списка из кеша, пока идёт загрузка.
-	const loader = new DebouncedSearch<CounterDto>((_, signal) => api.counters.list('', signal), {
+	// Без поиска: загрузка с повторами при обрыве связи и показ последнего списка из кеша.
+	const loader = new ListLoader((signal) => api.counters.list('', signal), {
 		initialItems: api.counters.cachedList,
 	});
 	const clock = new Clock();
 
 	let tab = $state<CounterTab>('all');
 
-	const visible = $derived.by(() => {
-		const items = loader.items ?? [];
-		if (tab === 'running') return items.filter(isRunning);
-		if (tab === 'paused') return items.filter(isPaused);
-		if (tab === 'finished') return items.filter(isFinished);
-		return items;
-	});
+	const visible = $derived(filterCounters(loader.items ?? [], tab));
 
 	/** Есть счётчики, время цикла которых вышло, а сервер ещё отдаёт их идущими. */
 	const hasDue = $derived(loader.items?.some((counter) => isDue(counter, clock.now)) ?? false);
 
 	// Как на экране счётчика: завершить наступившие циклы сразу, не дожидаясь воркера.
-	$effect(() => {
-		if (!hasDue) return;
-		const finish = () =>
-			api.counters.finishDue().then(
-				(updated) => {
-					if (loader.items) loader.items = replaceCounters(loader.items, updated);
-				},
-				() => {},
-			);
-		void finish();
-		const retry = setInterval(finish, COUNTER_REFRESH_DELAY_MS);
-		return () => clearInterval(retry);
-	});
+	new RepeatWhile(
+		() => hasDue,
+		async () => {
+			const updated = await api.counters.finishDue();
+			if (loader.items) loader.items = replaceCounters(loader.items, updated);
+		},
+		COUNTER_REFRESH_DELAY_MS,
+	);
 
 	async function remove(counter: CounterDto) {
 		if (!(await removeCounter(counter))) return;

@@ -1,4 +1,9 @@
-import { TRAILING_PUNCTUATION, URL_PATTERN } from '#lib/constants/links.ts';
+import {
+	TRAILING_PUNCTUATION,
+	URL_PATTERN,
+	URL_PROTOCOL_PREFIX,
+	URL_TRAILING_SLASH,
+} from '#lib/constants/links.ts';
 
 export type Segment =
 	| { type: 'text'; value: string }
@@ -27,5 +32,5 @@ export function linkify(text: string): Segment[] {
 
 /** Адрес для показа: без протокола и завершающего `/` (`https://site.com/` → `site.com`). */
 export function displayUrl(url: string): string {
-	return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+	return url.replace(URL_PROTOCOL_PREFIX, '').replace(URL_TRAILING_SLASH, '');
 }

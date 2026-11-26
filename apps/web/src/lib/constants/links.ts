@@ -3,3 +3,9 @@ export const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 
 /** Знаки препинания в конце ссылки — они относятся к предложению, а не к адресу. */
 export const TRAILING_PUNCTUATION = /[.,;:!?)\]}»"']+$/;
+
+/** Протокол в начале адреса — в коротком виде ссылки не показывается. */
+export const URL_PROTOCOL_PREFIX = /^https?:\/\//;
+
+/** Косая черта в конце адреса — в коротком виде ссылки не показывается. */
+export const URL_TRAILING_SLASH = /\/$/;

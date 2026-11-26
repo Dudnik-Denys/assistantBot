@@ -1,8 +1,12 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import RoundButton from '#lib/components/ui/buttons/RoundButton.svelte';
 	import { haptic } from '#lib/telegram.ts';
 
-	/** Круглая плавающая кнопка-ссылка в правом нижнем углу экрана: «+» для новой записи и т. п. */
+	/**
+	 * Круглая плавающая кнопка-ссылка в правом нижнем углу экрана: «+» для новой записи и т. п.
+	 * `RoundButton`, закреплённая в углу и скрытая при вводе.
+	 */
 	interface Props {
 		href: string;
 		/** Подпись для экранного диктора: на кнопке только значок. */
@@ -14,23 +18,23 @@
 	}
 
 	let { href, label, children, onopen }: Props = $props();
+
+	/**
+	 * Закреплена в правом нижнем углу; при открытой клавиатуре висела бы над ней — прячется,
+	 * пока поле в фокусе (`typing:`).
+	 */
+	const FLOATING_CLASSES =
+		'fixed right-page-r bottom-page-b shadow-lg shadow-elevation typing:pointer-events-none typing:opacity-0';
 </script>
 
-<a
+<RoundButton
 	{href}
-	aria-label={label}
+	{label}
 	onclick={() => {
 		haptic('light');
 		onopen?.();
 	}}
-	class={[
-		'fixed right-page-r bottom-page-b flex items-center justify-center',
-		'size-14 rounded-full text-3xl leading-none',
-		'bg-tg-button text-tg-button-text shadow-lg shadow-elevation',
-		'transition active:scale-95',
-		// при открытой клавиатуре кнопка висела бы над ней — прячем, пока поле в фокусе
-		'typing:pointer-events-none typing:opacity-0',
-	]}
+	class={FLOATING_CLASSES}
 >
 	{@render children()}
-</a>
+</RoundButton>

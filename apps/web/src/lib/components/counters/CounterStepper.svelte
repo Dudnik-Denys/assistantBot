@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { COUNTER_VALUE_MIN } from '@tgab/core/constants/counters';
+	import RoundButton from '#lib/components/ui/buttons/RoundButton.svelte';
 
 	/** Число с кнопками по бокам: «− 0 +». */
 	interface Props {
@@ -14,33 +15,16 @@
 </script>
 
 <div class="flex items-center justify-center gap-6">
-	<button
-		type="button"
-		aria-label="Уменьшить на 1"
+	<RoundButton
+		label="Уменьшить на 1"
+		variant="secondary"
 		disabled={busy || value <= COUNTER_VALUE_MIN}
 		onclick={ondecrement}
-		class={[
-			'flex size-14 items-center justify-center rounded-full text-3xl leading-none',
-			'bg-surface text-tg-button',
-			'transition active:scale-95 disabled:opacity-40',
-		]}
 	>
 		−
-	</button>
+	</RoundButton>
 	<output class="min-w-20 text-center text-5xl font-bold tabular-nums" aria-live="polite">
 		{value}
 	</output>
-	<button
-		type="button"
-		aria-label="Увеличить на 1"
-		disabled={busy}
-		onclick={onincrement}
-		class={[
-			'flex size-14 items-center justify-center rounded-full text-3xl leading-none',
-			'bg-tg-button text-tg-button-text',
-			'transition active:scale-95 disabled:opacity-40',
-		]}
-	>
-		+
-	</button>
+	<RoundButton label="Увеличить на 1" disabled={busy} onclick={onincrement}>+</RoundButton>
 </div>

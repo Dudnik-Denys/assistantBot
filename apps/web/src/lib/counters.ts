@@ -1,5 +1,6 @@
 import { COUNTER_TIMER_STATUS } from '@tgab/core/constants/counters';
 import { api, type CounterDto } from '#lib/api.ts';
+import type { CounterTab } from '#lib/constants/counters.ts';
 import { removeWithConfirm } from '#lib/feedback.ts';
 
 /** Число на экране: при ручном управлении — всегда, иначе — по настройке «Показывать счёт». */
@@ -25,6 +26,14 @@ export function isFinished(counter: CounterDto): boolean {
 /** Время цикла вышло, а сервер ещё отдаёт его идущим: пора `api.counters.finish`. */
 export function isDue(counter: CounterDto, now: number): boolean {
 	return isRunning(counter) && !!counter.timer && new Date(counter.timer.targetAt).getTime() <= now;
+}
+
+/** Счётчики вкладки списка: все, идущие, на паузе или закончившиеся. */
+export function filterCounters(items: CounterDto[], tab: CounterTab): CounterDto[] {
+	if (tab === 'running') return items.filter(isRunning);
+	if (tab === 'paused') return items.filter(isPaused);
+	if (tab === 'finished') return items.filter(isFinished);
+	return items;
 }
 
 /** Список, где счётчики из `updated` заменены новыми версиями (по `id`). */

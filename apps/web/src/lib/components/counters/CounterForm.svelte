@@ -7,7 +7,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { api, type CounterDto } from '#lib/api.ts';
-	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
 	import Button from '#lib/components/ui/buttons/Button.svelte';
 	import DateField from '#lib/components/ui/forms/DateField.svelte';
 	import NumberField from '#lib/components/ui/forms/NumberField.svelte';
@@ -16,6 +15,7 @@
 	import TextField from '#lib/components/ui/forms/TextField.svelte';
 	import TimeField from '#lib/components/ui/forms/TimeField.svelte';
 	import ActionBar from '#lib/components/ui/layout/ActionBar.svelte';
+	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
 	import { COUNTER_DURATION_FIELDS, COUNTER_TIMER_MODES } from '#lib/constants/counters.ts';
@@ -62,7 +62,7 @@
 				? await api.counters.update(initial.id, form.input)
 				: await api.counters.create(form.input);
 			haptic('success');
-			await goto(resolve('/counters/[id]', { id: saved.id }), { replaceState: !initial });
+			await goto(resolve('/counters/[id]', { id: saved.id }), { replace: !initial });
 		} catch (error) {
 			haptic('error');
 			saveError = errorMessage(error);
@@ -83,7 +83,7 @@
 	}
 </script>
 
-<BackButton onback={back} />
+<PageHeader title={initial ? 'Настройки счётчика' : 'Новый счётчик'} onback={back} />
 
 <form
 	class="flex flex-1 flex-col gap-4"
@@ -92,8 +92,6 @@
 		void save();
 	}}
 >
-	<h1 class="text-2xl font-bold">{initial ? 'Настройки счётчика' : 'Новый счётчик'}</h1>
-
 	<Panel>
 		<TextField
 			{@attach focusIfNew}
