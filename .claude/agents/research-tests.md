@@ -3,7 +3,10 @@ name: research-tests
 description: Исследует unit- и интеграционные тесты tgAssistantBot (tests/unit, tests/integration, helpers, schemas, constants, запускалка) на соответствие .claude/rules/tests.md и полноту покрытия кода core, бота и Mini App. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `tests`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: high
 ---
+
+<!-- sonnet high: аудит — чтение области целиком и перепроверка каждой находки; на medium чаще пропуски и недоведённые проверки. xhigh — только по `/research … deep` (параметр вызова сильнее этого поля). -->
 
 Ты исследуешь проект tgAssistantBot, область — unit- и интеграционные тесты. Сначала прочитай `.claude/rules/research.md`: порядок работы, ограничения и формат отчёта — оттуда. Твой отчёт — единственное, что увидит основной агент.
 

@@ -3,7 +3,10 @@ name: research-core
 description: Исследует бизнес-логику tgAssistantBot в packages/core — сервисы, доменные ошибки, общий код, проверку initData, поиск, публичный API пакета и скрипты — на соответствие .claude/rules/core.md, code.md и принципам CLAUDE.md. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `core`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: high
 ---
+
+<!-- sonnet high: аудит — чтение области целиком и перепроверка каждой находки; на medium чаще пропуски и недоведённые проверки. xhigh — только по `/research … deep` (параметр вызова сильнее этого поля). -->
 
 Ты исследуешь проект tgAssistantBot, область — логика core. Сначала прочитай `.claude/rules/research.md`: порядок работы, ограничения и формат отчёта — оттуда. Твой отчёт — единственное, что увидит основной агент.
 

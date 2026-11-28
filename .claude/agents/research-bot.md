@@ -3,7 +3,10 @@ name: research-bot
 description: Исследует Telegram-бота tgAssistantBot (apps/bot: grammY, роутеры, middleware, клавиатуры, запуск) на соответствие .claude/rules/bot.md и документации grammY. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `bot`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: high
 ---
+
+<!-- sonnet high: аудит — чтение области целиком и перепроверка каждой находки; на medium чаще пропуски и недоведённые проверки. xhigh — только по `/research … deep` (параметр вызова сильнее этого поля). -->
 
 Ты исследуешь проект tgAssistantBot, область — Telegram-бот. Сначала прочитай `.claude/rules/research.md`: порядок работы, ограничения и формат отчёта — оттуда. Твой отчёт — единственное, что увидит основной агент.
 

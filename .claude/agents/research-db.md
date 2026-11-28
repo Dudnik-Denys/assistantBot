@@ -3,7 +3,10 @@ name: research-db
 description: Исследует слой БД tgAssistantBot — схему Prisma, миграции, prisma.config, клиент, сырой SQL и запросы Prisma в сервисах core, тестовую БД и Postgres в docker-compose — на соответствие .claude/rules/db.md. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `db`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: high
 ---
+
+<!-- sonnet high: аудит — чтение области целиком и перепроверка каждой находки; на medium чаще пропуски и недоведённые проверки. xhigh — только по `/research … deep` (параметр вызова сильнее этого поля). -->
 
 Ты исследуешь проект tgAssistantBot, область — база данных. Сначала прочитай `.claude/rules/research.md`: порядок работы, ограничения и формат отчёта — оттуда. Твой отчёт — единственное, что увидит основной агент.
 

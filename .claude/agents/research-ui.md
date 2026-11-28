@@ -3,7 +3,10 @@ name: research-ui
 description: Исследует UI-компоненты Mini App tgAssistantBot (apps/web/src/lib/components) и дизайн-токены app.css на соответствие .claude/rules/components.md и ui.md: токены, классы, Props, переиспользование, доступность. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `ui`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: high
 ---
+
+<!-- sonnet high: аудит — чтение области целиком и перепроверка каждой находки; на medium чаще пропуски и недоведённые проверки. xhigh — только по `/research … deep` (параметр вызова сильнее этого поля). -->
 
 Ты исследуешь проект tgAssistantBot, область — UI-компоненты и стили. Сначала прочитай `.claude/rules/research.md`: порядок работы, ограничения и формат отчёта — оттуда. Твой отчёт — единственное, что увидит основной агент.
 

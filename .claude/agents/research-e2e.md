@@ -3,7 +3,10 @@ name: research-e2e
 description: Исследует e2e-тесты tgAssistantBot (Playwright, Page Object) на соответствие .claude/rules/e2e.md и готовность модулей без e2e: TestId, data-testid, сценарии без покрытия. Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `e2e`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: high
 ---
+
+<!-- sonnet high: аудит — чтение области целиком и перепроверка каждой находки; на medium чаще пропуски и недоведённые проверки. xhigh — только по `/research … deep` (параметр вызова сильнее этого поля). -->
 
 Ты исследуешь проект tgAssistantBot, область — e2e-тесты (Playwright). Сначала прочитай `.claude/rules/research.md`: порядок работы, ограничения и формат отчёта — оттуда. Твой отчёт — единственное, что увидит основной агент.
 
