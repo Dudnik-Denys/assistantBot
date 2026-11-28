@@ -29,8 +29,10 @@ export class NoteEditorPage extends BasePage {
 	// --- Действия ---
 
 	async fill(title: string, content = ''): Promise<void> {
-		await this.titleInput.fill(title);
-		await this.contentInput.fill(content);
+		await step(`Ввод заметки «${title}»`, async () => {
+			await this.titleInput.fill(title);
+			await this.contentInput.fill(content);
+		});
 	}
 
 	async fillContent(content: string): Promise<void> {

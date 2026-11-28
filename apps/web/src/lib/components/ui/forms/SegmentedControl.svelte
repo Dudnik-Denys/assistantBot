@@ -1,4 +1,5 @@
 <script lang="ts" generics="T extends string">
+	import { testIdWithValue } from '#lib/constants/test-ids.ts';
 	import type { ClassProp } from '#lib/types/props.ts';
 	import { mergeClasses } from '#lib/utils/classes.ts';
 
@@ -15,9 +16,11 @@
 		value: T;
 		/** Подпись группы для экранного диктора. */
 		label: string;
+		/** `data-testid` вариантов: у каждого — `testIdWithValue(testId, value)`. */
+		testId?: string;
 	}
 
-	let { options, value = $bindable(), label, class: className }: Props = $props();
+	let { options, value = $bindable(), label, testId, class: className }: Props = $props();
 </script>
 
 <!--
@@ -40,6 +43,7 @@
 			type="button"
 			role="radio"
 			aria-checked={value === option.value}
+			data-testid={testId && testIdWithValue(testId, option.value)}
 			class={[
 				'rounded-lg px-2 py-1.5 text-sm font-medium whitespace-nowrap',
 				value === option.value

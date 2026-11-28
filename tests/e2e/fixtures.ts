@@ -5,6 +5,9 @@ import { feature } from 'allure-js-commons';
 import { E2E_TELEGRAM_ID } from '../constants/e2e.ts';
 import { createTestUser } from '../helpers/factories.ts';
 import { TestDatabase } from '../helpers/test-database.ts';
+import { CounterPage } from './counters/counter.page.ts';
+import { CounterFormPage } from './counters/counter-form.page.ts';
+import { CountersListPage } from './counters/counters-list.page.ts';
 import { ErrorPage } from './error/error.page.ts';
 import { MainMenuPage } from './main-menu/main-menu.page.ts';
 import { NoteEditorPage } from './notes/note-editor.page.ts';
@@ -25,6 +28,9 @@ interface TestFixtures {
 	errorPage: ErrorPage;
 	notesList: NotesListPage;
 	noteEditor: NoteEditorPage;
+	countersList: CountersListPage;
+	counterForm: CounterFormPage;
+	counter: CounterPage;
 }
 
 interface WorkerFixtures {
@@ -79,6 +85,15 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 	},
 	noteEditor: async ({ page }, use) => {
 		await use(new NoteEditorPage(page));
+	},
+	countersList: async ({ page }, use) => {
+		await use(new CountersListPage(page));
+	},
+	counterForm: async ({ page }, use) => {
+		await use(new CounterFormPage(page));
+	},
+	counter: async ({ page }, use) => {
+		await use(new CounterPage(page));
 	},
 });
 

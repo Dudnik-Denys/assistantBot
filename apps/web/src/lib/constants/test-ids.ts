@@ -9,6 +9,7 @@ export const TestId = {
 	MainMenu: { List: 'main-menu.list', Section: 'main-menu.section' },
 	NotesList: {
 		Card: 'notes-list.card',
+		Title: 'notes-list.title',
 		Empty: 'notes-list.empty',
 		NotFound: 'notes-list.not-found',
 	},
@@ -16,6 +17,41 @@ export const TestId = {
 		Title: 'note-editor.title',
 		Content: 'note-editor.content',
 		Hint: 'note-editor.hint',
+	},
+	CountersList: {
+		/** Вкладка списка — со значением: `testIdWithValue(Tab, 'paused')`. */
+		Tab: 'counters-list.tab',
+		Card: 'counters-list.card',
+		Title: 'counters-list.title',
+		Status: 'counters-list.status',
+		Value: 'counters-list.value',
+		Empty: 'counters-list.empty',
+		EmptyTab: 'counters-list.empty-tab',
+	},
+	CounterForm: {
+		Title: 'counter-form.title',
+		/** Режим таймера — со значением: `testIdWithValue(Mode, 'DURATION')`. */
+		Mode: 'counter-form.mode',
+		/** Часть срока — со значением: `testIdWithValue(DurationPart, 'hours')`. */
+		DurationPart: 'counter-form.duration-part',
+		TargetDate: 'counter-form.target-date',
+		TargetTime: 'counter-form.target-time',
+		Problem: 'counter-form.problem',
+		Submit: 'counter-form.submit',
+	},
+	Counter: {
+		Countdown: 'counter.countdown',
+		TimerStatus: 'counter.timer-status',
+		Cycles: 'counter.cycles',
+		Value: 'counter.value',
+		Decrement: 'counter.decrement',
+		Increment: 'counter.increment',
+		/** «Старт» и «Продолжить». */
+		Start: 'counter.start',
+		Stop: 'counter.stop',
+		Reset: 'counter.reset',
+		Edit: 'counter.edit',
+		Delete: 'counter.delete',
 	},
 	ErrorPage: { Message: 'error-page.message' },
 	/** Элементы базовых компонентов `ui/`: идентификатор ставит сам компонент. */
@@ -33,7 +69,7 @@ export const TestId = {
 
 /**
  * Идентификатор со значением — когда текст не различает элементы или тест знает id записи:
- * `testIdWithValue(TestId.CountersList.Row, counter.id)` → `'counters-list.row=<id>'`.
+ * `testIdWithValue(TestId.CountersList.Tab, 'paused')` → `'counters-list.tab=paused'`.
  */
 export function testIdWithValue(id: string, value: string): string {
 	return `${id}=${value}`;

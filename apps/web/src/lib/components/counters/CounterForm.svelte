@@ -19,7 +19,12 @@
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
-	import { COUNTER_DURATION_LABELS, COUNTER_TIMER_MODES } from '#lib/constants/counters.ts';
+	import {
+		COUNTER_DURATION_LABELS,
+		COUNTER_TIMER_MODES,
+		CounterText,
+	} from '#lib/constants/counters.ts';
+	import { TestId, testIdWithValue } from '#lib/constants/test-ids.ts';
 	import { isFinished } from '#lib/counters.ts';
 	import { errorMessage } from '#lib/errors.ts';
 	import { focusField } from '#lib/keyboard.ts';
@@ -51,7 +56,7 @@
 	/** Идущий (или на паузе) таймер с новыми параметрами начнётся заново — спросить. */
 	async function confirmTimerRestart(): Promise<boolean> {
 		if (!initial?.timer || isFinished(initial) || !form.timerDirty) return true;
-		return confirmDialog('Таймер начнётся заново, число циклов сохранится. Сохранить?');
+		return confirmDialog(CounterText.TimerRestart);
 	}
 
 	async function save() {
@@ -73,7 +78,7 @@
 	}
 
 	async function back() {
-		if (form.dirty && !(await confirmDialog('Изменения не сохранятся. Выйти?'))) return;
+		if (form.dirty && !(await confirmDialog(CounterText.LeaveUnsaved))) return;
 		if (initial) await goto(resolve('/counters/[id]', { id: initial.id }));
 		else await goto(resolve('/counters'));
 	}
@@ -100,6 +105,7 @@
 			bind:value={form.title}
 			maxlength={COUNTER_TITLE_MAX}
 			placeholder="Название"
+			data-testid={TestId.CounterForm.Title}
 		/>
 	</Panel>
 
@@ -110,6 +116,7 @@
 				options={COUNTER_TIMER_MODES}
 				bind:value={form.mode}
 				label="Режим таймера"
+				testId={TestId.CounterForm.Mode}
 			/>
 
 			{#if form.mode === COUNTER_TIMER_MODE.Duration}
@@ -119,6 +126,7 @@
 							label={COUNTER_DURATION_LABELS[part]}
 							bind:value={form.duration[part]}
 							max={COUNTER_DURATION_PART_MAX}
+							data-testid={testIdWithValue(TestId.CounterForm.DurationPart, part)}
 						/>
 					{/each}
 				</div>
@@ -149,8 +157,14 @@
 						min={form.today}
 						bind:value={form.targetDate}
 						required
+						data-testid={TestId.CounterForm.TargetDate}
 					/>
-					<TimeField label="Время" bind:value={form.targetTime} required />
+					<TimeField
+						label="Время"
+						bind:value={form.targetTime}
+						required
+						data-testid={TestId.CounterForm.TargetTime}
+					/>
 				</div>
 			{:else}
 				<p class="text-sm text-tg-hint">Счётчик без таймера — только ручной: − число +</p>
@@ -189,7 +203,7 @@
 				onchange={(checked) => (form.showValue = checked)}
 			/>
 			{#if initial?.timer}
-				<p class="text-sm text-tg-hint">Циклов пройдено: {initial.value}</p>
+				<p class="text-sm text-tg-hint">{CounterText.Cycles(initial.value)}</p>
 			{/if}
 		</Panel>
 	</section>
@@ -221,7 +235,7 @@
 			</Panel>
 		</section>
 	{/if}
-	<p class="min-h-5 text-sm" role="alert">
+	<p class="min-h-5 text-sm" role="alert" data-testid={TestId.CounterForm.Problem}>
 		{#if saveError}
 			<span class="text-tg-destructive">{saveError}</span>
 		{:else if form.problem && (form.dirty || initial)}
@@ -231,7 +245,12 @@
 
 	<!-- static: не прилипает к низу окна, стоит после всех настроек -->
 	<ActionBar class="static mt-auto">
-		<Button type="submit" class="flex-1" disabled={saving || form.problem !== null}>
+		<Button
+			type="submit"
+			class="flex-1"
+			disabled={saving || form.problem !== null}
+			data-testid={TestId.CounterForm.Submit}
+		>
 			{initial ? 'Сохранить' : 'Создать'}
 		</Button>
 	</ActionBar>

@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { TestId } from '#web/lib/constants/test-ids.ts';
+import { answerDialog } from './dialogs.ts';
 
 /**
  * Общее для каждого экрана (`e2e.md`, «Экраны»): адрес, открытие, проверка, «Назад» и ответ
@@ -54,22 +55,14 @@ export abstract class BasePage {
 	}
 
 	/**
-	 * Диалог, который вызывает `action` (`confirmDialog`, `alertDialog` — вне Telegram это
-	 * `window.confirm` / `window.alert`): подписка — до действия, иначе Playwright сам закроет
-	 * диалог отменой; текст проверяется, ответ — `accept` (согласиться) или отказ.
-	 * Подробно — `e2e.md`, «Диалоги».
+	 * Диалог, который вызывает `action` (`confirmDialog`, `alertDialog`): ответ `accept` —
+	 * согласиться, иначе отказ. Логика — `answerDialog` из `dialogs.ts` (её используют и компоненты).
 	 */
 	protected async answerDialog(
 		action: () => Promise<void>,
 		message: string,
 		accept = true,
 	): Promise<void> {
-		const dialog = this.page.waitForEvent('dialog');
-		// Действие не завершится, пока диалог открыт: ждём его вместе с ответом.
-		const done = action();
-		const shown = await dialog;
-		expect(shown.message()).toContain(message);
-		await (accept ? shown.accept() : shown.dismiss());
-		await done;
+		await answerDialog(this.page, action, message, accept);
 	}
 }

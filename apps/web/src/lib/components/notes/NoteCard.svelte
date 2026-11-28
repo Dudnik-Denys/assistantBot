@@ -24,7 +24,9 @@
 		data-testid={TestId.NotesList.Card}
 	>
 		<div class="flex items-baseline gap-2">
-			<h2 class="min-w-0 flex-1 truncate font-semibold">{note.title}</h2>
+			<h2 class="min-w-0 flex-1 truncate font-semibold" data-testid={TestId.NotesList.Title}>
+				{note.title}
+			</h2>
 			<time class="shrink-0 text-xs text-tg-hint" datetime={note.updatedAt}>
 				{formatShortDate(note.updatedAt)}
 			</time>

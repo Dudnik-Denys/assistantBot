@@ -9,7 +9,8 @@
 	import InfoRow from '#lib/components/ui/layout/InfoRow.svelte';
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
-	import { COUNTER_REFRESH_DELAY_MS } from '#lib/constants/counters.ts';
+	import { COUNTER_REFRESH_DELAY_MS, CounterText } from '#lib/constants/counters.ts';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import {
 		isDue,
 		isFinished,
@@ -78,8 +79,8 @@
 
 	async function reset() {
 		const question = timer
-			? `Сбросить счёт и таймер «${current.title}»? Таймер встанет на паузу.`
-			: `Сбросить счёт «${current.title}»?`;
+			? CounterText.ResetWithTimer(current.title)
+			: CounterText.ResetValue(current.title);
 		if (!(await confirmDialog(question))) return;
 		await act((id) => api.counters.reset(id));
 	}
@@ -104,15 +105,25 @@
 			label="Прошедшая часть цикла"
 		>
 			{#if isFinished(current)}
-				<span class="text-xl font-semibold">Цикл завершён</span>
+				<span class="text-xl font-semibold" data-testid={TestId.Counter.TimerStatus}>
+					{CounterText.Finished}
+				</span>
 			{:else}
-				<span class="text-3xl font-bold tabular-nums">{formatRemaining(remainingMs)}</span>
-				<span class="text-sm text-tg-hint">
-					{awaitingWorker ? 'Завершаем цикл…' : isPaused(current) ? 'на паузе' : 'осталось'}
+				<span class="text-3xl font-bold tabular-nums" data-testid={TestId.Counter.Countdown}>
+					{formatRemaining(remainingMs)}
+				</span>
+				<span class="text-sm text-tg-hint" data-testid={TestId.Counter.TimerStatus}>
+					{awaitingWorker
+						? CounterText.Finishing
+						: isPaused(current)
+							? CounterText.Paused
+							: CounterText.Remaining}
 				</span>
 			{/if}
 			{#if isValueVisible(current) && !current.manual}
-				<span class="mt-2 text-sm text-tg-hint">Циклов пройдено: {current.value}</span>
+				<span class="mt-2 text-sm text-tg-hint" data-testid={TestId.Counter.Cycles}>
+					{CounterText.Cycles(current.value)}
+				</span>
 			{/if}
 		</ProgressRing>
 	{/if}
@@ -127,13 +138,25 @@
 	{/if}
 
 	{#if isFinished(current)}
-		<Button disabled={busy} onclick={proceed}>
-			{current.startStopHidden ? 'Продолжить' : 'Старт'}
+		<Button disabled={busy} onclick={proceed} data-testid={TestId.Counter.Start}>
+			{current.startStopHidden ? CounterText.Continue : CounterText.Start}
 		</Button>
 	{:else if isPaused(current)}
-		<Button disabled={busy} onclick={() => act((id) => api.counters.start(id))}>Старт</Button>
+		<Button
+			disabled={busy}
+			onclick={() => act((id) => api.counters.start(id))}
+			data-testid={TestId.Counter.Start}
+		>
+			{CounterText.Start}
+		</Button>
 	{:else if isRunning(current) && !awaitingWorker && !current.startStopHidden}
-		<Button disabled={busy} onclick={() => act((id) => api.counters.pause(id))}>Стоп</Button>
+		<Button
+			disabled={busy}
+			onclick={() => act((id) => api.counters.pause(id))}
+			data-testid={TestId.Counter.Stop}
+		>
+			{CounterText.Stop}
+		</Button>
 	{/if}
 
 	{#if timer}
@@ -149,10 +172,18 @@
 
 <ActionBar>
 	{#if current.manual}
-		<Button class="flex-1" disabled={busy} onclick={reset}>Сбросить</Button>
+		<Button class="flex-1" disabled={busy} onclick={reset} data-testid={TestId.Counter.Reset}>
+			Сбросить
+		</Button>
 	{/if}
-	<Button class="flex-1" onclick={() => goto(resolve('/counters/[id]/edit', { id: current.id }))}>
+	<Button
+		class="flex-1"
+		onclick={() => goto(resolve('/counters/[id]/edit', { id: current.id }))}
+		data-testid={TestId.Counter.Edit}
+	>
 		Изменить
 	</Button>
-	<Button variant="destructive" class="flex-1" onclick={remove}>Удалить</Button>
+	<Button variant="destructive" class="flex-1" onclick={remove} data-testid={TestId.Counter.Delete}>
+		Удалить
+	</Button>
 </ActionBar>

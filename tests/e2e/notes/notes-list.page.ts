@@ -1,6 +1,7 @@
 import { expect, type Locator } from '@playwright/test';
 import { TestId } from '#web/lib/constants/test-ids.ts';
 import { BasePage } from '../base.page.ts';
+import { CardListComponent } from '../components/card-list.component.ts';
 import { ListStateComponent } from '../components/list-state.component.ts';
 import { SearchBarComponent } from '../components/search-bar.component.ts';
 import { SwipeRowComponent } from '../components/swipe-row.component.ts';
@@ -13,16 +14,19 @@ export class NotesListPage extends BasePage {
 	readonly searchBar = new SearchBarComponent(this.page);
 	readonly swipeRows = new SwipeRowComponent(this.page);
 	readonly listState = new ListStateComponent(this.page);
+	readonly list = new CardListComponent(this.page, {
+		card: TestId.NotesList.Card,
+		title: TestId.NotesList.Title,
+		empty: TestId.NotesList.Empty,
+	});
 
 	// --- Элементы ---
 
-	readonly cards = this.page.getByTestId(TestId.NotesList.Card);
-	readonly empty = this.page.getByTestId(TestId.NotesList.Empty);
 	readonly notFound = this.page.getByTestId(TestId.NotesList.NotFound);
 	readonly newNoteButton = this.page.getByTestId(TestId.Common.FloatingButton);
 
 	card(title: string): Locator {
-		return this.cards.filter({ hasText: title });
+		return this.list.card(title);
 	}
 
 	// --- Действия ---
@@ -45,61 +49,35 @@ export class NotesListPage extends BasePage {
 
 	/** Свайп → «Удалить» → ответ на «Вы уверены…?»: `accept` — «Да», иначе «Нет». */
 	async swipeToDelete(title: string, accept = true): Promise<void> {
-		await step(`Удаление заметки «${title}» свайпом`, async () => {
-			await this.swipeRows.swipeOpen(title);
-			await this.answerDialog(
-				() => this.swipeRows.deleteButton(title).click(),
-				`заметку «${title}»`,
-				accept,
-			);
-		});
+		await this.swipeRows.swipeToDelete(this.card(title), `заметку «${title}»`, accept);
 	}
 
-	/**
-	 * Удаление, которое сервер отклонил: свайп → «Удалить» → «Да» → сообщение об ошибке
-	 * (`alertDialog`, вне Telegram — `window.alert`). Подписка на сообщение — до действия.
-	 */
+	/** Удаление, которое сервер отклонил: после «Да» — сообщение об ошибке (текст — из теста). */
 	async swipeToDeleteWithError(title: string, errorText: string): Promise<void> {
-		await step(`Удаление заметки «${title}» с ошибкой сервера`, async () => {
-			await this.swipeRows.swipeOpen(title);
-			const alert = this.page.waitForEvent('dialog', {
-				predicate: (dialog) => dialog.type() === 'alert',
-			});
-			await this.answerDialog(
-				() => this.swipeRows.deleteButton(title).click(),
-				`заметку «${title}»`,
-			);
-			const shown = await alert;
-			expect(shown.message()).toContain(errorText);
-			await shown.accept();
-		});
+		await this.swipeRows.swipeToDeleteWithError(this.card(title), `заметку «${title}»`, errorText);
 	}
 
 	// --- Проверки ---
 
 	override async expectOpened(): Promise<void> {
-		await super.expectOpened();
-		await expect(this.searchBar.input).toBeVisible();
+		await step('Проверка экрана «Заметки»', async () => {
+			await super.expectOpened();
+			await expect(this.searchBar.input).toBeVisible();
+		});
 	}
 
 	/** Заметка есть в списке (`visible = false` — её нет). */
 	async expectNoteVisible(title: string, visible = true): Promise<void> {
-		await expect(this.card(title)).toBeVisible({ visible });
+		await this.list.expectCardVisible(title, visible);
 	}
 
 	/** В списке ровно эти заметки, в этом порядке. */
 	async expectNotes(titles: string[]): Promise<void> {
-		await step(`Проверка заметок в списке: ${titles.join(', ')}`, async () => {
-			await expect(this.cards).toHaveCount(titles.length);
-			await expect(this.cards).toContainText(titles);
-		});
+		await this.list.expectTitles(titles);
 	}
 
 	async expectEmpty(): Promise<void> {
-		await step('Проверка пустого списка', async () => {
-			await expect(this.empty).toBeVisible();
-			await expect(this.cards).toHaveCount(0);
-		});
+		await this.list.expectEmpty();
 	}
 
 	async expectNothingFound(): Promise<void> {

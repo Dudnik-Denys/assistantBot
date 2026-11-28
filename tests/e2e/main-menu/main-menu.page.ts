@@ -25,8 +25,10 @@ export class MainMenuPage extends BasePage {
 	// --- Проверки ---
 
 	override async expectOpened(): Promise<void> {
-		await super.expectOpened();
-		await expect(this.list).toBeVisible();
+		await step('Проверка главного меню', async () => {
+			await super.expectOpened();
+			await expect(this.list).toBeVisible();
+		});
 	}
 
 	/** Разделы меню — ровно эти и в этом порядке. */

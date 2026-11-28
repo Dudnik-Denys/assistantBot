@@ -1,10 +1,20 @@
 <script lang="ts">
+	import type { HTMLInputAttributes } from 'svelte/elements';
 	import Field from '#lib/components/ui/forms/Field.svelte';
 	import { UiText } from '#lib/constants/ui-texts.ts';
 	import type { ClassProp } from '#lib/types/props.ts';
 
-	/** Короткое поле для целого числа с подписью сверху: части срока (месяцы, дни…). */
-	interface Props extends ClassProp {
+	/**
+	 * Короткое поле для целого числа с подписью сверху: части срока (месяцы, дни…). Остальные
+	 * атрибуты (`data-testid`…) передаются в `<input>`.
+	 */
+	interface Props
+		extends
+			ClassProp,
+			Omit<
+				HTMLInputAttributes,
+				'class' | 'value' | 'min' | 'max' | 'placeholder' | 'type' | 'inputmode'
+			> {
 		label: string;
 		/** Значение; пустое поле — 0. Связывается через `bind:value`. */
 		value: number;
@@ -21,6 +31,7 @@
 		max,
 		placeholder = UiText.EmptyValue,
 		class: className,
+		...rest
 	}: Props = $props();
 
 	/** Пустое поле — 0, дробное — целое, вне пределов — ближайшая граница. */
@@ -40,5 +51,6 @@
 		bind:value={() => value || null, (raw) => (value = normalize(raw))}
 		{placeholder}
 		class="field-filled px-2 text-center"
+		{...rest}
 	/>
 </Field>

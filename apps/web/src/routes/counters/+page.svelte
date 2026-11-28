@@ -14,8 +14,10 @@
 		COUNTER_REFRESH_DELAY_MS,
 		COUNTER_TAB_ALL,
 		COUNTER_TABS,
+		CounterText,
 		type CounterTab,
 	} from '#lib/constants/counters.ts';
+	import { TestId } from '#lib/constants/test-ids.ts';
 	import { filterCounters, isDue, removeCounter, replaceCounters } from '#lib/counters.ts';
 	import { holdKeyboard } from '#lib/keyboard.ts';
 	import { Clock } from '#lib/reactive/clock.svelte.ts';
@@ -53,7 +55,12 @@
 
 <Screen fit>
 	<PageHeader title="Счётчики" backToMenu>
-		<SegmentedControl options={COUNTER_TABS} bind:value={tab} label="Какие счётчики показать" />
+		<SegmentedControl
+			options={COUNTER_TABS}
+			bind:value={tab}
+			label="Какие счётчики показать"
+			testId={TestId.CountersList.Tab}
+		/>
 	</PageHeader>
 
 	<ScrollArea>
@@ -61,13 +68,18 @@
 			{#snippet empty()}
 				<Message
 					class="flex-none"
-					title="У вас пока нет ни одного счётчика"
-					text="Нажмите «+», чтобы создать первый"
+					title={CounterText.EmptyTitle}
+					text={CounterText.EmptyText}
+					data-testid={TestId.CountersList.Empty}
 				/>
 			{/snippet}
 			{#snippet children()}
 				{#if visible.length === 0 && tab !== COUNTER_TAB_ALL}
-					<Message class="flex-none" title={COUNTER_EMPTY_TAB_MESSAGES[tab]} />
+					<Message
+						class="flex-none"
+						title={COUNTER_EMPTY_TAB_MESSAGES[tab]}
+						data-testid={TestId.CountersList.EmptyTab}
+					/>
 				{:else}
 					<ul class="flex flex-col gap-2 pb-floating-clearance">
 						{#each visible as counter (counter.id)}

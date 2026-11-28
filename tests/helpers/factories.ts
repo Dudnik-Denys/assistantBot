@@ -63,6 +63,64 @@ export function createTestCounter(
 	return createCountersService(db).create(userId, { ...TEST_COUNTER_INPUT, ...input });
 }
 
+/** Счётчик, у которого точно есть таймер: тестам не нужно проверять `timer` на null. */
+export type TimerCounterDto = CounterDto & { timer: NonNullable<CounterDto['timer']> };
+
+function withTimer(counter: CounterDto): TimerCounterDto {
+	const { timer } = counter;
+	if (!timer) throw new Error(`У тестового счётчика «${counter.title}» нет таймера`);
+	return { ...counter, timer };
+}
+
+/** Счётчик с таймером (по умолчанию — на час, идёт с момента создания). */
+export async function createTestTimerCounter(
+	db: PrismaClient,
+	userId: string,
+	input: Partial<CounterInput> = {},
+): Promise<TimerCounterDto> {
+	return withTimer(await createTestCounter(db, userId, { timer: TEST_HOUR_TIMER, ...input }));
+}
+
+/** Счётчик с таймером на час, поставленным на паузу («Стоп»). */
+export async function createTestPausedCounter(
+	db: PrismaClient,
+	userId: string,
+	input: Partial<CounterInput> = {},
+): Promise<TimerCounterDto> {
+	const counter = await createTestTimerCounter(db, userId, input);
+	return withTimer(await createCountersService(db).pause(userId, counter.id));
+}
+
+/**
+ * Счётчик, цикл которого уже прошёл, а статус ещё «идёт» — как до прохода воркера. Сервис не
+ * создаёт цикл, который уже кончился, поэтому даты сдвигаются в прошлое прямой правкой записи
+ * (`tests.md`, «Тестовая БД»): цикл той же длины закончился ровно на свою длину раньше «сейчас».
+ */
+export async function createTestDueCounter(
+	db: PrismaClient,
+	userId: string,
+	input: Partial<CounterInput> = {},
+): Promise<TimerCounterDto> {
+	const counter = await createTestTimerCounter(db, userId, input);
+	const cycleMs = Date.parse(counter.timer.targetAt) - Date.parse(counter.timer.startAt);
+	const targetAt = new Date(Date.now() - cycleMs);
+	await db.counter.update({
+		where: { id: counter.id },
+		data: { startAt: new Date(targetAt.getTime() - cycleMs), targetAt },
+	});
+	return withTimer(await createCountersService(db).get(userId, counter.id));
+}
+
+/** Счётчик, цикл которого закончился и ждёт «Старт» (окончание — тем же `finish`, что у Mini App). */
+export async function createTestFinishedCounter(
+	db: PrismaClient,
+	userId: string,
+	input: Partial<CounterInput> = {},
+): Promise<TimerCounterDto> {
+	const counter = await createTestDueCounter(db, userId, input);
+	return withTimer(await createCountersService(db).finish(userId, counter.id));
+}
+
 /**
  * Уведомление об окончании цикла: счётчик с таймером на час и уведомлениями, цикл которого
  * завершает `processDue` в момент окончания, — тот же путь, что у воркера. `processDue`
@@ -73,8 +131,7 @@ export async function createTestNotification(
 	db: PrismaClient,
 	userId: string,
 ): Promise<NotificationDto> {
-	const counter = await createTestCounter(db, userId, { timer: TEST_HOUR_TIMER, notify: true });
-	if (!counter.timer) throw new Error('У тестового счётчика нет таймера');
+	const counter = await createTestTimerCounter(db, userId, { notify: true });
 	await createCountersService(db).processDue(new Date(counter.timer.targetAt));
 	const notification = (await createNotificationsService(db).list(userId)).find(
 		(item) => item.counter.id === counter.id,
