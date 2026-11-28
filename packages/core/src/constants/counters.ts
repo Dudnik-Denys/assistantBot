@@ -90,3 +90,6 @@ export const COUNTER_TRANSACTION_TIMEOUT_MS = 10_000;
  * даты» досчитываются делением, без перебора.
  */
 export const COUNTER_CATCH_UP_MAX = 1_000;
+
+/** Текст ошибки, когда запись не найдена или принадлежит другому пользователю. */
+export const COUNTER_NOT_FOUND_MESSAGE = 'Счётчик не найден';

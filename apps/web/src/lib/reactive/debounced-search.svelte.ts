@@ -22,7 +22,7 @@ export interface DebouncedSearchOptions<T> {
  *   <SearchBar bind:value={search.query} />
  *   {#each search.items ?? [] as item}…
  */
-export class DebouncedSearch<T> {
+export class DebouncedSearch<T extends { id: string }> {
 	/** Текст поиска; связывается с полем ввода через bind:value. */
 	query = $state('');
 	/** Есть ли непустой запрос — чтобы отличать «ничего не найдено» от «список пуст». */
@@ -57,5 +57,10 @@ export class DebouncedSearch<T> {
 	/** Нет связи, идут повторные попытки. */
 	get reconnecting(): boolean {
 		return this.#loader.reconnecting;
+	}
+
+	/** Убрать элемент из списка (после удаления на сервере), не загружая список заново. */
+	removeItem(id: string): void {
+		this.#loader.removeItem(id);
 	}
 }

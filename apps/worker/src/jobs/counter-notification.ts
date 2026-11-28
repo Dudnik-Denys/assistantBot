@@ -1,6 +1,7 @@
 import type { NotificationsService } from '@tgab/core';
 import { type Job, UnrecoverableError } from 'bullmq';
 import { type Api, GrammyError } from 'grammy';
+import { z } from 'zod';
 import {
 	TELEGRAM_UNAUTHORIZED_CODE,
 	TELEGRAM_UNDELIVERABLE_CODES,
@@ -23,7 +24,12 @@ export function createCounterNotificationJob({
 	miniAppUrl,
 }: CounterNotificationDeps) {
 	return async (job: Job): Promise<void> => {
-		const { notificationId } = NotificationJobDataSchema.parse(job.data);
+		const parsed = NotificationJobDataSchema.safeParse(job.data);
+		// Данные задачи не той формы повтор не исправит — сразу без повторов.
+		if (!parsed.success) {
+			throw new UnrecoverableError(`Данные задачи не той формы: ${z.prettifyError(parsed.error)}`);
+		}
+		const { notificationId } = parsed.data;
 		// Уведомление удалили (вместе со счётчиком) или уже отправили — делать нечего.
 		const delivery = await notifications.getDelivery(notificationId);
 		if (!delivery) return;

@@ -1,4 +1,4 @@
-import { MS_PER_SECOND, SECONDS_PER_DAY, SECONDS_PER_MINUTE } from '@tgab/core/constants/time';
+import { MS_PER_MINUTE, MS_PER_SECOND, SECONDS_PER_DAY } from '@tgab/core/constants/time';
 import type { JobsOptions } from 'bullmq';
 
 /** Очереди BullMQ. */
@@ -18,7 +18,7 @@ export const JobName = {
 /** Повторяющаяся задача выборки счётчиков (id планировщика BullMQ). */
 export const COUNTERS_DUE_SCHEDULER_ID = 'counters-due-every-minute';
 /** Как часто выбираются закончившиеся циклы. */
-export const COUNTERS_DUE_INTERVAL_MS = SECONDS_PER_MINUTE * MS_PER_SECOND;
+export const COUNTERS_DUE_INTERVAL_MS = MS_PER_MINUTE;
 /**
  * Сколько пачек (`COUNTER_DUE_BATCH_SIZE`) выборка обрабатывает за один запуск: остальные —
  * через минуту. Предел не даёт задаче крутиться без конца, если записи пачки раз за разом
@@ -33,7 +33,7 @@ export const NOTIFICATION_JOB_ID_PREFIX = 'counter-notification';
 export const NOTIFICATIONS_LIMITER = { max: 25, duration: MS_PER_SECOND };
 
 /** Сколько хранятся упавшие задачи отправки — чтобы разобрать, что и почему не ушло. */
-export const NOTIFICATION_FAILED_KEEP_SECONDS = 7 * SECONDS_PER_DAY;
+const NOTIFICATION_FAILED_KEEP_SECONDS = 7 * SECONDS_PER_DAY;
 
 /**
  * Отправка: 5 попыток с растущей паузой (5 с, 10 с, 20 с…). Выполненные задачи хранятся сутки —

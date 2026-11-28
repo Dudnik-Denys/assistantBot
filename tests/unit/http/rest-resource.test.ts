@@ -75,47 +75,47 @@ afterEach(() => {
 });
 
 describe('cachedList', () => {
-	test('Отсутствие кеша до первой загрузки списка', () => {
+	test('Тест отсутствия кеша до первой загрузки списка', () => {
 		expect(resource.cachedList).toBeNull();
 	});
 
-	test('Кеширование общего списка', async () => {
+	test('Тест кеширования общего списка', async () => {
 		const list = await resource.list();
 		expect(resource.cachedList).toEqual(list);
 		expect(list).toEqual([SECOND, FIRST]);
 	});
 
-	test('Сохранение общего списка в кеше после поиска', async () => {
+	test('Тест сохранения общего списка в кеше после поиска', async () => {
 		await resource.list();
 		const found = await resource.list('Перв');
 		expect(found).toEqual([FIRST]);
 		expect(resource.cachedList).toEqual([SECOND, FIRST]);
 	});
 
-	test('Добавление созданной записи в начало кеша', async () => {
+	test('Тест добавления созданной записи в начало кеша', async () => {
 		await resource.list();
 		const created = await resource.create({ title: 'Третья' });
 		expect(resource.cachedList).toEqual([created, SECOND, FIRST]);
 	});
 
-	test('Перенос изменённой записи в начало кеша без дубля', async () => {
+	test('Тест переноса изменённой записи в начало кеша без дубля', async () => {
 		await resource.list();
 		const updated = await resource.update(FIRST.id, { title: 'Первая, изменённая' });
 		expect(resource.cachedList).toEqual([updated, SECOND]);
 	});
 
-	test('Удаление записи из кеша', async () => {
+	test('Тест удаления записи из кеша', async () => {
 		await resource.list();
 		await resource.remove(SECOND.id);
 		expect(resource.cachedList).toEqual([FIRST]);
 	});
 
-	test('Отсутствие кеша после изменений без загрузки списка', async () => {
+	test('Тест отсутствия кеша после изменений без загрузки списка', async () => {
 		await resource.create({ title: 'Третья' });
 		expect(resource.cachedList).toBeNull();
 	});
 
-	test('Неизменность кеша при ошибке запроса', async () => {
+	test('Тест неизменности кеша при ошибке запроса', async () => {
 		await resource.list();
 		await expect(resource.remove('404')).rejects.toThrow(ApiError);
 		await expect(resource.update('404', { title: 'Нет такой' })).rejects.toThrow(ApiError);

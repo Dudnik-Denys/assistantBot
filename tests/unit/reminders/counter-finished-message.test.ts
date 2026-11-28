@@ -17,17 +17,17 @@ const DELIVERY: NotificationDelivery = {
 };
 
 describe('counterFinishedMessage', () => {
-	test('Название жирным с экранированием HTML', () => {
+	test('Тест названия жирным с экранированием HTML', () => {
 		const message = counterFinishedMessage({ ...DELIVERY, counterTitle: '<Сок & вода>' });
 		expect(message).toContain('<b>&lt;Сок &amp; вода&gt;</b>');
 	});
 
-	test('Число циклов — только если его показывают', () => {
+	test('Тест числа циклов только при включённом показе', () => {
 		expect(counterFinishedMessage(DELIVERY)).toContain(`Циклов пройдено: ${DELIVERY.cycle}`);
 		expect(counterFinishedMessage({ ...DELIVERY, showValue: false })).not.toContain('Циклов');
 	});
 
-	test('Подсказка зависит от автоповтора', () => {
+	test('Тест подсказки в зависимости от автоповтора', () => {
 		expect(counterFinishedMessage(DELIVERY)).toContain('в приложении');
 		expect(counterFinishedMessage({ ...DELIVERY, autoRestart: true })).toContain('уже начался');
 	});
@@ -39,13 +39,13 @@ describe('openNotificationKeyboard', () => {
 		return button && 'web_app' in button ? button.web_app?.url : undefined;
 	}
 
-	test('Адрес экрана уведомления от адреса Mini App со слешем и без', () => {
+	test('Тест адреса экрана уведомления от адреса Mini App со слешем и без', () => {
 		const expected = `https://app.example.com/${NOTIFICATION_SCREEN_PATH}${NOTIFICATION_ID}`;
 		expect(buttonUrl('https://app.example.com/')).toBe(expected);
 		expect(buttonUrl('https://app.example.com')).toBe(expected);
 	});
 
-	test('Подпапка в адресе Mini App сохраняется', () => {
+	test('Тест сохранения подпапки в адресе Mini App', () => {
 		expect(buttonUrl('https://example.com/app')).toBe(
 			`https://example.com/app/${NOTIFICATION_SCREEN_PATH}${NOTIFICATION_ID}`,
 		);

@@ -14,7 +14,7 @@
 	},
 	"devDependencies": {
 		"@playwright/test": "1.65.0",
-		"@types/bun": "1.4.4",
+		"@types/bun": "1.4.5",
 		"allure": "3.33.0",
 		"allure-js-commons": "3.14.0",
 		"allure-playwright": "3.14.0",

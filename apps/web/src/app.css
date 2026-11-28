@@ -20,6 +20,7 @@
 	--size-none: 0px;
 	--size-page-gutter: 1rem; /* поля страницы слева, справа и снизу */
 	--size-page-top: 0.75rem; /* поле страницы сверху — меньше, под заголовком Telegram */
+	--size-floating-clearance: 5rem; /* под концом списка — место для плавающей кнопки «+» */
 	/*
 	 * Свечение вверху страницы (bg-page-glow): круг радиусом --size-glow, центр чуть выше края
 	 * окна. Размеры — от ширины (vw): высоту окна меняет клавиатура, и свечение от неё сжималось бы.
@@ -79,6 +80,7 @@
 	--spacing-page-b: calc(var(--size-page-gutter) + var(--spacing-safe-bottom));
 	--spacing-page-l: calc(var(--size-page-gutter) + var(--spacing-safe-left));
 	--spacing-page-r: calc(var(--size-page-gutter) + var(--spacing-safe-right));
+	--spacing-floating-clearance: var(--size-floating-clearance);
 }
 
 /*

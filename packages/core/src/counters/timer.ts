@@ -1,3 +1,6 @@
+// Время таймера счётчика. Всё хранится в UTC, а сроки складываются в часовом поясе
+// пользователя: «1 месяц» — календарный месяц, «1 день» через переход на летнее время — те же
+// часы на циферблате, а не ровно 24 часа.
 import { TZDate } from '@date-fns/tz';
 import { add } from 'date-fns';
 import {
@@ -9,12 +12,6 @@ import {
 } from '../constants/counters.ts';
 import { MS_PER_SECOND, SECONDS_PER_HOUR, SECONDS_PER_MINUTE } from '../constants/time.ts';
 import type { CounterDuration } from '../schemas/counters/counter-input.ts';
-
-/**
- * Время таймера счётчика. Всё хранится в UTC, а сроки складываются в часовом поясе
- * пользователя: «1 месяц» — календарный месяц, «1 день» через переход на летнее время — те же
- * часы на циферблате, а не ровно 24 часа.
- */
 
 /** Локальные дата и время (`2026-11-24T12:00`, уже проверены схемой) в поясе → момент в UTC. */
 export function localToUtc(local: string, timeZone: string): Date {

@@ -1,7 +1,13 @@
-import { Bot, type Middleware } from 'grammy';
+import { Bot, Composer, type Middleware } from 'grammy';
 import type { MessageEntity, Update, UserFromGetMe } from 'grammy/types';
-import type { BotContext } from '#bot/context.ts';
-import { FAKE_BOT_ID, FAKE_BOT_TOKEN, FAKE_BOT_USERNAME, FAKE_USER_ID } from '../constants/bot.ts';
+import { type BotContext, hasUser, type PrivateContext } from '#bot/context.ts';
+import {
+	FAKE_ALLOWED_USER,
+	FAKE_BOT_ID,
+	FAKE_BOT_TOKEN,
+	FAKE_BOT_USERNAME,
+	FAKE_USER_ID,
+} from '../constants/bot.ts';
 
 /** Вызов Bot API, который перехватил фейковый бот. */
 export interface FakeApiCall {
@@ -68,4 +74,21 @@ export function createFakeBot(...middleware: Middleware<BotContext>[]) {
 		/** Отправить боту текст от пользователя `fromId`. */
 		send: (text: string, fromId = FAKE_USER_ID) => bot.handleUpdate(messageUpdate(text, fromId)),
 	};
+}
+
+/**
+ * Приватный роутер (после allowlist) для фейкового бота: `ctx.user` уже записан, как это делает
+ * allowlist. `createFakeBot(withUser(createStartRouter(deps)))`.
+ */
+export function withUser(
+	router: Middleware<PrivateContext>,
+	user = FAKE_ALLOWED_USER,
+): Middleware<BotContext> {
+	const composer = new Composer<BotContext>();
+	composer.use((ctx, next) => {
+		ctx.user = user;
+		return next();
+	});
+	composer.filter(hasUser, router);
+	return composer;
 }

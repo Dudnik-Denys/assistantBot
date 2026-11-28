@@ -20,42 +20,42 @@ beforeEach(async () => {
 afterAll(() => db.$disconnect());
 
 describe('create', () => {
-	test('Возврат DTO с обрезанными пробелами и датами-строками', async () => {
+	test('Тест возврата DTO с обрезанными пробелами и датами-строками', async () => {
 		const note = await notes.create(owner.id, { title: '  Покупки  ', content: ' молоко ' });
 		expect(note).toMatchObject({ title: 'Покупки', content: 'молоко' });
 		expect(typeof note.createdAt).toBe('string');
 		expect(Object.keys(note).sort()).toEqual(['content', 'createdAt', 'id', 'title', 'updatedAt']);
 	});
 
-	test('Отклонение заметки без заголовка', async () => {
+	test('Тест отклонения заметки без заголовка', async () => {
 		await expect(notes.create(owner.id, { title: ' ', content: 'Текст' })).rejects.toThrow(
 			ValidationError,
 		);
 	});
 
-	test('Отклонение ввода не той формы', async () => {
+	test('Тест отклонения ввода не той формы', async () => {
 		await expect(notes.create(owner.id, { title: 42 })).rejects.toThrow(ValidationError);
 	});
 });
 
 describe('get', () => {
-	test('Возврат своей заметки', async () => {
+	test('Тест возврата своей заметки', async () => {
 		const created = await createTestNote(db, owner.id);
 		expect(await notes.get(owner.id, created.id)).toEqual(created);
 	});
 
-	test('Выброс NotFoundError для чужой заметки вместо доступа к ней', async () => {
+	test('Тест выброса NotFoundError для чужой заметки вместо доступа к ней', async () => {
 		const created = await createTestNote(db, owner.id);
 		await expect(notes.get(stranger.id, created.id)).rejects.toThrow(NotFoundError);
 	});
 
-	test('Выброс NotFoundError для id не в формате UUID', async () => {
+	test('Тест выброса NotFoundError для id не в формате UUID', async () => {
 		await expect(notes.get(owner.id, 'not-a-uuid')).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('list', () => {
-	test('Выдача только заметок владельца, новые сверху', async () => {
+	test('Тест выдачи только заметок владельца, новые сверху', async () => {
 		const first = await createTestNote(db, owner.id, { title: 'Первая' });
 		await Bun.sleep(5); // updatedAt с точностью до миллисекунд: без паузы порядок может совпасть
 		const second = await createTestNote(db, owner.id, { title: 'Вторая' });
@@ -65,7 +65,7 @@ describe('list', () => {
 		expect(list.map((note) => note.id)).toEqual([second.id, first.id]);
 	});
 
-	test('Отклонение некорректных параметров списка', async () => {
+	test('Тест отклонения некорректных параметров списка', async () => {
 		for (const query of [{ limit: '0' }, { limit: 'abc' }, { limit: String(LIST_LIMIT_MAX + 1) }]) {
 			await expect(notes.list(owner.id, query)).rejects.toThrow(ValidationError);
 		}
@@ -74,58 +74,58 @@ describe('list', () => {
 		);
 	});
 
-	test('Учёт limit', async () => {
+	test('Тест учёта limit', async () => {
 		await createTestNote(db, owner.id, { title: 'Первая' });
 		await createTestNote(db, owner.id, { title: 'Вторая' });
 		expect(await notes.list(owner.id, { limit: '1' })).toHaveLength(1);
 	});
 
-	test('Поиск по началу слова с учётом морфологии', async () => {
+	test('Тест поиска по началу слова с учётом морфологии', async () => {
 		await createTestNote(db, owner.id, { title: 'Погода в Киеве' });
 		await createTestNote(db, owner.id, { title: 'Список покупок' });
 		const found = await notes.list(owner.id, { q: 'погод' });
 		expect(found.map((note) => note.title)).toEqual(['Погода в Киеве']);
 	});
 
-	test('Поиск по подстроке заголовка', async () => {
+	test('Тест поиска по подстроке заголовка', async () => {
 		await createTestNote(db, owner.id, { title: 'github.com/foo/bar' });
 		expect(await notes.list(owner.id, { q: 'github.com/foo' })).toHaveLength(1);
 	});
 
-	test('Поиск только по заголовку, без текста', async () => {
+	test('Тест поиска только по заголовку, без текста', async () => {
 		await createTestNote(db, owner.id, { title: 'Ссылки', content: 'Погода https://github.com' });
 		expect(await notes.list(owner.id, { q: 'погода' })).toEqual([]);
 		expect(await notes.list(owner.id, { q: 'github' })).toEqual([]);
 	});
 
-	test('Поиск % и _ как обычных символов', async () => {
+	test('Тест поиска % и _ как обычных символов', async () => {
 		await createTestNote(db, owner.id, { title: 'Скидка 50%' });
 		await createTestNote(db, owner.id, { title: 'Без процентов' });
 		const found = await notes.list(owner.id, { q: '%' });
 		expect(found.map((note) => note.title)).toEqual(['Скидка 50%']);
 	});
 
-	test('Защита от выполнения SQL из поискового запроса', async () => {
+	test('Тест защиты от выполнения SQL из поискового запроса', async () => {
 		await createTestNote(db, owner.id);
 		const found = await notes.list(owner.id, { q: `'; DROP TABLE "Note"; --` });
 		expect(found).toEqual([]);
 		expect(await notes.list(owner.id)).toHaveLength(1);
 	});
 
-	test('Исключение чужих заметок из поиска', async () => {
+	test('Тест исключения чужих заметок из поиска', async () => {
 		await createTestNote(db, stranger.id, { title: 'Погода' });
 		expect(await notes.list(owner.id, { q: 'погода' })).toEqual([]);
 	});
 });
 
 describe('update', () => {
-	test('Изменение своей заметки', async () => {
+	test('Тест изменения своей заметки', async () => {
 		const created = await createTestNote(db, owner.id, { title: 'Было' });
 		const updated = await notes.update(owner.id, created.id, { title: 'Стало' });
 		expect(updated.title).toBe('Стало');
 	});
 
-	test('Запрет изменения чужой заметки', async () => {
+	test('Тест запрета изменения чужой заметки', async () => {
 		const created = await createTestNote(db, owner.id, { title: 'Было' });
 		await expect(notes.update(stranger.id, created.id, { title: 'Взлом' })).rejects.toThrow(
 			NotFoundError,
@@ -133,7 +133,7 @@ describe('update', () => {
 		expect((await notes.get(owner.id, created.id)).title).toBe('Было');
 	});
 
-	test('Отклонение некорректного ввода без изменения заметки', async () => {
+	test('Тест отклонения некорректного ввода без изменения заметки', async () => {
 		const created = await createTestNote(db, owner.id, { title: 'Было' });
 		await expect(notes.update(owner.id, created.id, { title: ' ' })).rejects.toThrow(
 			ValidationError,
@@ -141,7 +141,7 @@ describe('update', () => {
 		expect((await notes.get(owner.id, created.id)).title).toBe('Было');
 	});
 
-	test('Выброс NotFoundError для id не в формате UUID', async () => {
+	test('Тест выброса NotFoundError для id не в формате UUID', async () => {
 		await expect(notes.update(owner.id, 'not-a-uuid', { title: 'Т' })).rejects.toThrow(
 			NotFoundError,
 		);
@@ -149,19 +149,19 @@ describe('update', () => {
 });
 
 describe('remove', () => {
-	test('Удаление своей заметки', async () => {
+	test('Тест удаления своей заметки', async () => {
 		const created = await createTestNote(db, owner.id);
 		await notes.remove(owner.id, created.id);
 		await expect(notes.get(owner.id, created.id)).rejects.toThrow(NotFoundError);
 	});
 
-	test('Запрет удаления чужой заметки', async () => {
+	test('Тест запрета удаления чужой заметки', async () => {
 		const created = await createTestNote(db, owner.id);
 		await expect(notes.remove(stranger.id, created.id)).rejects.toThrow(NotFoundError);
 		expect(await notes.get(owner.id, created.id)).toEqual(created);
 	});
 
-	test('Выброс NotFoundError для id не в формате UUID', async () => {
+	test('Тест выброса NotFoundError для id не в формате UUID', async () => {
 		await expect(notes.remove(owner.id, 'not-a-uuid')).rejects.toThrow(NotFoundError);
 	});
 });

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.css';
+	import { invalidateAll } from '$app/navigation';
 	import favicon from '#lib/assets/favicon.svg';
+	import Button from '#lib/components/ui/buttons/Button.svelte';
 	import Message from '#lib/components/ui/feedback/Message.svelte';
 	import NavigationProgress from '#lib/components/ui/feedback/NavigationProgress.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
@@ -14,6 +16,18 @@
 	$effect(() => initTelegram());
 	// Свайп вниз в любом месте закрывает экранную клавиатуру; слушатели снимаются вместе с layout.
 	$effect(() => dismissKeyboardOnSwipeDown());
+
+	let retrying = $state(false);
+
+	/** Повтор проверки доступа (обрыв связи при запуске): `load` корневого layout заново. */
+	async function retry() {
+		retrying = true;
+		try {
+			await invalidateAll();
+		} finally {
+			retrying = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -41,6 +55,7 @@
 				tone="error"
 				level={1}
 			/>
+			<Button disabled={retrying} onclick={retry}>Повторить</Button>
 		{/if}
 	</Screen>
 {/if}

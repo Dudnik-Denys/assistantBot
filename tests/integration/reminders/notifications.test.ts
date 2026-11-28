@@ -32,7 +32,7 @@ afterEach(() => {
 afterAll(() => db.$disconnect());
 
 describe('list', () => {
-	test('Выдача только уведомлений владельца, новые сверху', async () => {
+	test('Тест выдачи только уведомлений владельца, новые сверху', async () => {
 		const first = await createTestNotification(db, owner.id);
 		setSystemTime(new Date(NOW.getTime() + MS_PER_SECOND));
 		const second = await createTestNotification(db, owner.id);
@@ -44,18 +44,18 @@ describe('list', () => {
 });
 
 describe('get', () => {
-	test('Выброс NotFoundError для чужого уведомления вместо доступа к нему', async () => {
+	test('Тест выброса NotFoundError для чужого уведомления вместо доступа к нему', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await expect(notifications.get(stranger.id, notification.id)).rejects.toThrow(NotFoundError);
 	});
 
-	test('Выброс NotFoundError для id не в формате UUID', async () => {
+	test('Тест выброса NotFoundError для id не в формате UUID', async () => {
 		await expect(notifications.get(owner.id, 'not-a-uuid')).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('markRead', () => {
-	test('Отметка прочитанным без изменения времени при повторе', async () => {
+	test('Тест отметки прочитанным без изменения времени при повторе', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		expect(notification.readAt).toBeNull();
 
@@ -65,7 +65,7 @@ describe('markRead', () => {
 		expect((await notifications.markRead(owner.id, notification.id)).readAt).toBe(read.readAt);
 	});
 
-	test('Выброс NotFoundError для чужого уведомления без его изменения', async () => {
+	test('Тест выброса NotFoundError для чужого уведомления без его изменения', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await expect(notifications.markRead(stranger.id, notification.id)).rejects.toThrow(
 			NotFoundError,
@@ -75,14 +75,14 @@ describe('markRead', () => {
 });
 
 describe('remove', () => {
-	test('Удаление уведомления без удаления счётчика', async () => {
+	test('Тест удаления уведомления без удаления счётчика', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await notifications.remove(owner.id, notification.id);
 		await expect(notifications.get(owner.id, notification.id)).rejects.toThrow(NotFoundError);
 		expect(await db.counter.count({ where: { id: notification.counter.id } })).toBe(1);
 	});
 
-	test('Выброс NotFoundError для чужого уведомления без его удаления', async () => {
+	test('Тест выброса NotFoundError для чужого уведомления без его удаления', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await expect(notifications.remove(stranger.id, notification.id)).rejects.toThrow(NotFoundError);
 		expect(await notifications.get(owner.id, notification.id)).toEqual(notification);
@@ -90,14 +90,14 @@ describe('remove', () => {
 });
 
 describe('listUnsent', () => {
-	test('Выдача неотправленных всех пользователей, старые сначала', async () => {
+	test('Тест выдачи неотправленных всех пользователей, старые сначала', async () => {
 		const first = await createTestNotification(db, owner.id);
 		setSystemTime(new Date(NOW.getTime() + MS_PER_SECOND));
 		const second = await createTestNotification(db, stranger.id);
 		expect(await notifications.listUnsent(new Date())).toEqual([first.id, second.id]);
 	});
 
-	test('Без отправленных и недоставляемых', async () => {
+	test('Тест выдачи без отправленных и недоставляемых', async () => {
 		const sent = await createTestNotification(db, owner.id);
 		const undeliverable = await createTestNotification(db, stranger.id);
 		await notifications.markSent(sent.id);
@@ -105,7 +105,7 @@ describe('listUnsent', () => {
 		expect(await notifications.listUnsent(NOW)).toEqual([]);
 	});
 
-	test('Без уведомлений старше окна досылки', async () => {
+	test('Тест выдачи без уведомлений старше окна досылки', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		const edge = new Date(NOW.getTime() + NOTIFICATION_RESEND_WINDOW_MS);
 		expect(await notifications.listUnsent(edge)).toEqual([notification.id]);
@@ -114,7 +114,7 @@ describe('listUnsent', () => {
 });
 
 describe('markSent и markUndeliverable', () => {
-	test('Недоставляемым нельзя отметить уже отправленное', async () => {
+	test('Тест запрета отметить недоставляемым уже отправленное', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await notifications.markSent(notification.id);
 		await notifications.markUndeliverable(notification.id);
@@ -122,7 +122,7 @@ describe('markSent и markUndeliverable', () => {
 		expect(row.deliveryFailedAt).toBeNull();
 	});
 
-	test('Повторная отметка отправленным не меняет время отправки', async () => {
+	test('Тест сохранения времени отправки при повторной отметке', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await notifications.markSent(notification.id);
 		setSystemTime(new Date(NOW.getTime() + MS_PER_SECOND));
@@ -131,7 +131,7 @@ describe('markSent и markUndeliverable', () => {
 		expect(row.sentAt).toEqual(NOW);
 	});
 
-	test('Уведомление после отметки остаётся в Mini App', async () => {
+	test('Тест сохранения уведомления в Mini App после отметки', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await notifications.markUndeliverable(notification.id);
 		expect(await notifications.get(owner.id, notification.id)).toEqual(notification);
@@ -139,7 +139,7 @@ describe('markSent и markUndeliverable', () => {
 });
 
 describe('getDelivery', () => {
-	test('Данные сообщения для неотправленного уведомления', async () => {
+	test('Тест данных сообщения для неотправленного уведомления', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		expect(await notifications.getDelivery(notification.id)).toEqual({
 			notificationId: notification.id,
@@ -151,7 +151,7 @@ describe('getDelivery', () => {
 		});
 	});
 
-	test('Число показывается у ручного счётчика, даже если скрыто', async () => {
+	test('Тест показа числа у ручного счётчика, даже если оно скрыто', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await db.counter.update({
 			where: { id: notification.counter.id },
@@ -160,7 +160,7 @@ describe('getDelivery', () => {
 		expect((await notifications.getDelivery(notification.id))?.showValue).toBe(true);
 	});
 
-	test('null для отправленного, недоставляемого и удалённого уведомления', async () => {
+	test('Тест возврата null для отправленного, недоставляемого и удалённого уведомления', async () => {
 		const sent = await createTestNotification(db, owner.id);
 		const undeliverable = await createTestNotification(db, owner.id);
 		const removed = await createTestNotification(db, owner.id);
@@ -170,5 +170,28 @@ describe('getDelivery', () => {
 		for (const { id } of [sent, undeliverable, removed]) {
 			expect(await notifications.getDelivery(id)).toBeNull();
 		}
+	});
+});
+
+describe('неверный id', () => {
+	test('Тест выброса NotFoundError в markRead и remove для id не в формате UUID и неизвестного UUID', async () => {
+		for (const id of ['not-a-uuid', crypto.randomUUID()]) {
+			await expect(notifications.markRead(owner.id, id)).rejects.toThrow(NotFoundError);
+			await expect(notifications.remove(owner.id, id)).rejects.toThrow(NotFoundError);
+		}
+	});
+
+	test('Тест выброса NotFoundError в методах воркера для id не в формате UUID', async () => {
+		await expect(notifications.markSent('not-a-uuid')).rejects.toThrow(NotFoundError);
+		await expect(notifications.markUndeliverable('not-a-uuid')).rejects.toThrow(NotFoundError);
+		await expect(notifications.getDelivery('not-a-uuid')).rejects.toThrow(NotFoundError);
+	});
+
+	test('Тест методов воркера для неизвестного UUID без ошибки и без записей', async () => {
+		const id = crypto.randomUUID();
+		await notifications.markSent(id);
+		await notifications.markUndeliverable(id);
+		expect(await notifications.getDelivery(id)).toBeNull();
+		expect(await db.counterNotification.count()).toBe(0);
 	});
 });

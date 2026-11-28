@@ -20,18 +20,18 @@ const THIS_YEAR = new Date(2026, 0, 3, 12, 0).toISOString();
 const LAST_YEAR = new Date(2025, 4, 3, 12, 0).toISOString();
 
 describe('formatShortDate', () => {
-	test('Только время для сегодняшней даты', () => {
+	test('Тест показа только времени для сегодняшней даты', () => {
 		expect(formatShortDate(TODAY, NOW)).toBe('09:05');
 	});
 
-	test('День и месяц без года для даты этого года', () => {
+	test('Тест показа дня и месяца без года для даты этого года', () => {
 		const formatted = formatShortDate(THIS_YEAR, NOW);
 		expect(formatted).toContain('3');
 		expect(formatted).toContain('янв');
 		expect(formatted).not.toContain('2026');
 	});
 
-	test('Полная дата с годом для прошлых лет', () => {
+	test('Тест показа полной даты с годом для прошлых лет', () => {
 		const formatted = formatShortDate(LAST_YEAR, NOW);
 		expect(formatted).toContain('мая');
 		expect(formatted).toContain('2025');
@@ -39,33 +39,33 @@ describe('formatShortDate', () => {
 });
 
 describe('formatDateTime', () => {
-	test('Дата и время в поясе пользователя, а не устройства', () => {
+	test('Тест показа даты и времени в поясе пользователя, а не устройства', () => {
 		const iso = '2026-11-24T10:00:00.000Z';
 		expect(formatDateTime(iso, 'Europe/Kyiv')).toContain('12:00');
 		expect(formatDateTime(iso, 'Asia/Tokyo')).toContain('19:00');
 	});
 
-	test('Смена дня по поясу пользователя', () => {
+	test('Тест смены дня по поясу пользователя', () => {
 		expect(formatDateTime('2026-11-24T22:30:00.000Z', 'Europe/Kyiv')).toContain('25');
 	});
 });
 
 describe('formatRemaining', () => {
-	test('Часы, минуты и секунды меньше суток', () => {
+	test('Тест показа часов, минут и секунд для остатка меньше суток', () => {
 		expect(
 			formatRemaining((4 * SECONDS_PER_HOUR + 5 * SECONDS_PER_MINUTE + 6) * MS_PER_SECOND),
 		).toBe('04:05:06');
 	});
 
-	test('Дни перед временем от суток', () => {
+	test('Тест показа дней перед временем для остатка от суток', () => {
 		expect(formatRemaining(3 * MS_PER_DAY + 6 * MS_PER_SECOND)).toBe('3 д 00:00:06');
 	});
 
-	test('Округление неполной секунды вверх', () => {
+	test('Тест округления неполной секунды вверх', () => {
 		expect(formatRemaining(1)).toBe('00:00:01');
 	});
 
-	test('Ноль вместо отрицательного остатка', () => {
+	test('Тест подстановки нуля вместо отрицательного остатка', () => {
 		expect(formatRemaining(-5 * MS_PER_SECOND)).toBe('00:00:00');
 	});
 });
@@ -76,16 +76,16 @@ describe('cycleProgress', () => {
 	const startMs = Date.parse(START);
 	const length = Date.parse(TARGET) - startMs;
 
-	test('Доля прошедшего времени цикла', () => {
+	test('Тест подсчёта доли прошедшего времени цикла', () => {
 		expect(cycleProgress(START, TARGET, startMs + length / 4)).toBe(0.25);
 	});
 
-	test('Ограничение долей от 0 до 1 до старта и после окончания', () => {
+	test('Тест ограничения доли от 0 до 1 до старта и после окончания', () => {
 		expect(cycleProgress(START, TARGET, startMs - length)).toBe(0);
 		expect(cycleProgress(START, TARGET, startMs + 2 * length)).toBe(1);
 	});
 
-	test('Цикл нулевой длины считается завершённым', () => {
+	test('Тест завершённости цикла нулевой длины', () => {
 		expect(cycleProgress(START, START, startMs - 1)).toBe(1);
 	});
 });

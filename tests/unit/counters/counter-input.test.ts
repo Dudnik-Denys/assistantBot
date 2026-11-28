@@ -34,17 +34,17 @@ function firstMessage(input: unknown): string | undefined {
 }
 
 describe('CounterInputSchema', () => {
-	test('Обрезка пробелов в названии', () => {
+	test('Тест обрезки пробелов в названии', () => {
 		expect(CounterInputSchema.parse({ ...BASE_INPUT, title: '  Вода  ' }).title).toBe('Вода');
 	});
 
-	test('Отклонение счётчика без названия, в том числе из одних пробелов', () => {
+	test('Тест отклонения счётчика без названия, в том числе из одних пробелов', () => {
 		for (const title of [undefined, '', '   ']) {
 			expect(firstMessage({ ...BASE_INPUT, title })).toBe(COUNTER_TITLE_REQUIRED_MESSAGE);
 		}
 	});
 
-	test(`Ограничение названия ${COUNTER_TITLE_MAX} символами включительно`, () => {
+	test(`Тест ограничения названия ${COUNTER_TITLE_MAX} символами включительно`, () => {
 		expect(
 			CounterInputSchema.safeParse({ ...BASE_INPUT, title: 'а'.repeat(COUNTER_TITLE_MAX) }).success,
 		).toBe(true);
@@ -53,7 +53,7 @@ describe('CounterInputSchema', () => {
 		);
 	});
 
-	test('Счётчик без таймера — всегда ручной, без повтора, уведомлений и скрытых кнопок', () => {
+	test('Тест счётчика без таймера: всегда ручной, без повтора, уведомлений и скрытых кнопок', () => {
 		expect(CounterInputSchema.parse(BASE_INPUT)).toMatchObject({
 			manual: true,
 			repeatSame: false,
@@ -63,7 +63,7 @@ describe('CounterInputSchema', () => {
 		});
 	});
 
-	test('Таймер на срок сохраняет повтор, автоповтор и уведомления', () => {
+	test('Тест сохранения повтора, автоповтора и уведомлений у таймера на срок', () => {
 		expect(CounterInputSchema.parse({ ...BASE_INPUT, timer: HOUR_TIMER })).toMatchObject({
 			manual: false,
 			repeatSame: true,
@@ -73,7 +73,7 @@ describe('CounterInputSchema', () => {
 		});
 	});
 
-	test('Таймер до даты сбрасывает повтор и автоповтор', () => {
+	test('Тест сброса повтора и автоповтора у таймера до даты', () => {
 		expect(CounterInputSchema.parse({ ...BASE_INPUT, timer: DATE_TIMER })).toMatchObject({
 			repeatSame: false,
 			autoRestart: false,
@@ -81,12 +81,12 @@ describe('CounterInputSchema', () => {
 		});
 	});
 
-	test('Автоповтор только вместе с повтором тех же параметров', () => {
+	test('Тест автоповтора только вместе с повтором тех же параметров', () => {
 		const input = { ...BASE_INPUT, timer: HOUR_TIMER, repeatSame: false };
 		expect(CounterInputSchema.parse(input).autoRestart).toBe(false);
 	});
 
-	test('Подстановка нулей в незаполненные части срока', () => {
+	test('Тест подстановки нулей в незаполненные части срока', () => {
 		const parsed = CounterInputSchema.parse({ ...BASE_INPUT, timer: HOUR_TIMER });
 		expect(parsed.timer).toEqual({
 			...HOUR_TIMER,
@@ -94,12 +94,12 @@ describe('CounterInputSchema', () => {
 		});
 	});
 
-	test('Отклонение нулевого срока', () => {
+	test('Тест отклонения нулевого срока', () => {
 		const timer = { ...HOUR_TIMER, duration: { hours: 0 } };
 		expect(firstMessage({ ...BASE_INPUT, timer })).toBe(COUNTER_DURATION_REQUIRED_MESSAGE);
 	});
 
-	test(`Ограничение части срока ${COUNTER_DURATION_PART_MAX} включительно, без дробей и минусов`, () => {
+	test(`Тест ограничения части срока ${COUNTER_DURATION_PART_MAX} включительно, без дробей и минусов`, () => {
 		const withDays = (days: number) => ({
 			...BASE_INPUT,
 			timer: { ...HOUR_TIMER, duration: { days } },
@@ -110,17 +110,17 @@ describe('CounterInputSchema', () => {
 		}
 	});
 
-	test('Отклонение своего старта без даты и времени', () => {
+	test('Тест отклонения своего старта без даты и времени', () => {
 		const timer = { ...HOUR_TIMER, customStart: true };
 		expect(firstMessage({ ...BASE_INPUT, timer })).toBe(COUNTER_START_REQUIRED_MESSAGE);
 	});
 
-	test('Свой старт с датой и временем', () => {
+	test('Тест принятия своего старта с датой и временем', () => {
 		const timer = { ...HOUR_TIMER, customStart: true, startAt: '2026-12-01T09:30' };
 		expect(CounterInputSchema.safeParse({ ...BASE_INPUT, timer }).success).toBe(true);
 	});
 
-	test('Отклонение даты не в формате локального времени до минуты', () => {
+	test('Тест отклонения даты не в формате локального времени до минуты', () => {
 		for (const targetAt of [
 			'2026-12-31',
 			'2026-12-31T12:00:30',

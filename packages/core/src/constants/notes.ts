@@ -12,3 +12,6 @@ export const NOTE_TITLE_REQUIRED_MESSAGE = 'Укажите заголовок';
  * поиске: длинный запрос не раздувает tsquery.
  */
 export const SEARCH_WORDS_MAX = 10;
+
+/** Текст ошибки, когда запись не найдена или принадлежит другому пользователю. */
+export const NOTE_NOT_FOUND_MESSAGE = 'Заметка не найдена';

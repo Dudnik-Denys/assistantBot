@@ -22,13 +22,13 @@ function logged(): string {
 }
 
 describe('logUpdates', () => {
-	test('Команда и отправитель в логе, остальной текст — нет', async () => {
+	test('Тест лога команды и отправителя без остального текста', async () => {
 		await createFakeBot(logUpdates).send(`/start ${SECRET}`);
 		expect(logged()).toContain(`from ${FAKE_USER_ID}: message /start`);
 		expect(logged()).not.toContain(SECRET);
 	});
 
-	test('Текст обычного сообщения не попадает в лог', async () => {
+	test('Тест отсутствия текста обычного сообщения в логе', async () => {
 		await createFakeBot(logUpdates).send(SECRET);
 		expect(logged()).toContain('message');
 		expect(logged()).not.toContain(SECRET);
@@ -39,13 +39,13 @@ describe('logApiCalls', () => {
 	// Предыдущий вызов в цепочке трансформеров: успешный ответ без сети.
 	const okCall = (async () => ({ ok: true, result: true })) as unknown as ApiCallFn<RawApi>;
 
-	test('Метод и результат вызова Bot API в логе', async () => {
+	test('Тест лога метода и результата вызова Bot API', async () => {
 		await logApiCalls(okCall, 'sendMessage', { chat_id: 1, text: SECRET });
 		expect(logged()).toContain('→ sendMessage ok');
 		expect(logged()).not.toContain(SECRET);
 	});
 
-	test('getUpdates не логируется', async () => {
+	test('Тест отсутствия getUpdates в логе', async () => {
 		await logApiCalls(okCall, 'getUpdates', {});
 		expect(logSpy).not.toHaveBeenCalled();
 	});

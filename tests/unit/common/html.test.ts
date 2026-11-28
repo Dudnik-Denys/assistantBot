@@ -2,15 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import { escapeHtml } from '#core/common/html.ts';
 
 describe('escapeHtml', () => {
-	test('Экранирование символов разметки Telegram HTML', () => {
+	test('Тест экранирования символов разметки Telegram HTML', () => {
 		expect(escapeHtml('<b>Вода & сок</b>')).toBe('&lt;b&gt;Вода &amp; сок&lt;/b&gt;');
 	});
 
-	test('Амперсанд уже экранированной сущности экранируется заново', () => {
+	test('Тест повторного экранирования амперсанда уже экранированной сущности', () => {
 		expect(escapeHtml('&lt;')).toBe('&amp;lt;');
 	});
 
-	test('Текст без спецсимволов не меняется', () => {
+	test('Тест неизменности текста без спецсимволов', () => {
 		expect(escapeHtml('Счётчик "Вода" — 5')).toBe('Счётчик "Вода" — 5');
 	});
 });

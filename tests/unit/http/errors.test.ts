@@ -7,12 +7,12 @@ import { ApiError, NetworkError, ServerUnavailableError } from '#web/lib/http/cl
 const SERVER_MESSAGE = 'Заметка не найдена';
 
 describe('isConnectionError', () => {
-	test('Признание ошибкой связи отсутствия ответа и ответа не от нашего API', () => {
+	test('Тест признания ошибкой связи отсутствия ответа и ответа не от нашего API', () => {
 		expect(isConnectionError(new NetworkError(new TypeError('Failed to fetch')))).toBe(true);
 		expect(isConnectionError(new ServerUnavailableError(HttpStatus.NotFound))).toBe(true);
 	});
 
-	test('Отказ считать ошибкой связи ответ нашего API и прочие ошибки', () => {
+	test('Тест отказа считать ошибкой связи ответ нашего API и прочие ошибки', () => {
 		expect(isConnectionError(new ApiError(HttpStatus.NotFound, SERVER_MESSAGE))).toBe(false);
 		expect(isConnectionError(new Error('Сбой'))).toBe(false);
 		expect(isConnectionError('строка')).toBe(false);
@@ -29,11 +29,11 @@ describe('errorMessage', () => {
 
 	afterEach(() => consoleError.mockRestore());
 
-	test('Текст сервера для ошибки нашего API', () => {
+	test('Тест текста сервера для ошибки нашего API', () => {
 		expect(errorMessage(new ApiError(HttpStatus.NotFound, SERVER_MESSAGE))).toBe(SERVER_MESSAGE);
 	});
 
-	test('Текст про связь для ошибок связи', () => {
+	test('Тест текста про связь для ошибок связи', () => {
 		const networkError = new NetworkError(new TypeError('Failed to fetch'));
 		const unavailable = new ServerUnavailableError(HttpStatus.NotFound);
 		expect(errorMessage(networkError)).toBe(networkError.message);
@@ -41,7 +41,7 @@ describe('errorMessage', () => {
 		expect(consoleError).not.toHaveBeenCalled();
 	});
 
-	test('Общий текст и запись в консоль для неожиданной ошибки', () => {
+	test('Тест общего текста и записи в консоль для неожиданной ошибки', () => {
 		const unexpected = new Error('undefined is not a function');
 		expect(errorMessage(unexpected)).toBe(UNEXPECTED_ERROR_MESSAGE);
 		expect(consoleError).toHaveBeenCalledWith(unexpected);

@@ -9,6 +9,7 @@ import {
 	COUNTER_EMPTY_DURATION,
 	COUNTER_INITIAL_VALUE,
 	COUNTER_NO_TIMER_MESSAGE,
+	COUNTER_NOT_FOUND_MESSAGE,
 	COUNTER_NOT_RUNNING_MESSAGE,
 	COUNTER_RESTART_NEEDS_PARAMS_MESSAGE,
 	COUNTER_TARGET_PASSED_MESSAGE,
@@ -25,9 +26,7 @@ import {
 	type CounterTimerInput,
 } from '../schemas/counters/counter-input.ts';
 import { addDuration, type CycleSource, finishCycle, localToUtc, nextCycle } from './timer.ts';
-import type { CounterDto, ProcessDueResult } from './types.ts';
-
-const NOT_FOUND = 'Счётчик не найден';
+import type { CounterDto, CounterFailure, FinishDueOfResult, ProcessDueResult } from './types.ts';
 
 function durationOf(row: Counter): CounterDuration {
 	return {
@@ -49,7 +48,7 @@ function durationColumns(duration: CounterDuration) {
 	};
 }
 
-export function toCounterDto(row: Counter): CounterDto {
+function toCounterDto(row: Counter): CounterDto {
 	const { timerMode, startAt, targetAt, timerStatus, pausedAt } = row;
 	return {
 		id: row.id,
@@ -172,9 +171,9 @@ export function createCountersService(db: PrismaClient) {
 	}
 
 	async function findOwn(userId: string, id: string): Promise<Counter> {
-		assertId(id, NOT_FOUND);
+		assertId(id, COUNTER_NOT_FOUND_MESSAGE);
 		const row = await db.counter.findFirst({ where: { id, userId } });
-		if (!row) throw new NotFoundError(NOT_FOUND);
+		if (!row) throw new NotFoundError(COUNTER_NOT_FOUND_MESSAGE);
 		return row;
 	}
 
@@ -283,19 +282,19 @@ export function createCountersService(db: PrismaClient) {
 					...(timerChanged(row, timer, timeZone) ? timerColumns(timer, timeZone, new Date()) : {}),
 				},
 			});
-			if (count === 0) throw new NotFoundError(NOT_FOUND);
+			if (count === 0) throw new NotFoundError(COUNTER_NOT_FOUND_MESSAGE);
 			return this.get(userId, id);
 		},
 
 		async increment(userId: string, id: string): Promise<CounterDto> {
-			assertId(id, NOT_FOUND);
+			assertId(id, COUNTER_NOT_FOUND_MESSAGE);
 			await db.counter.updateMany({ where: { id, userId }, data: { value: { increment: 1 } } });
 			return this.get(userId, id);
 		},
 
 		/** −1, но не ниже `COUNTER_VALUE_MIN`. */
 		async decrement(userId: string, id: string): Promise<CounterDto> {
-			assertId(id, NOT_FOUND);
+			assertId(id, COUNTER_NOT_FOUND_MESSAGE);
 			await db.counter.updateMany({
 				where: { id, userId, value: { gt: COUNTER_VALUE_MIN } },
 				data: { value: { decrement: 1 } },
@@ -328,13 +327,13 @@ export function createCountersService(db: PrismaClient) {
 				where: { id, userId },
 				data: { value: COUNTER_INITIAL_VALUE, ...timer },
 			});
-			if (count === 0) throw new NotFoundError(NOT_FOUND);
+			if (count === 0) throw new NotFoundError(COUNTER_NOT_FOUND_MESSAGE);
 			return this.get(userId, id);
 		},
 
 		/** «Стоп»: идущий таймер — на паузу; отсчёт замирает на `pausedAt`. */
 		async pause(userId: string, id: string): Promise<CounterDto> {
-			assertId(id, NOT_FOUND);
+			assertId(id, COUNTER_NOT_FOUND_MESSAGE);
 			const now = new Date();
 			// Только идущий и ещё не закончившийся цикл: закончившийся ждёт воркера.
 			const { count } = await db.counter.updateMany({
@@ -396,9 +395,9 @@ export function createCountersService(db: PrismaClient) {
 		},
 
 		async remove(userId: string, id: string): Promise<void> {
-			assertId(id, NOT_FOUND);
+			assertId(id, COUNTER_NOT_FOUND_MESSAGE);
 			const { count } = await db.counter.deleteMany({ where: { id, userId } });
-			if (count === 0) throw new NotFoundError(NOT_FOUND);
+			if (count === 0) throw new NotFoundError(COUNTER_NOT_FOUND_MESSAGE);
 		},
 
 		/**
@@ -415,20 +414,29 @@ export function createCountersService(db: PrismaClient) {
 
 		/**
 		 * То же для всех наступивших циклов пользователя (список счётчиков). Возвращает
-		 * обработанные счётчики — клиент заменяет их в списке.
+		 * обработанные счётчики — клиент заменяет их в списке. Как в `processDue`, ошибка одного
+		 * счётчика не прерывает остальные: он попадает в `failed` и остаётся идущим — клиент
+		 * повторит запрос (`RepeatWhile`).
 		 */
-		async finishDueOf(userId: string): Promise<CounterDto[]> {
+		async finishDueOf(userId: string): Promise<FinishDueOfResult> {
 			const now = new Date();
 			const due = await db.counter.findMany({
 				where: { userId, timerStatus: COUNTER_TIMER_STATUS.Running, targetAt: { lte: now } },
 				take: COUNTER_DUE_BATCH_SIZE,
 				select: { id: true },
 			});
-			for (const { id } of due) await finishDue(id, now);
-			const rows = await db.counter.findMany({
-				where: { userId, id: { in: due.map(({ id }) => id) } },
-			});
-			return rows.map(toCounterDto);
+			const finished: string[] = [];
+			const failed: CounterFailure[] = [];
+			for (const { id } of due) {
+				try {
+					await finishDue(id, now);
+					finished.push(id);
+				} catch (error) {
+					failed.push({ id, error });
+				}
+			}
+			const rows = await db.counter.findMany({ where: { userId, id: { in: finished } } });
+			return { counters: rows.map(toCounterDto), failed };
 		},
 
 		/**

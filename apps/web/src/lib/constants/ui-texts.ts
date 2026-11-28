@@ -11,4 +11,9 @@ export const UiText = {
 	Search: 'Поиск',
 	ClearSearch: 'Очистить',
 	PageLoading: 'Загрузка страницы',
+	Back: 'Назад',
+	BackToMenu: 'В меню',
+	Remove: 'Удалить',
+	/** Пустое поле формы (дата, время, число): знак-заглушка вместо значения. */
+	EmptyValue: '–',
 } as const;

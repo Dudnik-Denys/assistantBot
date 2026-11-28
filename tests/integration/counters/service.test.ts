@@ -16,12 +16,7 @@ import {
 	COUNTER_TIMER_MODE,
 	COUNTER_TIMER_STATUS,
 } from '#core/constants/counters.ts';
-import {
-	MS_PER_DAY,
-	MS_PER_SECOND,
-	SECONDS_PER_HOUR,
-	SECONDS_PER_MINUTE,
-} from '#core/constants/time.ts';
+import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE, MS_PER_SECOND } from '#core/constants/time.ts';
 import {
 	createTestCounter,
 	createTestNotification,
@@ -41,8 +36,6 @@ let stranger: User;
 // Время тестов: 12:00:30 по Киеву (часовой пояс новых пользователей), зимой — UTC+2.
 const NOW = new Date('2026-01-15T10:00:30.000Z');
 const NOW_MINUTE = new Date('2026-01-15T10:00:00.000Z');
-const MS_PER_MINUTE = SECONDS_PER_MINUTE * MS_PER_SECOND;
-const MS_PER_HOUR = SECONDS_PER_HOUR * MS_PER_SECOND;
 const PAUSE_MS = 10 * MS_PER_MINUTE;
 const DATE_TIMER = { mode: COUNTER_TIMER_MODE.Date, targetAt: '2026-01-20T12:00' } as const;
 const DATE_TIMER_TARGET = '2026-01-20T10:00:00.000Z';
@@ -68,7 +61,7 @@ afterEach(() => {
 afterAll(() => db.$disconnect());
 
 describe('create', () => {
-	test('Ручной счётчик без таймера с начальным числом', async () => {
+	test('Тест создания ручного счётчика без таймера с начальным числом', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		expect(counter).toMatchObject({
 			title: TEST_COUNTER_INPUT.title,
@@ -79,7 +72,7 @@ describe('create', () => {
 		});
 	});
 
-	test('Таймер на срок со стартом от начала текущей минуты', async () => {
+	test('Тест таймера на срок со стартом от начала текущей минуты', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		expect(counter.timer).toMatchObject({
 			mode: COUNTER_TIMER_MODE.Duration,
@@ -91,7 +84,7 @@ describe('create', () => {
 		});
 	});
 
-	test('Свой старт — по времени пользователя', async () => {
+	test('Тест своего старта по времени пользователя', async () => {
 		const timer = { ...TEST_HOUR_TIMER, customStart: true, startAt: '2026-01-15T11:30' };
 		const counter = await createTestCounter(db, owner.id, { timer });
 		expect(counter.timer).toMatchObject({
@@ -101,7 +94,7 @@ describe('create', () => {
 		});
 	});
 
-	test('Таймер до даты — по времени пользователя', async () => {
+	test('Тест таймера до даты по времени пользователя', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: DATE_TIMER });
 		expect(counter.timer).toMatchObject({
 			mode: COUNTER_TIMER_MODE.Date,
@@ -110,31 +103,31 @@ describe('create', () => {
 		});
 	});
 
-	test('Отклонение окончания, которое уже прошло', async () => {
+	test('Тест отклонения окончания, которое уже прошло', async () => {
 		const timer = { ...DATE_TIMER, targetAt: '2026-01-15T11:59' };
 		await expect(createTestCounter(db, owner.id, { timer })).rejects.toThrow(
 			COUNTER_TARGET_PASSED_MESSAGE,
 		);
 	});
 
-	test('Отклонение ввода не той формы', async () => {
+	test('Тест отклонения ввода не той формы', async () => {
 		await expect(counters.create(owner.id, { title: 42 })).rejects.toThrow(ValidationError);
 	});
 });
 
 describe('get', () => {
-	test('Выброс NotFoundError для чужого счётчика вместо доступа к нему', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика вместо доступа к нему', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(counters.get(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
 	});
 
-	test('Выброс NotFoundError для id не в формате UUID', async () => {
+	test('Тест выброса NotFoundError для id не в формате UUID', async () => {
 		await expect(counters.get(owner.id, 'not-a-uuid')).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('list', () => {
-	test('Выдача только счётчиков владельца, новые сверху', async () => {
+	test('Тест выдачи только счётчиков владельца, новые сверху', async () => {
 		const first = await createTestCounter(db, owner.id);
 		advance(MS_PER_SECOND);
 		const second = await createTestCounter(db, owner.id);
@@ -146,7 +139,7 @@ describe('list', () => {
 });
 
 describe('update', () => {
-	test('Без изменения таймера текущий цикл и пауза сохраняются', async () => {
+	test('Тест сохранения текущего цикла и паузы без изменения таймера', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		const paused = await counters.pause(owner.id, counter.id);
 		advance(PAUSE_MS);
@@ -160,7 +153,7 @@ describe('update', () => {
 		expect(updated.timer).toEqual(paused.timer);
 	});
 
-	test('Новый срок запускает новый цикл с текущей минуты', async () => {
+	test('Тест запуска нового цикла с текущей минуты при новом сроке', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await counters.pause(owner.id, counter.id);
 		const now = advance(PAUSE_MS);
@@ -176,7 +169,7 @@ describe('update', () => {
 		});
 	});
 
-	test('Тот же свой старт после паузы с секундами не считается новым', async () => {
+	test('Тест того же своего старта после паузы с секундами: не новый', async () => {
 		const timer = { ...TEST_HOUR_TIMER, customStart: true, startAt: '2026-01-15T11:30' };
 		const counter = await createTestCounter(db, owner.id, { timer });
 		await counters.pause(owner.id, counter.id);
@@ -191,13 +184,13 @@ describe('update', () => {
 		expect(updated.timer).toEqual(started.timer);
 	});
 
-	test('Удаление таймера', async () => {
+	test('Тест удаления таймера', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		const updated = await counters.update(owner.id, counter.id, TEST_COUNTER_INPUT);
 		expect(updated.timer).toBeNull();
 	});
 
-	test('Выброс NotFoundError для чужого счётчика без его изменения', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика без его изменения', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(
 			counters.update(stranger.id, counter.id, { ...TEST_COUNTER_INPUT, title: 'Чужое' }),
@@ -205,7 +198,7 @@ describe('update', () => {
 		expect((await counters.get(owner.id, counter.id)).title).toBe(counter.title);
 	});
 
-	test('Отклонение некорректного ввода', async () => {
+	test('Тест отклонения некорректного ввода', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(
 			counters.update(owner.id, counter.id, { ...TEST_COUNTER_INPUT, title: '' }),
@@ -214,19 +207,19 @@ describe('update', () => {
 });
 
 describe('increment и decrement', () => {
-	test('Изменение числа на 1', async () => {
+	test('Тест изменения числа на 1', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await counters.increment(owner.id, counter.id);
 		expect((await counters.increment(owner.id, counter.id)).value).toBe(2);
 		expect((await counters.decrement(owner.id, counter.id)).value).toBe(1);
 	});
 
-	test('Число не опускается ниже нуля', async () => {
+	test('Тест сохранения числа не ниже нуля', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		expect((await counters.decrement(owner.id, counter.id)).value).toBe(COUNTER_INITIAL_VALUE);
 	});
 
-	test('Выброс NotFoundError для чужого счётчика без его изменения', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика без его изменения', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(counters.increment(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
 		await expect(counters.decrement(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
@@ -235,7 +228,7 @@ describe('increment и decrement', () => {
 });
 
 describe('reset', () => {
-	test('Начальное число и новый цикл на срок на паузе с текущего момента', async () => {
+	test('Тест начального числа и нового цикла на срок на паузе с текущего момента', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await counters.increment(owner.id, counter.id);
 		const now = advance(PAUSE_MS);
@@ -250,7 +243,7 @@ describe('reset', () => {
 		});
 	});
 
-	test('Таймер до даты остаётся до той же даты', async () => {
+	test('Тест сохранения даты у таймера до даты', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: DATE_TIMER });
 		const reset = await counters.reset(owner.id, counter.id);
 		expect(reset.timer).toMatchObject({
@@ -259,14 +252,14 @@ describe('reset', () => {
 		});
 	});
 
-	test('Выброс NotFoundError для чужого счётчика', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(counters.reset(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('pause', () => {
-	test('Идущий таймер — на паузу с текущего момента', async () => {
+	test('Тест паузы идущего таймера с текущего момента', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		const paused = await counters.pause(owner.id, counter.id);
 		expect(paused.timer).toMatchObject({
@@ -275,31 +268,31 @@ describe('pause', () => {
 		});
 	});
 
-	test('Отклонение паузы у таймера, который не идёт', async () => {
+	test('Тест отклонения паузы у таймера, который не идёт', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await counters.pause(owner.id, counter.id);
 		await expect(counters.pause(owner.id, counter.id)).rejects.toThrow(COUNTER_NOT_RUNNING_MESSAGE);
 	});
 
-	test('Отклонение паузы у цикла, который уже закончился', async () => {
+	test('Тест отклонения паузы у цикла, который уже закончился', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		advance(2 * MS_PER_HOUR);
 		await expect(counters.pause(owner.id, counter.id)).rejects.toThrow(COUNTER_NOT_RUNNING_MESSAGE);
 	});
 
-	test('Отклонение паузы у счётчика без таймера', async () => {
+	test('Тест отклонения паузы у счётчика без таймера', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(counters.pause(owner.id, counter.id)).rejects.toThrow(ValidationError);
 	});
 
-	test('Выброс NotFoundError для чужого счётчика', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await expect(counters.pause(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('start', () => {
-	test('Таймер на срок после паузы сдвигается на её длину', async () => {
+	test('Тест сдвига таймера на срок после паузы на её длину', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await counters.pause(owner.id, counter.id);
 		advance(PAUSE_MS);
@@ -313,7 +306,7 @@ describe('start', () => {
 		});
 	});
 
-	test('Таймер до даты после паузы — без сдвига даты', async () => {
+	test('Тест таймера до даты после паузы без сдвига даты', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: DATE_TIMER });
 		await counters.pause(owner.id, counter.id);
 		advance(PAUSE_MS);
@@ -326,7 +319,7 @@ describe('start', () => {
 		});
 	});
 
-	test('Закончившийся цикл с теми же параметрами — заново с текущей минуты', async () => {
+	test('Тест повтора закончившегося цикла с теми же параметрами с текущей минуты', async () => {
 		const counter = await createTestCounter(db, owner.id, {
 			timer: TEST_HOUR_TIMER,
 			repeatSame: true,
@@ -343,7 +336,7 @@ describe('start', () => {
 		});
 	});
 
-	test('Отклонение старта закончившегося цикла без тех же параметров', async () => {
+	test('Тест отклонения старта закончившегося цикла без тех же параметров', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		advance(2 * MS_PER_HOUR);
 		await counters.finish(owner.id, counter.id);
@@ -352,19 +345,19 @@ describe('start', () => {
 		);
 	});
 
-	test('Отклонение старта идущего таймера', async () => {
+	test('Тест отклонения старта идущего таймера', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await expect(counters.start(owner.id, counter.id)).rejects.toThrow(
 			COUNTER_ALREADY_RUNNING_MESSAGE,
 		);
 	});
 
-	test('Отклонение старта счётчика без таймера', async () => {
+	test('Тест отклонения старта счётчика без таймера', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(counters.start(owner.id, counter.id)).rejects.toThrow(COUNTER_NO_TIMER_MESSAGE);
 	});
 
-	test('Из двух одновременных «Старт» срабатывает один', async () => {
+	test('Тест срабатывания одного из двух одновременных «Старт»', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await counters.pause(owner.id, counter.id);
 		advance(PAUSE_MS);
@@ -380,33 +373,33 @@ describe('start', () => {
 		);
 	});
 
-	test('Выброс NotFoundError для чужого счётчика', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		await expect(counters.start(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('remove', () => {
-	test('Удаление счётчика вместе с его уведомлениями', async () => {
+	test('Тест удаления счётчика вместе с его уведомлениями', async () => {
 		const notification = await createTestNotification(db, owner.id);
 		await counters.remove(owner.id, notification.counter.id);
 		await expect(counters.get(owner.id, notification.counter.id)).rejects.toThrow(NotFoundError);
 		expect(await notifications.list(owner.id)).toEqual([]);
 	});
 
-	test('Выброс NotFoundError для чужого счётчика без его удаления', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика без его удаления', async () => {
 		const counter = await createTestCounter(db, owner.id);
 		await expect(counters.remove(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
 		expect(await counters.get(owner.id, counter.id)).toEqual(counter);
 	});
 
-	test('Выброс NotFoundError для id не в формате UUID', async () => {
+	test('Тест выброса NotFoundError для id не в формате UUID', async () => {
 		await expect(counters.remove(owner.id, 'not-a-uuid')).rejects.toThrow(NotFoundError);
 	});
 });
 
 describe('finish', () => {
-	test('Наступивший цикл без автоповтора — +1 и FINISHED', async () => {
+	test('Тест наступившего цикла без автоповтора: +1 и FINISHED', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		advance(2 * MS_PER_HOUR);
 
@@ -416,19 +409,19 @@ describe('finish', () => {
 		expect(finished.finishedAt).toBe(counter.timer?.targetAt ?? null);
 	});
 
-	test('Цикл, который ещё не наступил, не меняется', async () => {
+	test('Тест сохранения ненаступившего цикла без изменений', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		expect(await counters.finish(owner.id, counter.id)).toEqual(counter);
 	});
 
-	test('Повторный вызов не даёт второго +1', async () => {
+	test('Тест отсутствия второго +1 при повторном вызове', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		advance(2 * MS_PER_HOUR);
 		await counters.finish(owner.id, counter.id);
 		expect((await counters.finish(owner.id, counter.id)).value).toBe(COUNTER_INITIAL_VALUE + 1);
 	});
 
-	test('Выброс NotFoundError для чужого счётчика без его изменения', async () => {
+	test('Тест выброса NotFoundError для чужого счётчика без его изменения', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		advance(2 * MS_PER_HOUR);
 		await expect(counters.finish(stranger.id, counter.id)).rejects.toThrow(NotFoundError);
@@ -437,21 +430,40 @@ describe('finish', () => {
 });
 
 describe('finishDueOf', () => {
-	test('Завершение и возврат только наступивших счётчиков пользователя', async () => {
+	test('Тест завершения и возврата только наступивших счётчиков пользователя', async () => {
 		const due = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		const strangers = await createTestCounter(db, stranger.id, { timer: TEST_HOUR_TIMER });
 		advance(2 * MS_PER_HOUR);
 		await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 
-		const finished = await counters.finishDueOf(owner.id);
+		const { counters: finished, failed } = await counters.finishDueOf(owner.id);
 		expect(finished.map((counter) => counter.id)).toEqual([due.id]);
 		expect(finished[0]?.value).toBe(COUNTER_INITIAL_VALUE + 1);
+		expect(failed).toEqual([]);
 		expect((await counters.get(stranger.id, strangers.id)).value).toBe(COUNTER_INITIAL_VALUE);
+	});
+
+	test('Тест ошибки одного счётчика: остальные завершаются, ошибка — в failed', async () => {
+		const broken = await createTestCounter(db, owner.id, {
+			timer: { ...TEST_HOUR_TIMER, duration: { days: 1 } },
+			repeatSame: true,
+			autoRestart: true,
+		});
+		const healthy = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
+		// Испорченная запись: календарный срок складывается в несуществующем часовом поясе.
+		// Сервиса для смены пояса нет — запись правится напрямую.
+		await db.user.update({ where: { id: owner.id }, data: { timezone: 'Invalid/Zone' } });
+		advance(2 * MS_PER_DAY);
+
+		const { counters: finished, failed } = await counters.finishDueOf(owner.id);
+		expect(finished.map((counter) => counter.id)).toEqual([healthy.id]);
+		expect(failed.map((failure) => failure.id)).toEqual([broken.id]);
+		expect((await counters.get(owner.id, broken.id)).value).toBe(COUNTER_INITIAL_VALUE);
 	});
 });
 
 describe('processDue', () => {
-	test('Завершение наступивших циклов всех пользователей и уведомление при notify', async () => {
+	test('Тест завершения наступивших циклов всех пользователей и уведомления при notify', async () => {
 		const silent = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		const notifying = await createTestCounter(db, stranger.id, {
 			timer: TEST_HOUR_TIMER,
@@ -471,7 +483,7 @@ describe('processDue', () => {
 		});
 	});
 
-	test('Автоповтор: новый цикл с момента окончания прошлого', async () => {
+	test('Тест автоповтора: новый цикл с момента окончания прошлого', async () => {
 		const counter = await createTestCounter(db, owner.id, {
 			timer: TEST_HOUR_TIMER,
 			repeatSame: true,
@@ -488,7 +500,7 @@ describe('processDue', () => {
 		});
 	});
 
-	test('Повторный проход и Mini App не дают второго +1', async () => {
+	test('Тест отсутствия второго +1 при повторном проходе и Mini App', async () => {
 		const counter = await createTestCounter(db, owner.id, { timer: TEST_HOUR_TIMER });
 		const now = advance(2 * MS_PER_HOUR);
 		await counters.finish(owner.id, counter.id);
@@ -497,7 +509,7 @@ describe('processDue', () => {
 		expect((await counters.get(owner.id, counter.id)).value).toBe(COUNTER_INITIAL_VALUE + 1);
 	});
 
-	test('Одновременные проходы завершают цикл один раз', async () => {
+	test('Тест однократного завершения цикла одновременными проходами', async () => {
 		const counter = await createTestCounter(db, owner.id, {
 			timer: TEST_HOUR_TIMER,
 			notify: true,
@@ -510,7 +522,7 @@ describe('processDue', () => {
 		expect(await notifications.list(owner.id)).toHaveLength(1);
 	});
 
-	test('Ошибка одной записи не прерывает остальные и возвращается в failed', async () => {
+	test('Тест ошибки одной записи: остальные обрабатываются, ошибка — в failed', async () => {
 		const broken = await createTestCounter(db, stranger.id, {
 			timer: { ...TEST_HOUR_TIMER, duration: { days: 1 } },
 			repeatSame: true,
@@ -528,4 +540,23 @@ describe('processDue', () => {
 		expect((await counters.get(owner.id, healthy.id)).value).toBe(COUNTER_INITIAL_VALUE + 1);
 		expect((await counters.get(stranger.id, broken.id)).value).toBe(COUNTER_INITIAL_VALUE);
 	});
+});
+
+describe('неверный id', () => {
+	const methods = {
+		update: (id: string) => counters.update(owner.id, id, TEST_COUNTER_INPUT),
+		increment: (id: string) => counters.increment(owner.id, id),
+		decrement: (id: string) => counters.decrement(owner.id, id),
+		reset: (id: string) => counters.reset(owner.id, id),
+		pause: (id: string) => counters.pause(owner.id, id),
+		start: (id: string) => counters.start(owner.id, id),
+		finish: (id: string) => counters.finish(owner.id, id),
+	};
+
+	for (const [name, call] of Object.entries(methods)) {
+		test(`Тест выброса NotFoundError в ${name} для id не в формате UUID и неизвестного UUID`, async () => {
+			await expect(call('not-a-uuid')).rejects.toThrow(NotFoundError);
+			await expect(call(crypto.randomUUID())).rejects.toThrow(NotFoundError);
+		});
+	}
 });

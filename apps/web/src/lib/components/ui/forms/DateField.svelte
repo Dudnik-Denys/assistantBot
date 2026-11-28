@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from 'svelte/elements';
 	import Field from '#lib/components/ui/forms/Field.svelte';
+	import { UiText } from '#lib/constants/ui-texts.ts';
 	import type { ClassProp } from '#lib/types/props.ts';
 	import { parsePlainDate, type Temporal } from '#lib/utils/temporal.ts';
 
@@ -25,7 +26,7 @@
 		label,
 		value = $bindable(),
 		min,
-		placeholder = '–',
+		placeholder = UiText.EmptyValue,
 		class: className,
 		...rest
 	}: Props = $props();

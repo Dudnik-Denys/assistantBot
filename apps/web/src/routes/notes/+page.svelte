@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { api, type NoteDto } from '#lib/api.ts';
 	import NoteCard from '#lib/components/notes/NoteCard.svelte';
@@ -23,12 +22,12 @@
 	async function removeNote(note: NoteDto) {
 		if (!(await removeWithConfirm(`заметку «${note.title}»`, () => api.notes.remove(note.id))))
 			return;
-		search.items = search.items?.filter((item) => item.id !== note.id) ?? null;
+		search.removeItem(note.id);
 	}
 </script>
 
 <Screen fit>
-	<PageHeader title="Заметки" onback={() => goto(resolve('/'))} backLabel="В меню">
+	<PageHeader title="Заметки" backToMenu>
 		<SearchBar bind:value={search.query} label="Поиск по заметкам" />
 	</PageHeader>
 
@@ -54,7 +53,7 @@
 				{/if}
 			{/snippet}
 			{#snippet children(notes)}
-				<ul class="flex flex-col gap-2 pb-20">
+				<ul class="flex flex-col gap-2 pb-floating-clearance">
 					{#each notes as note (note.id)}
 						<li><NoteCard {note} onremove={() => removeNote(note)} /></li>
 					{/each}

@@ -64,7 +64,7 @@ function setup({
 }
 
 describe('отправка', () => {
-	test('Сообщение пользователю с кнопкой и отметка отправленным', async () => {
+	test('Тест сообщения пользователю с кнопкой и отметки отправленным', async () => {
 		const { run, marks, sent } = setup();
 		await run();
 		expect(sent).toHaveLength(1);
@@ -75,42 +75,42 @@ describe('отправка', () => {
 		expect(marks).toEqual(['sent']);
 	});
 
-	test('Без адреса Mini App — сообщение без кнопки', async () => {
+	test('Тест сообщения без кнопки без адреса Mini App', async () => {
 		const { run, sent } = setup({ miniAppUrl: null });
 		await run();
 		expect(sent[0]?.options.reply_markup).toBeUndefined();
 	});
 
-	test('Удалённое или уже отправленное уведомление не отправляется', async () => {
+	test('Тест пропуска удалённого или уже отправленного уведомления', async () => {
 		const { run, marks, sent } = setup({ delivery: null });
 		await run();
 		expect(sent).toEqual([]);
 		expect(marks).toEqual([]);
 	});
 
-	test('Отклонение данных задачи не той формы без отправки', async () => {
+	test('Тест отклонения данных задачи не той формы без отправки и повторов', async () => {
 		const { run, sent } = setup();
-		await expect(run({ notificationId: 'не uuid' })).rejects.toThrow();
+		await expect(run({ notificationId: 'не uuid' })).rejects.toThrow(UnrecoverableError);
 		expect(sent).toEqual([]);
 	});
 });
 
 describe('ошибки Telegram', () => {
 	for (const code of [400, 403]) {
-		test(`${code} — отметка недоставляемым и задача без повторов`, async () => {
+		test(`Тест ошибки ${code}: отметка недоставляемым и задача без повторов`, async () => {
 			const { run, marks } = setup({ sendError: telegramError(code) });
 			await expect(run()).rejects.toThrow(UnrecoverableError);
 			expect(marks).toEqual(['undeliverable']);
 		});
 	}
 
-	test('401 — задача без повторов, но уведомление не помечается', async () => {
+	test('Тест ошибки 401: задача без повторов, но уведомление не помечается', async () => {
 		const { run, marks } = setup({ sendError: telegramError(401) });
 		await expect(run()).rejects.toThrow(UnrecoverableError);
 		expect(marks).toEqual([]);
 	});
 
-	test('Временные ошибки Telegram и сети — для повтора, без отметок', async () => {
+	test('Тест временных ошибок Telegram и сети: повтор без отметок', async () => {
 		for (const sendError of [
 			telegramError(429),
 			telegramError(500),

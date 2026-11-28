@@ -6,14 +6,14 @@ import { step } from '../step.ts';
 const NOTES_API = /\/api\/notes(\?|$)/;
 
 test.describe('Заметки: пустой список, ошибки, нет связи', () => {
-	test('Подсказка создать первую заметку в пустом списке', async ({ notesList }) => {
+	test('Тест подсказки создать первую заметку в пустом списке', async ({ notesList }) => {
 		await step('Открытие пустого списка', async () => {
 			await notesList.open();
 			await notesList.expectEmpty();
 		});
 	});
 
-	test('Предупреждение о заметке без заголовка', async ({ notesList, noteEditor }) => {
+	test('Тест предупреждения о заметке без заголовка', async ({ notesList, noteEditor }) => {
 		await step('Ввод текста без заголовка', async () => {
 			await notesList.open();
 			await notesList.openNewNote();
@@ -26,7 +26,7 @@ test.describe('Заметки: пустой список, ошибки, нет �
 		});
 	});
 
-	test('Страница ошибки для несуществующей заметки', async ({ errorPage, mainMenu }) => {
+	test('Тест страницы ошибки для несуществующей заметки', async ({ errorPage, mainMenu }) => {
 		await step('Открытие несуществующей заметки по адресу', async () => {
 			await errorPage.openAddress(`/notes/${randomUUID()}`);
 			await errorPage.expectError('Заметка не найдена');
@@ -37,7 +37,7 @@ test.describe('Заметки: пустой список, ошибки, нет �
 		});
 	});
 
-	test('Загрузка списка после восстановления связи', async ({ page, notesList }) => {
+	test('Тест загрузки списка после восстановления связи', async ({ page, notesList }) => {
 		await step('Открытие списка без связи с сервером', async () => {
 			await page.route(NOTES_API, (route) => route.abort());
 			await notesList.open();

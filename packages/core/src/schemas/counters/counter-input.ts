@@ -19,7 +19,7 @@ const LocalDateTimeSchema = z.iso
 const DurationPartSchema = z.number().int().min(0).max(COUNTER_DURATION_PART_MAX).default(0);
 
 /** Срок цикла: части складываются; хотя бы одна больше нуля. */
-export const CounterDurationSchema = z
+const CounterDurationSchema = z
 	.object({
 		months: DurationPartSchema,
 		weeks: DurationPartSchema,
@@ -38,7 +38,7 @@ export type CounterDuration = z.infer<typeof CounterDurationSchema>;
  * срок — свой (`customStart` и `startAt`) или момент сохранения (`customStart: false`, `startAt`
  * не нужен и не учитывается); у таймера до даты старт — всегда момент сохранения.
  */
-export const CounterTimerInputSchema = z.discriminatedUnion('mode', [
+const CounterTimerInputSchema = z.discriminatedUnion('mode', [
 	z
 		.object({
 			mode: z.literal(COUNTER_TIMER_MODE.Duration),

@@ -6,22 +6,22 @@ import { IdSchema } from '#core/schemas/common/id.ts';
 const NOT_FOUND = 'Запись не найдена';
 
 describe('IdSchema', () => {
-	test('Принятие UUID седьмой версии (как у моделей Prisma)', () => {
+	test('Тест принятия UUID седьмой версии (как у моделей Prisma)', () => {
 		expect(IdSchema.safeParse(Bun.randomUUIDv7()).success).toBe(true);
 	});
 
-	test('Отклонение строки не в формате UUID', () => {
+	test('Тест отклонения строки не в формате UUID', () => {
 		expect(IdSchema.safeParse('abc').success).toBe(false);
 		expect(IdSchema.safeParse('').success).toBe(false);
 	});
 });
 
 describe('assertId', () => {
-	test('Пропуск UUID без ошибки', () => {
+	test('Тест пропуска UUID без ошибки', () => {
 		expect(() => assertId(Bun.randomUUIDv7(), NOT_FOUND)).not.toThrow();
 	});
 
-	test('Выброс NotFoundError с переданным текстом для строки не в формате UUID', () => {
+	test('Тест выброса NotFoundError с переданным текстом для строки не в формате UUID', () => {
 		expect(() => assertId('abc', NOT_FOUND)).toThrow(NotFoundError);
 		expect(() => assertId('abc', NOT_FOUND)).toThrow(NOT_FOUND);
 	});

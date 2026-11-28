@@ -15,5 +15,6 @@
 		// DOM — для кода Mini App, который тестируется (window, Headers в lib/http, lib/telegram.ts).
 		"lib": ["ES2023", "DOM"]
 	},
-	"include": ["."]
+	// app.d.ts — тип `App.Locals` для серверного кода Mini App (`lib/server/http.ts` в unit/http).
+	"include": [".", "../apps/web/src/app.d.ts"]
 }

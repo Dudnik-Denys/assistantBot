@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { api, type NotificationDto } from '#lib/api.ts';
 	import NotificationCard from '#lib/components/reminders/NotificationCard.svelte';
 	import ListState from '#lib/components/ui/feedback/ListState.svelte';
@@ -20,12 +18,12 @@
 		const subject = `уведомление о счётчике «${notification.counter.title}»`;
 		if (!(await removeWithConfirm(subject, () => api.notifications.remove(notification.id))))
 			return;
-		loader.items = loader.items?.filter((item) => item.id !== notification.id) ?? null;
+		loader.removeItem(notification.id);
 	}
 </script>
 
 <Screen fit>
-	<PageHeader title="Напоминания" onback={() => goto(resolve('/'))} backLabel="В меню" />
+	<PageHeader title="Напоминания" backToMenu />
 
 	<ScrollArea>
 		<ListState items={loader.items} error={loader.error} reconnecting={loader.reconnecting}>

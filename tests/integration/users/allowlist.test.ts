@@ -49,7 +49,7 @@ function telegramUser(id: number | bigint) {
 }
 
 describe('createAllowlist', () => {
-	test('Пропуск пользователя из allowlist дальше с записью в ctx.user', async () => {
+	test('Тест пропуска пользователя из allowlist дальше с записью в ctx.user', async () => {
 		const allowed = await createTestUser(db);
 		const result = await runAllowlist({ from: telegramUser(allowed.telegramId) });
 		expect(result.passed).toBe(true);
@@ -57,7 +57,7 @@ describe('createAllowlist', () => {
 		expect(result.replies).toEqual([]);
 	});
 
-	test('Отказ незнакомому в личном чате с его Telegram ID в ответе', async () => {
+	test('Тест отказа незнакомому в личном чате с его Telegram ID в ответе', async () => {
 		const result = await runAllowlist({ from: telegramUser(STRANGER_TELEGRAM_ID) });
 		expect(result.passed).toBe(false);
 		expect(result.user).toBeUndefined();
@@ -65,7 +65,7 @@ describe('createAllowlist', () => {
 		expect(result.replies[0]).toContain(String(STRANGER_TELEGRAM_ID));
 	});
 
-	test('Отказ незнакомому в группе без ответа', async () => {
+	test('Тест отказа незнакомому в группе без ответа', async () => {
 		const result = await runAllowlist({
 			from: telegramUser(STRANGER_TELEGRAM_ID),
 			chatType: 'group',
@@ -74,7 +74,7 @@ describe('createAllowlist', () => {
 		expect(result.replies).toEqual([]);
 	});
 
-	test('Игнорирование апдейтов от ботов и без отправителя', async () => {
+	test('Тест игнорирования апдейтов от ботов и без отправителя', async () => {
 		const allowed = await createTestUser(db);
 		const fromBot = await runAllowlist({
 			from: { ...telegramUser(allowed.telegramId), is_bot: true },

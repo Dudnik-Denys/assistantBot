@@ -4,6 +4,7 @@
 	import { api, type NotificationDto } from '#lib/api.ts';
 	import Button from '#lib/components/ui/buttons/Button.svelte';
 	import ActionBar from '#lib/components/ui/layout/ActionBar.svelte';
+	import InfoRow from '#lib/components/ui/layout/InfoRow.svelte';
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
 	import { runWithFeedback } from '#lib/feedback.ts';
@@ -48,14 +49,10 @@
 <div class="flex flex-1 flex-col gap-4">
 	<Panel>
 		<p class="text-lg font-semibold wrap-break-word">⏱ {notification.counter.title}</p>
-		<p class="flex justify-between gap-2 text-sm">
-			<span class="text-tg-hint">Окончание цикла</span>
-			<span>{formatDateTime(notification.finishedAt, api.user.timeZone)}</span>
-		</p>
-		<p class="flex justify-between gap-2 text-sm">
-			<span class="text-tg-hint">Циклов пройдено</span>
-			<span>{notification.cycle}</span>
-		</p>
+		<InfoRow label="Окончание цикла" class="text-sm">
+			{formatDateTime(notification.finishedAt, api.user.timeZone)}
+		</InfoRow>
+		<InfoRow label="Циклов пройдено" class="text-sm">{notification.cycle}</InfoRow>
 	</Panel>
 	{#if !finished}
 		<p class="text-sm text-tg-hint">Счётчик уже идёт: следующий цикл запущен.</p>

@@ -1,17 +1,15 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { TestId } from '#web/lib/constants/test-ids.ts';
 
-/** Состояния экрана-списка (`ListState`): загрузка и повторы связи, «нет связи», ошибка. */
+/** Состояния экрана-списка (`ListState`): загрузка и повторы связи, ошибка. */
 export class ListStateComponent {
 	// --- Элементы ---
 
 	readonly loading: Locator;
-	readonly offline: Locator;
 	readonly error: Locator;
 
 	constructor(page: Page) {
 		this.loading = page.getByTestId(TestId.Common.Loading);
-		this.offline = page.getByTestId(TestId.Common.Offline);
 		this.error = page.getByTestId(TestId.Common.ListError);
 	}
 

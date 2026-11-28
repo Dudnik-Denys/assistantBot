@@ -14,17 +14,29 @@
 		onback?: () => void;
 		/** Подпись ссылки «Назад» в браузере. */
 		backLabel?: string;
+		/** «Назад» в главное меню (экран раздела): вместо `onback` и `backLabel`. */
+		backToMenu?: boolean;
 		/** Заголовок по центру, с полями по бокам: название записи (счётчика), а не раздела. */
 		centered?: boolean;
 		/** Под заголовком: поиск, фильтры. */
 		children?: Snippet;
 	}
 
-	let { title, onback, backLabel, centered = false, class: className, children }: Props = $props();
+	let {
+		title,
+		onback,
+		backLabel,
+		backToMenu = false,
+		centered = false,
+		class: className,
+		children,
+	}: Props = $props();
 </script>
 
 <header class={mergeClasses('pb-3', className)}>
-	{#if onback}
+	{#if backToMenu}
+		<BackButton />
+	{:else if onback}
 		<BackButton {onback} label={backLabel} />
 	{/if}
 	<!-- заголовок переносится и внутри слова: длинное слово без пробелов не шире экрана -->

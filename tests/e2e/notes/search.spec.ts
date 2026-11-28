@@ -8,7 +8,7 @@ test.describe('Заметки: поиск', () => {
 		await createTestNote(db, user.id, { title: 'Погода в Киеве' });
 	});
 
-	test('Поиск заметки по началу слова', async ({ notesList }) => {
+	test('Тест поиска заметки по началу слова', async ({ notesList }) => {
 		await step('Открытие списка', async () => {
 			await notesList.open();
 		});
@@ -18,7 +18,7 @@ test.describe('Заметки: поиск', () => {
 		});
 	});
 
-	test('Пустой результат и очистка поиска', async ({ notesList }) => {
+	test('Тест пустого результата и очистки поиска', async ({ notesList }) => {
 		await step('Поиск без совпадений', async () => {
 			await notesList.open();
 			await notesList.search('отпуск');

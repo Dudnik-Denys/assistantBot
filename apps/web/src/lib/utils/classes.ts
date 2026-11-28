@@ -3,7 +3,7 @@ import { extendTailwindMerge } from 'tailwind-merge';
 
 /**
  * tailwind-merge по умолчанию знает только стандартную шкалу Tailwind.
- * Наши токены из app.css (`--spacing-page-*`, `--spacing-safe-*`) регистрируем, чтобы
+ * Наши токены из app.css (`--spacing-page-*`, `--spacing-safe-*`, `--spacing-floating-clearance`) регистрируем, чтобы
  * `pb-3` и `pb-page-b` считались конфликтующими, а не двумя разными классами.
  * Цвета (`bg-tg-*`, `text-tg-*`) tailwind-merge распознаёт сам.
  */
@@ -19,6 +19,7 @@ const twMerge = extendTailwindMerge({
 				'safe-bottom',
 				'safe-left',
 				'safe-right',
+				'floating-clearance',
 			],
 		},
 	},

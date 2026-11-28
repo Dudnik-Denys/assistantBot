@@ -52,6 +52,21 @@ export class NotesListPage extends BasePage {
 		);
 	}
 
+	/**
+	 * Удаление, которое сервер отклонил: свайп → «Удалить» → «Да» → сообщение об ошибке
+	 * (`alertDialog`, вне Telegram — `window.alert`). Подписка на сообщение — до действия.
+	 */
+	async swipeToDeleteWithError(title: string, errorText: string): Promise<void> {
+		await this.swipeRows.swipeOpen(title);
+		const alert = this.page.waitForEvent('dialog', {
+			predicate: (dialog) => dialog.type() === 'alert',
+		});
+		await this.answerDialog(() => this.swipeRows.deleteButton(title).click(), `заметку «${title}»`);
+		const shown = await alert;
+		expect(shown.message()).toContain(errorText);
+		await shown.accept();
+	}
+
 	// --- Проверки ---
 
 	override async expectOpened(): Promise<void> {

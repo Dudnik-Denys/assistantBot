@@ -1,9 +1,10 @@
 import type { PrismaClient, User } from '@tgab/db';
-import { DEFAULT_TIMEZONE } from '../constants/users.ts';
+import { DEFAULT_TIMEZONE, USER_NOT_FOUND_MESSAGE } from '../constants/users.ts';
+import { NotFoundError } from '../errors.ts';
 import type { TelegramUserFields } from '../schemas/users/telegram-user.ts';
 import type { TelegramIdentity, UserDto } from './types.ts';
 
-export function toUserDto(user: User): UserDto {
+function toUserDto(user: User): UserDto {
 	return {
 		id: user.id,
 		telegramId: user.telegramId.toString(),
@@ -50,6 +51,13 @@ export function createUsersService(
 				});
 			}
 			return null;
+		},
+
+		/** Профиль пользователя для клиента (`GET /api/user`). */
+		async getProfile(userId: string): Promise<UserDto> {
+			const user = await db.user.findUnique({ where: { id: userId } });
+			if (!user) throw new NotFoundError(USER_NOT_FOUND_MESSAGE);
+			return toUserDto(user);
 		},
 
 		/**

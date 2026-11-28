@@ -6,6 +6,7 @@
 	import Button from '#lib/components/ui/buttons/Button.svelte';
 	import ProgressRing from '#lib/components/ui/feedback/ProgressRing.svelte';
 	import ActionBar from '#lib/components/ui/layout/ActionBar.svelte';
+	import InfoRow from '#lib/components/ui/layout/InfoRow.svelte';
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
 	import { COUNTER_REFRESH_DELAY_MS } from '#lib/constants/counters.ts';
@@ -137,14 +138,8 @@
 
 	{#if timer}
 		<Panel class="text-sm">
-			<p class="flex justify-between gap-2">
-				<span class="text-tg-hint">Начало цикла</span>
-				<span>{formatDateTime(timer.startAt, timeZone)}</span>
-			</p>
-			<p class="flex justify-between gap-2">
-				<span class="text-tg-hint">Окончание</span>
-				<span>{formatDateTime(timer.targetAt, timeZone)}</span>
-			</p>
+			<InfoRow label="Начало цикла">{formatDateTime(timer.startAt, timeZone)}</InfoRow>
+			<InfoRow label="Окончание">{formatDateTime(timer.targetAt, timeZone)}</InfoRow>
 			{#if current.autoRestart}
 				<p class="text-tg-hint">Следующий цикл начнётся автоматически</p>
 			{/if}

@@ -16,8 +16,28 @@ import { spawnCommand } from './commands.ts';
 import { testEnv } from './test-env.ts';
 
 /**
+ * Очистка всех таблиц, кроме той, чьё имя лежит в настройке `RESET_KEEP_TABLE_SETTING`. Имя
+ * настройки вставлено в текст из константы: внутри `DO $$ … $$` параметры запроса не работают.
+ */
+const RESET_SQL = `
+	DO $$
+	DECLARE
+		tables text;
+	BEGIN
+		SELECT string_agg(format('%I.%I', schemaname, tablename), ', ') INTO tables
+		FROM pg_tables
+		WHERE schemaname = 'public'
+		AND tablename <> current_setting('${RESET_KEEP_TABLE_SETTING}');
+		IF tables IS NOT NULL THEN
+			EXECUTE format('TRUNCATE %s CASCADE', tables);
+		END IF;
+	END
+	$$
+`;
+
+/**
  * Тестовая БД: адрес, подготовка (контейнер и миграции), клиент и очистка таблиц.
- * Используют запускалка (`run-tests.ts`) и интеграционные тесты; позже — e2e.
+ * Используют запускалка (`run-tests.ts`) и интеграционные тесты и фикстуры e2e.
  */
 export class TestDatabase {
 	private constructor(readonly url: string) {}
@@ -56,29 +76,15 @@ export class TestDatabase {
 
 	/**
 	 * Очищает все таблицы приложения (кроме служебной таблицы Prisma) — вызывать в `beforeEach`.
-	 * Список таблиц собирает и экранирует сам Postgres (`format('%I.%I')` в блоке `DO`), так что
-	 * в текст SQL ничего не подставляется (`Prisma.raw` не нужен). Имя исключаемой таблицы —
-	 * параметром: в `DO` параметров нет, поэтому оно передаётся через `set_config` в той же
-	 * транзакции (`is_local = true` — только до её конца).
+	 * Список таблиц собирает и экранирует сам Postgres (`format('%I.%I')` в блоке `DO`). Имя
+	 * исключаемой таблицы — параметром: в `DO` параметров нет, поэтому оно передаётся через
+	 * `set_config` в той же транзакции (`is_local = true` — только до её конца).
 	 */
 	async reset(db: PrismaClient): Promise<void> {
 		await db.$transaction([
 			db.$queryRaw`SELECT set_config(${RESET_KEEP_TABLE_SETTING}, ${PRISMA_MIGRATIONS_TABLE}, true)`,
-			db.$executeRaw`
-				DO $$
-				DECLARE
-					tables text;
-				BEGIN
-					SELECT string_agg(format('%I.%I', schemaname, tablename), ', ') INTO tables
-					FROM pg_tables
-					WHERE schemaname = 'public'
-					AND tablename <> current_setting('tgab.reset_keep_table');
-					IF tables IS NOT NULL THEN
-						EXECUTE format('TRUNCATE %s CASCADE', tables);
-					END IF;
-				END
-				$$
-			`,
+			// Текст SQL — константа модуля, без данных извне: `Unsafe` здесь — исключение `db.md`.
+			db.$executeRawUnsafe(RESET_SQL),
 		]);
 	}
 

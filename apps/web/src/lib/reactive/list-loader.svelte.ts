@@ -27,7 +27,7 @@ export interface ListLoaderOptions<T, P> {
  *
  * Список с полем поиска — `DebouncedSearch` (поверх этого класса).
  */
-export class ListLoader<T, P = undefined> {
+export class ListLoader<T extends { id: string }, P = undefined> {
 	/** Загруженные элементы; null — первая загрузка ещё не завершилась. */
 	items = $state<T[] | null>(null);
 	/** Текст ошибки последней загрузки или null. */
@@ -87,5 +87,10 @@ export class ListLoader<T, P = undefined> {
 				window.removeEventListener('online', retryNow);
 			};
 		});
+	}
+
+	/** Убрать элемент из списка (после удаления на сервере), не загружая список заново. */
+	removeItem(id: string): void {
+		this.items = this.items?.filter((item) => item.id !== id) ?? null;
 	}
 }

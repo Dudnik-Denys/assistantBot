@@ -79,33 +79,33 @@ afterEach(() => {
 });
 
 describe('выборка наступивших', () => {
-	test('Один проход, если пачка неполная', async () => {
+	test('Тест одного прохода при неполной пачке', async () => {
 		const { job, processDueCalls } = setup();
 		await job();
 		expect(processDueCalls).toHaveLength(1);
 	});
 
-	test('Следующий проход после полной пачки — с тем же моментом', async () => {
+	test('Тест следующего прохода после полной пачки с тем же моментом', async () => {
 		const { job, processDueCalls } = setup({ passes: [FULL_PASS, FULL_PASS, LAST_PASS] });
 		await job();
 		expect(processDueCalls).toHaveLength(3);
 		expect(new Set(processDueCalls.map((now) => now.getTime())).size).toBe(1);
 	});
 
-	test('Остановка, если в полной пачке ничего не завершилось', async () => {
+	test('Тест остановки, если в полной пачке ничего не завершилось', async () => {
 		const stuck = { ...FULL_PASS, finished: 0 };
 		const { job, processDueCalls } = setup({ passes: [FULL_PASS, stuck, FULL_PASS] });
 		await job();
 		expect(processDueCalls).toHaveLength(2);
 	});
 
-	test(`Не больше ${COUNTERS_DUE_MAX_PASSES} проходов за запуск`, async () => {
+	test(`Тест ограничения ${COUNTERS_DUE_MAX_PASSES} проходами за запуск`, async () => {
 		const { job, processDueCalls } = setup({ passes: [FULL_PASS] });
 		await job();
 		expect(processDueCalls).toHaveLength(COUNTERS_DUE_MAX_PASSES);
 	});
 
-	test('Ошибки записей — в лог с id счётчика', async () => {
+	test('Тест лога ошибок записей с id счётчика', async () => {
 		const failure = { id: 'broken-counter', error: new Error('Сбой') };
 		const { job } = setup({ passes: [{ selected: 1, finished: 0, failed: [failure] }] });
 		await job();
@@ -114,13 +114,13 @@ describe('выборка наступивших', () => {
 });
 
 describe('outbox', () => {
-	test('Ничего не ставится в очередь, если неотправленных нет', async () => {
+	test('Тест пустой очереди, если неотправленных нет', async () => {
 		const { job, added } = setup();
 		await job();
 		expect(added).toEqual([]);
 	});
 
-	test('Неотправленные — в очередь одной пачкой с jobId из id уведомления', async () => {
+	test('Тест постановки неотправленных в очередь одной пачкой с jobId из id уведомления', async () => {
 		const { job, added } = setup({ unsent: NOTIFICATION_IDS });
 		await job();
 		expect(added).toEqual([
@@ -135,7 +135,7 @@ describe('outbox', () => {
 		]);
 	});
 
-	test('Упавшая задача удаляется перед постановкой, ждущая — нет', async () => {
+	test('Тест удаления упавшей задачи перед постановкой без удаления ждущей', async () => {
 		const jobs = new Map<string, FakeJob>([
 			[`${NOTIFICATION_JOB_ID_PREFIX}-n1`, { failed: true, removed: false }],
 			[`${NOTIFICATION_JOB_ID_PREFIX}-n2`, { failed: false, removed: false }],

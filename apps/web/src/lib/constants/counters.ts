@@ -1,13 +1,16 @@
-import { COUNTER_TIMER_MODE } from '@tgab/core/constants/counters';
+import { type COUNTER_DURATION_PARTS, COUNTER_TIMER_MODE } from '@tgab/core/constants/counters';
 
 // Константы раздела «Счётчики» Mini App (только для него).
+
+/** Вкладка «Все»: список без фильтра. */
+export const COUNTER_TAB_ALL = 'all';
 
 /**
  * Вкладки списка счётчиков. Подписи короткие: четыре сегмента в одну строку должны помещаться
  * и на телефоне шириной 375 pt (iPhone 12 mini — самый маленький, `ui.md`), иначе ряд `SegmentedControl` не поместится в ширину экрана.
  */
 export const COUNTER_TABS = [
-	{ value: 'all', label: 'Все' },
+	{ value: COUNTER_TAB_ALL, label: 'Все' },
 	{ value: 'running', label: 'Идут' },
 	{ value: 'paused', label: 'Пауза' },
 	{ value: 'finished', label: 'Завершены' },
@@ -16,7 +19,10 @@ export const COUNTER_TABS = [
 export type CounterTab = (typeof COUNTER_TABS)[number]['value'];
 
 /** Сообщение пустой вкладки. */
-export const COUNTER_EMPTY_TAB_MESSAGES: Record<Exclude<CounterTab, 'all'>, string> = {
+export const COUNTER_EMPTY_TAB_MESSAGES: Record<
+	Exclude<CounterTab, typeof COUNTER_TAB_ALL>,
+	string
+> = {
 	running: 'Сейчас нет запущенных счётчиков',
 	paused: 'Нет счётчиков на паузе',
 	finished: 'Нет счётчиков, которые ждут продолжения',
@@ -34,14 +40,14 @@ export const COUNTER_TIMER_MODES = [
 
 export type CounterTimerModeOption = (typeof COUNTER_TIMER_MODES)[number]['value'];
 
-/** Части срока в форме — в порядке полей. */
-export const COUNTER_DURATION_FIELDS = [
-	{ part: 'months', label: 'Мес.' },
-	{ part: 'weeks', label: 'Нед.' },
-	{ part: 'days', label: 'Дни' },
-	{ part: 'hours', label: 'Часы' },
-	{ part: 'minutes', label: 'Мин.' },
-] as const;
+/** Подписи полей срока в форме; набор и порядок частей — `COUNTER_DURATION_PARTS` из core. */
+export const COUNTER_DURATION_LABELS: Record<(typeof COUNTER_DURATION_PARTS)[number], string> = {
+	months: 'Мес.',
+	weeks: 'Нед.',
+	days: 'Дни',
+	hours: 'Часы',
+	minutes: 'Мин.',
+};
 
 /**
  * Повтор «завершить цикл» (`api.counters.finish`), если первый запрос не завершил его: цикл

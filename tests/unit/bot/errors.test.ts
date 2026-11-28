@@ -28,7 +28,7 @@ function botError(error: unknown): BotError<BotContext> {
 }
 
 describe('handleBotError', () => {
-	test('Ошибка Telegram API — с описанием от Telegram', () => {
+	test('Тест лога ошибки Telegram API с описанием от Telegram', () => {
 		const error = new GrammyError('Call failed', FORBIDDEN, 'sendMessage', {});
 		handleBotError(botError(error));
 		expect(errorSpy).toHaveBeenCalledWith(
@@ -37,13 +37,13 @@ describe('handleBotError', () => {
 		);
 	});
 
-	test('Ошибка сети — с исходной ошибкой', () => {
+	test('Тест лога ошибки сети с исходной ошибкой', () => {
 		const cause = new Error('ECONNRESET');
 		handleBotError(botError(new HttpError('Network request failed', cause)));
 		expect(errorSpy).toHaveBeenCalledWith(`Network error (update ${UPDATE_ID}):`, cause);
 	});
 
-	test('Прочая ошибка — целиком', () => {
+	test('Тест лога прочей ошибки целиком', () => {
 		const error = new Error('Ошибка в обработчике');
 		handleBotError(botError(error));
 		expect(errorSpy).toHaveBeenCalledWith(`Error (update ${UPDATE_ID}):`, error);

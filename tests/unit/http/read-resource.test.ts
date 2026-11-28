@@ -53,7 +53,7 @@ afterEach(() => {
 });
 
 describe('list', () => {
-	test('Общий список сохраняется в кеш', async () => {
+	test('Тест сохранения общего списка в кеш', async () => {
 		const resource = createResource();
 		expect(resource.cachedList).toBeNull();
 		const items = await resource.list();
@@ -61,31 +61,31 @@ describe('list', () => {
 		expect(resource.cachedList).toEqual(items);
 	});
 
-	test('Результат поиска не заменяет кеш', async () => {
+	test('Тест сохранения кеша при результате поиска', async () => {
 		const resource = createResource();
 		await resource.list();
 		expect(await resource.list('Втор')).toEqual([SECOND]);
 		expect(resource.cachedList).toEqual([THIRD, SECOND, FIRST]);
 	});
 
-	test('Поисковый запрос кодируется в адресе', async () => {
+	test('Тест кодирования поискового запроса в адресе', async () => {
 		await createResource().list('a&b');
 		expect(fake.calls[0]?.url).toBe(`${API_BASE_URL}${PATH}?q=a%26b`);
 	});
 });
 
 describe('get', () => {
-	test('Элемент по id', async () => {
+	test('Тест загрузки элемента по id', async () => {
 		expect(await createResource().get(SECOND.id)).toEqual(SECOND);
 	});
 
-	test('Выброс ResponseFormatError для ответа не по схеме', async () => {
+	test('Тест выброса ResponseFormatError для ответа не по схеме', async () => {
 		await expect(createResource().get('bad')).rejects.toThrow(ResponseFormatError);
 	});
 });
 
 describe('remove', () => {
-	test('Удалённый элемент убирается из кеша', async () => {
+	test('Тест удаления элемента из кеша', async () => {
 		const resource = createResource();
 		await resource.list();
 		await resource.remove(SECOND.id);
@@ -97,21 +97,21 @@ describe('remove', () => {
 describe('cacheItem', () => {
 	const changed = { ...FIRST, title: 'Изменена' };
 
-	test('Изменённый элемент — в начало кеша', async () => {
+	test('Тест переноса изменённого элемента в начало кеша', async () => {
 		const resource = createResource();
 		await resource.list();
 		resource.update(changed);
 		expect(resource.cachedList).toEqual([changed, THIRD, SECOND]);
 	});
 
-	test('При stableOrder изменённый элемент остаётся на своём месте', async () => {
+	test('Тест сохранения места изменённого элемента при stableOrder', async () => {
 		const resource = createResource({ stableOrder: true });
 		await resource.list();
 		resource.update(changed);
 		expect(resource.cachedList).toEqual([THIRD, SECOND, changed]);
 	});
 
-	test('До загрузки списка кеш не создаётся', () => {
+	test('Тест отсутствия кеша до загрузки списка', () => {
 		const resource = createResource();
 		resource.update(changed);
 		expect(resource.cachedList).toBeNull();

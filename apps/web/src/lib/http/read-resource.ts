@@ -59,6 +59,16 @@ export class ReadResource<Dto extends { id: string }> {
 		if (this.#cachedList) this.#cachedList = this.#cachedList.filter((item) => item.id !== id);
 	}
 
+	/** Действие над записью (`POST <раздел>/<id>/<действие>`): ответ — изменённый DTO, он же в кеш. */
+	protected async recordAction(id: string, action: string): Promise<Dto> {
+		const item = await this.http.request(`${this.path}/${id}/${action}`, {
+			method: 'POST',
+			schema: this.schema,
+		});
+		this.cacheItem(item);
+		return item;
+	}
+
 	/**
 	 * Изменённый элемент — в кеш: в начало, если список отсортирован по времени изменения,
 	 * иначе (`stableOrder`) — на прежнее место.

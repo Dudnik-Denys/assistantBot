@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { api, type CounterDto } from '#lib/api.ts';
 	import CounterCard from '#lib/components/counters/CounterCard.svelte';
@@ -13,6 +12,7 @@
 	import {
 		COUNTER_EMPTY_TAB_MESSAGES,
 		COUNTER_REFRESH_DELAY_MS,
+		COUNTER_TAB_ALL,
 		COUNTER_TABS,
 		type CounterTab,
 	} from '#lib/constants/counters.ts';
@@ -28,7 +28,7 @@
 	});
 	const clock = new Clock();
 
-	let tab = $state<CounterTab>('all');
+	let tab = $state<CounterTab>(COUNTER_TAB_ALL);
 
 	const visible = $derived(filterCounters(loader.items ?? [], tab));
 
@@ -47,12 +47,12 @@
 
 	async function remove(counter: CounterDto) {
 		if (!(await removeCounter(counter))) return;
-		loader.items = loader.items?.filter((item) => item.id !== counter.id) ?? null;
+		loader.removeItem(counter.id);
 	}
 </script>
 
 <Screen fit>
-	<PageHeader title="Счётчики" onback={() => goto(resolve('/'))} backLabel="В меню">
+	<PageHeader title="Счётчики" backToMenu>
 		<SegmentedControl options={COUNTER_TABS} bind:value={tab} label="Какие счётчики показать" />
 	</PageHeader>
 
@@ -66,10 +66,10 @@
 				/>
 			{/snippet}
 			{#snippet children()}
-				{#if visible.length === 0 && tab !== 'all'}
+				{#if visible.length === 0 && tab !== COUNTER_TAB_ALL}
 					<Message class="flex-none" title={COUNTER_EMPTY_TAB_MESSAGES[tab]} />
 				{:else}
-					<ul class="flex flex-col gap-2 pb-20">
+					<ul class="flex flex-col gap-2 pb-floating-clearance">
 						{#each visible as counter (counter.id)}
 							<li><CounterCard {counter} now={clock.now} onremove={() => remove(counter)} /></li>
 						{/each}

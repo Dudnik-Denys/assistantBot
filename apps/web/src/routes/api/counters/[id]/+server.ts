@@ -1,20 +1,11 @@
-import { HttpStatus } from '#lib/constants/http-status.ts';
-import { handleApi, readJson, requireUser } from '#lib/server/http.ts';
+import { recordAction, recordDelete, recordUpdate } from '#lib/server/http.ts';
 import { counters } from '#lib/server/services.ts';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = ({ locals, params }) =>
-	handleApi(async () => Response.json(await counters.get(requireUser(locals).id, params.id)));
+export const GET: RequestHandler = recordAction((userId, id) => counters.get(userId, id));
 
-export const PUT: RequestHandler = ({ locals, params, request }) =>
-	handleApi(async () => {
-		const user = requireUser(locals);
-		const input = await readJson(request);
-		return Response.json(await counters.update(user.id, params.id, input));
-	});
+export const PUT: RequestHandler = recordUpdate((userId, id, input) =>
+	counters.update(userId, id, input),
+);
 
-export const DELETE: RequestHandler = ({ locals, params }) =>
-	handleApi(async () => {
-		await counters.remove(requireUser(locals).id, params.id);
-		return new Response(null, { status: HttpStatus.NoContent });
-	});
+export const DELETE: RequestHandler = recordDelete((userId, id) => counters.remove(userId, id));

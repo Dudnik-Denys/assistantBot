@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { TestId } from '#lib/constants/test-ids.ts';
+	import { UiText } from '#lib/constants/ui-texts.ts';
 
 	/**
 	 * Кнопка «Удалить» в действиях `SwipeActions`: выполняет `onremove`
@@ -13,7 +14,7 @@
 		label?: string;
 	}
 
-	let { onremove, close, label = 'Удалить' }: Props = $props();
+	let { onremove, close, label = UiText.Remove }: Props = $props();
 </script>
 
 <button

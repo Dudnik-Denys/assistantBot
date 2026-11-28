@@ -44,6 +44,10 @@ for (const worker of workers) {
 	);
 	worker.on('error', (error) => console.error(`Воркер ${worker.name}:`, error));
 }
+// Без слушателя BullMQ молча глотает ошибки очереди (сбой Redis при постановке задач).
+for (const queue of Object.values(queues)) {
+	queue.on('error', (error) => console.error(`Очередь ${queue.name}:`, error));
+}
 
 await scheduleRepeatingJobs(queues);
 console.log('Воркер запущен: очереди', Object.values(QueueName).join(', '));

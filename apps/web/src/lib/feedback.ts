@@ -23,7 +23,7 @@ export async function runWithFeedback<T>(
 }
 
 /** Подтверждение удаления: «Вы уверены, что хотите удалить {subject}?» с кнопками «Да» / «Нет». */
-export function confirmRemoval(subject: string): Promise<boolean> {
+function confirmRemoval(subject: string): Promise<boolean> {
 	return confirmDialog(`Вы уверены, что хотите удалить ${subject}?`, {
 		confirmText: 'Да',
 		cancelText: 'Нет',

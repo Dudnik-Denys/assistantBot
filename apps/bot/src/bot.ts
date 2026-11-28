@@ -1,7 +1,7 @@
 import { autoRetry } from '@grammyjs/auto-retry';
 import type { UsersService } from '@tgab/core';
 import { Bot } from 'grammy';
-import type { BotContext } from '#bot/context.ts';
+import { type BotContext, hasUser } from '#bot/context.ts';
 import { handleBotError } from '#bot/errors.ts';
 import { createAllowlist } from '#bot/middlewares/allowlist.ts';
 import { logApiCalls, logUpdates } from '#bot/middlewares/logging.ts';
@@ -26,7 +26,7 @@ export function createBot(deps: BotDeps): Bot<BotContext> {
 	bot.use(logUpdates);
 	bot.use(publicRouter);
 	bot.use(createAllowlist(deps.users));
-	bot.use(createPrivateRouter(deps));
+	bot.filter(hasUser, createPrivateRouter(deps));
 
 	bot.catch(handleBotError);
 	return bot;

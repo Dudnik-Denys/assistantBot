@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Field from '#lib/components/ui/forms/Field.svelte';
+	import { UiText } from '#lib/constants/ui-texts.ts';
 	import type { ClassProp } from '#lib/types/props.ts';
 
 	/** Короткое поле для целого числа с подписью сверху: части срока (месяцы, дни…). */
@@ -18,7 +19,7 @@
 		value = $bindable(),
 		min = 0,
 		max,
-		placeholder = '–',
+		placeholder = UiText.EmptyValue,
 		class: className,
 	}: Props = $props();
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		COUNTER_DURATION_PART_MAX,
+		COUNTER_DURATION_PARTS,
 		COUNTER_TIMER_MODE,
 		COUNTER_TITLE_MAX,
 	} from '@tgab/core/constants/counters';
@@ -18,7 +19,7 @@
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Panel from '#lib/components/ui/layout/Panel.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
-	import { COUNTER_DURATION_FIELDS, COUNTER_TIMER_MODES } from '#lib/constants/counters.ts';
+	import { COUNTER_DURATION_LABELS, COUNTER_TIMER_MODES } from '#lib/constants/counters.ts';
 	import { isFinished } from '#lib/counters.ts';
 	import { errorMessage } from '#lib/errors.ts';
 	import { focusField } from '#lib/keyboard.ts';
@@ -113,10 +114,10 @@
 
 			{#if form.mode === COUNTER_TIMER_MODE.Duration}
 				<div class="grid grid-cols-5 gap-2">
-					{#each COUNTER_DURATION_FIELDS as field (field.part)}
+					{#each COUNTER_DURATION_PARTS as part (part)}
 						<NumberField
-							label={field.label}
-							bind:value={form.duration[field.part]}
+							label={COUNTER_DURATION_LABELS[part]}
+							bind:value={form.duration[part]}
 							max={COUNTER_DURATION_PART_MAX}
 						/>
 					{/each}

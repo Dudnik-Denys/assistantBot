@@ -1,12 +1,12 @@
 import { Composer } from 'grammy';
 import { BotCommand } from '#bot/constants/commands.ts';
-import type { BotContext } from '#bot/context.ts';
+import type { PrivateContext } from '#bot/context.ts';
 import { miniAppKeyboard } from '#bot/keyboards/mini-app.ts';
 import type { RouterDeps } from '#bot/routers/deps.ts';
 
 /** /start — приветствие и кнопка Mini App (если задан её адрес). */
-export function createStartRouter(deps: Pick<RouterDeps, 'miniAppUrl'>): Composer<BotContext> {
-	const router = new Composer<BotContext>();
+export function createStartRouter(deps: Pick<RouterDeps, 'miniAppUrl'>): Composer<PrivateContext> {
+	const router = new Composer<PrivateContext>();
 
 	router.command(BotCommand.Start, async (ctx) => {
 		const keyboard = deps.miniAppUrl ? miniAppKeyboard(deps.miniAppUrl) : undefined;

@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
 	import Message from '#lib/components/ui/feedback/Message.svelte';
@@ -21,7 +19,7 @@
 </script>
 
 <Screen>
-	<BackButton onback={() => goto(resolve('/'))} label="В меню" />
+	<BackButton />
 	<Message
 		{title}
 		{caption}

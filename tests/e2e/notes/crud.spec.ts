@@ -6,9 +6,10 @@ import { createNoteViaUi } from './flows/create-note.ts';
 
 const TITLE = 'Покупки';
 const CONTENT = 'молоко, хлеб';
+const DELETE_ERROR = 'Не удалось удалить заметку';
 
 test.describe('Заметки: создание, изменение, удаление', () => {
-	test('Создание заметки из главного меню', { tag: '@smoke' }, async ({
+	test('Тест создания заметки из главного меню', { tag: '@smoke' }, async ({
 		mainMenu,
 		notesList,
 		noteEditor,
@@ -24,7 +25,7 @@ test.describe('Заметки: создание, изменение, удале�
 		});
 	});
 
-	test('Изменение текста заметки', async ({ db, user, notesList, noteEditor }) => {
+	test('Тест изменения текста заметки', async ({ db, user, notesList, noteEditor }) => {
 		await createTestNote(db, user.id, { title: TITLE, content: CONTENT });
 
 		await step('Открытие заметки', async () => {
@@ -42,7 +43,12 @@ test.describe('Заметки: создание, изменение, удале�
 		});
 	});
 
-	test('Удаление заметки свайпом', { tag: '@smoke' }, async ({ db, user, page, notesList }) => {
+	test('Тест удаления заметки свайпом', { tag: '@smoke' }, async ({
+		db,
+		user,
+		page,
+		notesList,
+	}) => {
 		await createTestNote(db, user.id, { title: TITLE });
 
 		await step('Удаление свайпом с подтверждением', async () => {
@@ -56,7 +62,7 @@ test.describe('Заметки: создание, изменение, удале�
 		});
 	});
 
-	test('Отмена удаления оставляет заметку', async ({ db, user, notesList }) => {
+	test('Тест отмены удаления заметки', async ({ db, user, notesList }) => {
 		await createTestNote(db, user.id, { title: TITLE });
 
 		await step('Отказ в подтверждении удаления', async () => {
@@ -64,6 +70,43 @@ test.describe('Заметки: создание, изменение, удале�
 			await notesList.swipeToDelete(TITLE, false);
 		});
 		await step('Проверка заметки в списке', async () => {
+			await notesList.expectNoteVisible(TITLE);
+		});
+	});
+
+	test('Тест ошибки сервера при удалении заметки', async ({ db, user, page, notesList }) => {
+		const note = await createTestNote(db, user.id, { title: TITLE });
+
+		await step('Удаление, которое сервер отклонил', async () => {
+			await page.route(`**/api/notes/${note.id}`, (route) =>
+				route.request().method() === 'DELETE'
+					? route.fulfill({ status: 500, json: { error: DELETE_ERROR } })
+					: route.fallback(),
+			);
+			await notesList.open();
+			await notesList.swipeToDeleteWithError(TITLE, DELETE_ERROR);
+		});
+		await step('Проверка заметки в списке', async () => {
+			await notesList.expectNoteVisible(TITLE);
+		});
+	});
+
+	test('Тест возврата из заметки кнопкой «Назад» браузера', async ({
+		db,
+		user,
+		notesList,
+		noteEditor,
+	}) => {
+		await createTestNote(db, user.id, { title: TITLE });
+
+		await step('Открытие заметки из списка', async () => {
+			await notesList.open();
+			await notesList.openNote(TITLE);
+			await noteEditor.expectOpened();
+		});
+		await step('«Назад» браузера', async () => {
+			await noteEditor.goBackInBrowser();
+			await notesList.expectOpened();
 			await notesList.expectNoteVisible(TITLE);
 		});
 	});

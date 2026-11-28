@@ -41,70 +41,70 @@ function expectRejected(initData: string, message: string) {
 }
 
 describe('validateInitData', () => {
-	test('Принятие корректной подписи и возврат пользователя и времени входа', () => {
+	test('Тест принятия корректной подписи и возврата пользователя и времени входа', () => {
 		const result = validate(sign({ auth_date: FRESH_AUTH_DATE, user: USER_JSON, query_id: 'abc' }));
 		expect(result.user).toEqual({ id: TEST_USER_ID, first_name: 'Тест', username: 'test' });
 		expect(result.authDate).toEqual(new Date(Number(FRESH_AUTH_DATE) * 1000));
 	});
 
-	test('Отбрасывание полей пользователя, которых нет в схеме', () => {
+	test('Тест отбрасывания полей пользователя, которых нет в схеме', () => {
 		const user = JSON.stringify({ id: TEST_USER_ID, is_premium: true });
 		const result = validate(sign({ auth_date: FRESH_AUTH_DATE, user }));
 		expect(result.user).toEqual({ id: TEST_USER_ID });
 	});
 
-	test('Отклонение подписи чужим токеном', () => {
+	test('Тест отклонения подписи чужим токеном', () => {
 		const initData = sign({ auth_date: FRESH_AUTH_DATE, user: USER_JSON }, OTHER_BOT_TOKEN);
 		expectRejected(initData, 'Неверная подпись initData');
 	});
 
-	test('Отклонение данных, подменённых после подписи', () => {
+	test('Тест отклонения данных, подменённых после подписи', () => {
 		const params = new URLSearchParams(sign({ auth_date: FRESH_AUTH_DATE, user: USER_JSON }));
 		params.set('user', JSON.stringify({ id: TEST_USER_ID + 1 }));
 		expectRejected(params.toString(), 'Неверная подпись initData');
 	});
 
-	test('Отклонение initData без hash', () => {
+	test('Тест отклонения initData без hash', () => {
 		const initData = new URLSearchParams({ auth_date: FRESH_AUTH_DATE, user: USER_JSON });
 		expectRejected(initData.toString(), 'В initData нет hash');
 	});
 
-	test('Принятие initData ровно на границе срока', () => {
+	test('Тест принятия initData ровно на границе срока', () => {
 		const authDate = String(NOW_SECONDS - INIT_DATA_MAX_AGE_SECONDS);
 		expect(validate(sign({ auth_date: authDate, user: USER_JSON })).user.id).toBe(TEST_USER_ID);
 	});
 
-	test('Отклонение initData старше срока на секунду', () => {
+	test('Тест отклонения initData старше срока на секунду', () => {
 		const authDate = String(NOW_SECONDS - INIT_DATA_MAX_AGE_SECONDS - 1);
 		expectRejected(sign({ auth_date: authDate, user: USER_JSON }), 'initData устарели');
 	});
 
-	test('Принятие auth_date в будущем в пределах допуска на расхождение часов', () => {
+	test('Тест принятия auth_date в будущем в пределах допуска на расхождение часов', () => {
 		const authDate = String(NOW_SECONDS + INIT_DATA_MAX_CLOCK_SKEW_SECONDS);
 		expect(validate(sign({ auth_date: authDate, user: USER_JSON })).user.id).toBe(TEST_USER_ID);
 	});
 
-	test('Отклонение auth_date дальше допуска в будущем', () => {
+	test('Тест отклонения auth_date дальше допуска в будущем', () => {
 		const authDate = String(NOW_SECONDS + INIT_DATA_MAX_CLOCK_SKEW_SECONDS + 1);
 		expectRejected(sign({ auth_date: authDate, user: USER_JSON }), 'auth_date в будущем');
 	});
 
-	test('Отклонение некорректного auth_date', () => {
+	test('Тест отклонения некорректного auth_date', () => {
 		expectRejected(sign({ auth_date: 'вчера', user: USER_JSON }), 'Некорректный auth_date');
 	});
 
-	test('Отклонение initData без user', () => {
+	test('Тест отклонения initData без user', () => {
 		expectRejected(sign({ auth_date: FRESH_AUTH_DATE }), 'В initData нет user');
 	});
 
-	test('Отклонение user с некорректным JSON', () => {
+	test('Тест отклонения user с некорректным JSON', () => {
 		expectRejected(
 			sign({ auth_date: FRESH_AUTH_DATE, user: '{не json' }),
 			'Некорректный user в initData',
 		);
 	});
 
-	test('Отклонение user не той формы', () => {
+	test('Тест отклонения user не той формы', () => {
 		const user = JSON.stringify({ id: -1 });
 		expectRejected(sign({ auth_date: FRESH_AUTH_DATE, user }), 'Некорректный user в initData');
 	});

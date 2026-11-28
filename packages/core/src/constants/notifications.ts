@@ -17,3 +17,6 @@ export const NOTIFICATION_RESEND_WINDOW_MS = MS_PER_DAY;
 
 /** Сколько неотправленных уведомлений воркер ставит в очередь за один проход. */
 export const NOTIFICATION_RESEND_BATCH_SIZE = 100;
+
+/** Текст ошибки, когда запись не найдена или принадлежит другому пользователю. */
+export const NOTIFICATION_NOT_FOUND_MESSAGE = 'Уведомление не найдено';

@@ -20,7 +20,6 @@ export type { NoteInput } from './schemas/notes/note-input.ts';
 export {
 	createUsersService,
 	toTelegramIdentity,
-	toUserDto,
 	type UsersService,
 } from './users/service.ts';
 export type { TelegramIdentity, UserDto } from './users/types.ts';

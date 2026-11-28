@@ -20,7 +20,8 @@ export const PRISMA_MIGRATIONS_TABLE = '_prisma_migrations';
 
 /**
  * Настройка сеанса Postgres, через которую `TestDatabase.reset` передаёт в блок `DO` имя
- * таблицы, которую не очищать (параметров у `DO` нет). Должна совпадать со строкой в его SQL.
+ * таблицы, которую не очищать (параметров у `DO` нет). В текст SQL `reset` вставляется из этой
+ * константы — имя записано в одном месте.
  */
 export const RESET_KEEP_TABLE_SETTING = 'tgab.reset_keep_table';
 

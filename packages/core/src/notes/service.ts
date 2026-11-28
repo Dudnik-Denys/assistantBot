@@ -1,6 +1,7 @@
 import { type Note, Prisma, type PrismaClient } from '@tgab/db';
 import { assertId } from '../common/id.ts';
 import { parseInput } from '../common/parse-input.ts';
+import { NOTE_NOT_FOUND_MESSAGE } from '../constants/notes.ts';
 import { NotFoundError } from '../errors.ts';
 import { ListQuerySchema } from '../schemas/common/list-query.ts';
 import { NoteInputSchema } from '../schemas/notes/note-input.ts';
@@ -11,9 +12,7 @@ type NoteRow = Pick<Note, 'id' | 'title' | 'content' | 'createdAt' | 'updatedAt'
 
 const select = { id: true, title: true, content: true, createdAt: true, updatedAt: true } as const;
 
-const NOT_FOUND = 'Заметка не найдена';
-
-export function toNoteDto(row: NoteRow): NoteDto {
+function toNoteDto(row: NoteRow): NoteDto {
 	return {
 		id: row.id,
 		title: row.title,
@@ -70,9 +69,9 @@ export function createNotesService(db: PrismaClient) {
 		},
 
 		async get(userId: string, id: string): Promise<NoteDto> {
-			assertId(id, NOT_FOUND);
+			assertId(id, NOTE_NOT_FOUND_MESSAGE);
 			const note = await db.note.findFirst({ where: { id, userId }, select });
-			if (!note) throw new NotFoundError(NOT_FOUND);
+			if (!note) throw new NotFoundError(NOTE_NOT_FOUND_MESSAGE);
 			return toNoteDto(note);
 		},
 
@@ -83,17 +82,17 @@ export function createNotesService(db: PrismaClient) {
 		},
 
 		async update(userId: string, id: string, input: unknown): Promise<NoteDto> {
-			assertId(id, NOT_FOUND);
+			assertId(id, NOTE_NOT_FOUND_MESSAGE);
 			const data = parseInput(NoteInputSchema, input);
 			const { count } = await db.note.updateMany({ where: { id, userId }, data });
-			if (count === 0) throw new NotFoundError(NOT_FOUND);
+			if (count === 0) throw new NotFoundError(NOTE_NOT_FOUND_MESSAGE);
 			return this.get(userId, id);
 		},
 
 		async remove(userId: string, id: string): Promise<void> {
-			assertId(id, NOT_FOUND);
+			assertId(id, NOTE_NOT_FOUND_MESSAGE);
 			const { count } = await db.note.deleteMany({ where: { id, userId } });
-			if (count === 0) throw new NotFoundError(NOT_FOUND);
+			if (count === 0) throw new NotFoundError(NOTE_NOT_FOUND_MESSAGE);
 		},
 	};
 }
