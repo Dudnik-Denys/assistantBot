@@ -4,6 +4,7 @@ import { BasePage } from '../base.page.ts';
 import { ListStateComponent } from '../components/list-state.component.ts';
 import { SearchBarComponent } from '../components/search-bar.component.ts';
 import { SwipeRowComponent } from '../components/swipe-row.component.ts';
+import { step } from '../step.ts';
 
 /** Список заметок (`/notes`): поиск, карточки, «+», удаление свайпом. */
 export class NotesListPage extends BasePage {
@@ -44,12 +45,14 @@ export class NotesListPage extends BasePage {
 
 	/** Свайп → «Удалить» → ответ на «Вы уверены…?»: `accept` — «Да», иначе «Нет». */
 	async swipeToDelete(title: string, accept = true): Promise<void> {
-		await this.swipeRows.swipeOpen(title);
-		await this.answerDialog(
-			() => this.swipeRows.deleteButton(title).click(),
-			`заметку «${title}»`,
-			accept,
-		);
+		await step(`Удаление заметки «${title}» свайпом`, async () => {
+			await this.swipeRows.swipeOpen(title);
+			await this.answerDialog(
+				() => this.swipeRows.deleteButton(title).click(),
+				`заметку «${title}»`,
+				accept,
+			);
+		});
 	}
 
 	/**
@@ -57,14 +60,19 @@ export class NotesListPage extends BasePage {
 	 * (`alertDialog`, вне Telegram — `window.alert`). Подписка на сообщение — до действия.
 	 */
 	async swipeToDeleteWithError(title: string, errorText: string): Promise<void> {
-		await this.swipeRows.swipeOpen(title);
-		const alert = this.page.waitForEvent('dialog', {
-			predicate: (dialog) => dialog.type() === 'alert',
+		await step(`Удаление заметки «${title}» с ошибкой сервера`, async () => {
+			await this.swipeRows.swipeOpen(title);
+			const alert = this.page.waitForEvent('dialog', {
+				predicate: (dialog) => dialog.type() === 'alert',
+			});
+			await this.answerDialog(
+				() => this.swipeRows.deleteButton(title).click(),
+				`заметку «${title}»`,
+			);
+			const shown = await alert;
+			expect(shown.message()).toContain(errorText);
+			await shown.accept();
 		});
-		await this.answerDialog(() => this.swipeRows.deleteButton(title).click(), `заметку «${title}»`);
-		const shown = await alert;
-		expect(shown.message()).toContain(errorText);
-		await shown.accept();
 	}
 
 	// --- Проверки ---
@@ -81,13 +89,17 @@ export class NotesListPage extends BasePage {
 
 	/** В списке ровно эти заметки, в этом порядке. */
 	async expectNotes(titles: string[]): Promise<void> {
-		await expect(this.cards).toHaveCount(titles.length);
-		await expect(this.cards).toContainText(titles);
+		await step(`Проверка заметок в списке: ${titles.join(', ')}`, async () => {
+			await expect(this.cards).toHaveCount(titles.length);
+			await expect(this.cards).toContainText(titles);
+		});
 	}
 
 	async expectEmpty(): Promise<void> {
-		await expect(this.empty).toBeVisible();
-		await expect(this.cards).toHaveCount(0);
+		await step('Проверка пустого списка', async () => {
+			await expect(this.empty).toBeVisible();
+			await expect(this.cards).toHaveCount(0);
+		});
 	}
 
 	async expectNothingFound(): Promise<void> {

@@ -1,4 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { NOTE_NOT_FOUND_MESSAGE } from '#core/constants/notes.ts';
+import { NoteEditorText } from '#web/lib/constants/notes.ts';
+import { UiText } from '#web/lib/constants/ui-texts.ts';
 import { test } from '../fixtures.ts';
 import { step } from '../step.ts';
 
@@ -17,11 +20,12 @@ test.describe('Заметки: пустой список, ошибки, нет �
 		await step('Ввод текста без заголовка', async () => {
 			await notesList.open();
 			await notesList.openNewNote();
+			await noteEditor.expectOpened();
 			await noteEditor.fillContent('текст без заголовка');
-			await noteEditor.expectHint('Укажите заголовок');
+			await noteEditor.expectHint(NoteEditorText.UntitledHint);
 		});
 		await step('Выход без сохранения', async () => {
-			await noteEditor.leaveUnsaved('без заголовка не сохранится');
+			await noteEditor.leaveUnsaved(NoteEditorText.LeaveUntitled);
 			await notesList.expectEmpty();
 		});
 	});
@@ -29,7 +33,7 @@ test.describe('Заметки: пустой список, ошибки, нет �
 	test('Тест страницы ошибки для несуществующей заметки', async ({ errorPage, mainMenu }) => {
 		await step('Открытие несуществующей заметки по адресу', async () => {
 			await errorPage.openAddress(`/notes/${randomUUID()}`);
-			await errorPage.expectError('Заметка не найдена');
+			await errorPage.expectError(NOTE_NOT_FOUND_MESSAGE);
 		});
 		await step('Возврат в меню', async () => {
 			await errorPage.goBack();
@@ -41,12 +45,11 @@ test.describe('Заметки: пустой список, ошибки, нет �
 		await step('Открытие списка без связи с сервером', async () => {
 			await page.route(NOTES_API, (route) => route.abort());
 			await notesList.open();
-			await notesList.listState.expectReconnecting('Идёт попытка соединения');
+			await notesList.listState.expectReconnecting(UiText.Reconnecting);
 		});
 		await step('Восстановление связи', async () => {
 			await page.unroute(NOTES_API);
-			// Браузер сообщает о вернувшейся сети событием online — приложение повторяет запрос сразу.
-			await page.evaluate(() => window.dispatchEvent(new Event('online')));
+			await notesList.goOnline();
 			await notesList.listState.expectLoaded();
 			await notesList.expectEmpty();
 		});

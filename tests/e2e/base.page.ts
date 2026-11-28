@@ -35,6 +35,19 @@ export abstract class BasePage {
 		await this.page.goBack();
 	}
 
+	/** Перезагрузка страницы — проверить, что данные сохранены на сервере, а не только на экране. */
+	async reload(): Promise<void> {
+		await this.page.reload();
+	}
+
+	/**
+	 * Сеть вернулась: браузер сообщает об этом событием `online`, и Mini App повторяет запрос
+	 * сразу (`ListLoader`). Подмену сети (`page.route`) тест снимает до вызова.
+	 */
+	async goOnline(): Promise<void> {
+		await this.page.evaluate(() => window.dispatchEvent(new Event('online')));
+	}
+
 	/** Экран показан: адрес и характерный элемент экрана. */
 	async expectOpened(): Promise<void> {
 		await expect(this.page).toHaveURL(this.path);

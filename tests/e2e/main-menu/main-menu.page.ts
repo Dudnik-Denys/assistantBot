@@ -1,6 +1,7 @@
 import { expect, type Locator } from '@playwright/test';
 import { TestId } from '#web/lib/constants/test-ids.ts';
 import { BasePage } from '../base.page.ts';
+import { step } from '../step.ts';
 
 /** Главная (`/`): список разделов, вход в любой модуль. */
 export class MainMenuPage extends BasePage {
@@ -30,7 +31,9 @@ export class MainMenuPage extends BasePage {
 
 	/** Разделы меню — ровно эти и в этом порядке. */
 	async expectSections(titles: string[]): Promise<void> {
-		await expect(this.sections).toHaveCount(titles.length);
-		await expect(this.sections).toContainText(titles);
+		await step(`Проверка разделов меню: ${titles.join(', ')}`, async () => {
+			await expect(this.sections).toHaveCount(titles.length);
+			await expect(this.sections).toContainText(titles);
+		});
 	}
 }

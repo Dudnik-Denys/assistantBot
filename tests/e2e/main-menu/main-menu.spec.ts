@@ -1,3 +1,4 @@
+import { SECTIONS } from '#web/lib/constants/sections.ts';
 import { test } from '../fixtures.ts';
 import { step } from '../step.ts';
 
@@ -7,7 +8,7 @@ test.describe('Главное меню', () => {
 			await mainMenu.open();
 		});
 		await step('Проверка разделов', async () => {
-			await mainMenu.expectSections(['Заметки', 'Счётчики', 'Напоминания']);
+			await mainMenu.expectSections(SECTIONS.map(({ title }) => title));
 		});
 	});
 });

@@ -1,6 +1,7 @@
 import { expect, type Response } from '@playwright/test';
 import { TestId } from '#web/lib/constants/test-ids.ts';
 import { BasePage } from '../base.page.ts';
+import { step } from '../step.ts';
 
 /** Ответ на сохранение заметки (создание — POST, изменение — PUT) прошёл успешно. */
 function isNoteSaved(response: Response): boolean {
@@ -49,8 +50,10 @@ export class NoteEditorPage extends BasePage {
 	}
 
 	async expectNote(title: string, content: string): Promise<void> {
-		await expect(this.titleInput).toHaveValue(title);
-		await expect(this.contentInput).toHaveValue(content);
+		await step(`Проверка заметки «${title}» в редакторе`, async () => {
+			await expect(this.titleInput).toHaveValue(title);
+			await expect(this.contentInput).toHaveValue(content);
+		});
 	}
 
 	async expectHint(text: string): Promise<void> {
@@ -61,15 +64,19 @@ export class NoteEditorPage extends BasePage {
 
 	/** Заполнить и дождаться автосохранения: подписка на ответ — до ввода (`e2e.md`, «Гонки»). */
 	async fillAndWaitSaved(title: string, content = ''): Promise<void> {
-		const saved = this.page.waitForResponse(isNoteSaved);
-		await this.fill(title, content);
-		await saved;
+		await step(`Ввод заметки «${title}» и автосохранение`, async () => {
+			const saved = this.page.waitForResponse(isNoteSaved);
+			await this.fill(title, content);
+			await saved;
+		});
 	}
 
 	/** Изменить текст и дождаться автосохранения. */
 	async fillContentAndWaitSaved(content: string): Promise<void> {
-		const saved = this.page.waitForResponse(isNoteSaved);
-		await this.fillContent(content);
-		await saved;
+		await step('Изменение текста и автосохранение', async () => {
+			const saved = this.page.waitForResponse(isNoteSaved);
+			await this.fillContent(content);
+			await saved;
+		});
 	}
 }

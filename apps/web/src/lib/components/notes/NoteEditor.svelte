@@ -6,6 +6,7 @@
 	import { api, type NoteDto } from '#lib/api.ts';
 	import BackButton from '#lib/components/ui/buttons/BackButton.svelte';
 	import SectionTitle from '#lib/components/ui/text/SectionTitle.svelte';
+	import { NoteEditorText } from '#lib/constants/notes.ts';
 	import { TestId } from '#lib/constants/test-ids.ts';
 	import { focusField } from '#lib/keyboard.ts';
 	import { Autosave } from '#lib/reactive/autosave.svelte.ts';
@@ -72,9 +73,7 @@
 	async function back() {
 		const saved = await autosave.flush();
 		if (!saved && !empty) {
-			const message = untitled
-				? 'Заметка без заголовка не сохранится. Выйти?'
-				: 'Не удалось сохранить изменения. Выйти?';
+			const message = untitled ? NoteEditorText.LeaveUntitled : NoteEditorText.LeaveUnsaved;
 			if (!(await confirmDialog(message))) return;
 		}
 		goto(resolve('/notes'));
@@ -97,7 +96,7 @@
 	/>
 	<p class="mb-2 min-h-4 text-xs text-tg-hint" data-testid={TestId.NoteEditor.Hint}>
 		{#if untitled && !empty}
-			Укажите заголовок — без него заметка не сохранится
+			{NoteEditorText.UntitledHint}
 		{:else if autosave.error}
 			<span class="text-tg-destructive">{autosave.error}</span>
 		{:else if updatedAt}

@@ -27,7 +27,6 @@ export const TestId = {
 		SwipeRow: 'common.swipe-row',
 		SwipeDelete: 'common.swipe-delete',
 		Loading: 'common.loading',
-		Offline: 'common.offline',
 		ListError: 'common.list-error',
 	},
 } as const;

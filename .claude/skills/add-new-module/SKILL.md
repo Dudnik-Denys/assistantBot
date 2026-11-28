@@ -76,7 +76,7 @@ argument-hint: "<модуль, например: счётчики>"
 4. **Регистрация сервиса** — `apps/web/src/lib/server/services.ts`: `export const __entities__ = create__Entities__Service(db);`
 5. **API** — `templates/api-collection.server.ts.tpl` → `apps/web/src/routes/api/__entities__/+server.ts`, `templates/api-item.server.ts.tpl` → `…/api/__entities__/[id]/+server.ts`. Лишние методы (например, `GET` элемента, если нет экрана элемента) не создавай.
 6. **Клиент API** — `templates/api-client.ts.tpl` → `apps/web/src/lib/api.ts`.
-7. **Пункт меню** — `apps/web/src/lib/constants/sections.ts`: `{ href: resolve('/__entities__'), title: '__Title__', description: '…', icon: '…' }`.
+7. **Пункт меню** — `apps/web/src/lib/constants/sections.ts`: в `Section` — `__Entities__: { route: '/__entities__', title: '__Title__', description: '…', icon: '…' }` и он же в массиве `SECTIONS` на своём месте (адрес строит `resolve(section.route)` в `routes/+page.svelte`). Список разделов в e2e (`main-menu.spec.ts`) берётся из `SECTIONS` — править тест не нужно.
 8. **Тесты** — по `tests.md`: `tests/unit/__entities__/` — схема ввода (валидные, невалидные, граничные значения) и чистые функции; `tests/integration/__entities__/service.test.ts` — каждый метод сервиса, чужие записи (`NotFoundError`), неверный id, некорректный ввод. Фабрика `createTest__Entity__` — в `tests/helpers/factories.ts`. Образцы — тесты заметок.
 9. **Документация** — `.claude/CLAUDE.md`: «Project status», при необходимости архитектура; новые общие компоненты — в список `components.md`.
 

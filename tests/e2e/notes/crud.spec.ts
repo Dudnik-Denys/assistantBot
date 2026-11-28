@@ -1,3 +1,4 @@
+import { Section } from '#web/lib/constants/sections.ts';
 import { createTestNote } from '../../helpers/factories.ts';
 import { test } from '../fixtures.ts';
 import { openSection } from '../main-menu/flows/open-section.ts';
@@ -15,7 +16,7 @@ test.describe('Заметки: создание, изменение, удале�
 		noteEditor,
 	}) => {
 		await step('Вход в раздел «Заметки»', async () => {
-			await openSection(mainMenu, 'Заметки', notesList);
+			await openSection(mainMenu, Section.Notes.title, notesList);
 		});
 		await step('Создание заметки', async () => {
 			await createNoteViaUi(notesList, noteEditor, TITLE, CONTENT);
@@ -43,12 +44,7 @@ test.describe('Заметки: создание, изменение, удале�
 		});
 	});
 
-	test('Тест удаления заметки свайпом', { tag: '@smoke' }, async ({
-		db,
-		user,
-		page,
-		notesList,
-	}) => {
+	test('Тест удаления заметки свайпом', { tag: '@smoke' }, async ({ db, user, notesList }) => {
 		await createTestNote(db, user.id, { title: TITLE });
 
 		await step('Удаление свайпом с подтверждением', async () => {
@@ -57,7 +53,7 @@ test.describe('Заметки: создание, изменение, удале�
 			await notesList.expectNoteVisible(TITLE, false);
 		});
 		await step('Проверка после перезагрузки', async () => {
-			await page.reload();
+			await notesList.reload();
 			await notesList.expectEmpty();
 		});
 	});

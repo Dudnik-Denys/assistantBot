@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import Card from '#lib/components/ui/layout/Card.svelte';
 	import PageHeader from '#lib/components/ui/layout/PageHeader.svelte';
 	import Screen from '#lib/components/ui/layout/Screen.svelte';
-	import { sections } from '#lib/constants/sections.ts';
+	import { SECTIONS } from '#lib/constants/sections.ts';
 	import { TestId } from '#lib/constants/test-ids.ts';
 	import { haptic } from '#lib/telegram.ts';
 </script>
@@ -12,10 +13,10 @@
 
 	<nav>
 		<ul class="flex flex-col gap-2" data-testid={TestId.MainMenu.List}>
-			{#each sections as section (section.href)}
+			{#each SECTIONS as section (section.route)}
 				<li>
 					<Card
-						href={section.href}
+						href={resolve(section.route)}
 						onclick={() => haptic('light')}
 						data-testid={TestId.MainMenu.Section}
 					>

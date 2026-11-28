@@ -4,10 +4,12 @@ import {
 	E2E_BASE_URL,
 	E2E_DEVICES,
 	E2E_ENV_DIR,
+	E2E_EXPECT_TIMEOUT_MS,
 	E2E_HTML_REPORT_DIR,
 	E2E_OUTPUT_DIR,
 	E2E_PORT,
 	E2E_TELEGRAM_ID,
+	E2E_TEST_TIMEOUT_MS,
 	E2E_WEB_SERVER_TIMEOUT_MS,
 } from './constants/e2e.ts';
 import { ROOT_DIR } from './constants/paths.ts';
@@ -25,6 +27,9 @@ export default defineConfig({
 	// Одна тестовая БД на все тесты: параллельный тест стёр бы чужие данные (e2e.md, «Гонки», п. 5).
 	workers: 1,
 	fullyParallel: false,
+	// Лимиты времени — явно (e2e.md, «Конфиг»).
+	timeout: E2E_TEST_TIMEOUT_MS,
+	expect: { timeout: E2E_EXPECT_TIMEOUT_MS },
 	forbidOnly: Boolean(process.env.CI),
 	reporter: [
 		['list'],

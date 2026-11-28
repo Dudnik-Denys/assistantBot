@@ -13,6 +13,13 @@ export class ErrorPage extends BasePage {
 
 	// --- Действия ---
 
+	/** Адреса у страницы ошибки нет: `open()` открыл бы главную. Открывать — `openAddress()`. */
+	override async open(): Promise<void> {
+		throw new Error(
+			'У страницы ошибки нет своего адреса — используйте errorPage.openAddress(path)',
+		);
+	}
+
 	/** Открыть адрес, который должен закончиться ошибкой. */
 	async openAddress(path: string): Promise<void> {
 		await this.page.goto(path);

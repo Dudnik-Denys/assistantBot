@@ -56,7 +56,7 @@
 	<Loading title={reconnecting ? reconnectingTitle : loadingTitle} />
 {:else}
 	{#if reconnecting}
-		<Notice pending data-testid={TestId.Common.Offline}>{offlineText}</Notice>
+		<Notice pending>{offlineText}</Notice>
 	{/if}
 	{#if items.length === 0}
 		{@render empty()}
