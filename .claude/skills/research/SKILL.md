@@ -1,7 +1,7 @@
 ---
 name: research
-description: Аудит проекта tgAssistantBot на соответствие правилам .claude/rules и CLAUDE.md — параллельно запускает агентов-исследователей research-* по областям (документация, тесты, e2e, БД, схемы и константы, core, бот, воркер, UI-компоненты, API, веб, инструменты) и сводит их находки в один отчёт для обсуждения. Код не меняет. Вызывается как /research [области…|all] [changed]; без аргументов — предложит выбрать области.
-argument-hint: "[docs|tests|e2e|db|schemas|core|bot|worker|ui|api|web|tooling|all …] [changed]"
+description: Аудит проекта tgAssistantBot на соответствие правилам .claude/rules и CLAUDE.md — параллельно запускает агентов-исследователей research-* по областям (правила и документация, скиллы и агенты, тесты, e2e, БД, схемы и константы, core, бот, воркер, UI-компоненты, API, веб, инструменты) и сводит их находки в один отчёт для обсуждения. Код не меняет. Вызывается как /research [области…|all] [changed]; без аргументов — предложит выбрать области.
+argument-hint: "[docs|rules|skills|tests|e2e|db|schemas|core|bot|worker|ui|api|web|tooling|all …] [changed]"
 ---
 
 # research
@@ -14,9 +14,10 @@ argument-hint: "[docs|tests|e2e|db|schemas|core|bot|worker|ui|api|web|tooling|al
 
 | Область | Агент | Что смотрит |
 |---|---|---|
-| `docs` | `research-docs` | `.claude/` и README: соответствие коду, противоречия, устаревшие ссылки |
+| `rules` | `research-rules` | CLAUDE.md, `rules/`, `knownIssue.md`, `settings.json`, README: соответствие коду, противоречия, дублирование, устаревшее |
+| `skills` | `research-skills` | скиллы (с шаблонами), команды, агенты: соответствие правилам и коду, рабочие ли шаги и пути |
 | `tests` | `research-tests` | unit и integration, полнота покрытия |
-| `e2e` | `research-e2e` | Playwright или готовность к нему |
+| `e2e` | `research-e2e` | e2e-тесты Playwright и готовность модулей без них |
 | `db` | `research-db` | Prisma, миграции, SQL, тестовая БД |
 | `schemas` | `research-schemas` | zod-схемы, константы, типы, env во всех пакетах |
 | `core` | `research-core` | сервисы, ошибки, публичный API `packages/core` |
@@ -25,14 +26,17 @@ argument-hint: "[docs|tests|e2e|db|schemas|core|bot|worker|ui|api|web|tooling|al
 | `ui` | `research-ui` | `lib/components`, `app.css` |
 | `api` | `research-api` | `routes/api`, `lib/server`, хуки, HTTP-клиент |
 | `web` | `research-web` | страницы, `lib/reactive`, Telegram, утилиты, конфиг SvelteKit |
-| `tooling` | `research-tooling` | `run.sh`, `deploy/`, `package.json`, Biome/Prettier, tsconfig, CI, compose, `.gitignore`, настройки |
+| `tooling` | `research-tooling` | `run.sh`, `deploy/`, `package.json`, Biome/Prettier, tsconfig, CI, compose, `.gitignore`, настройки редактора |
 
-Тяжесть — примерный расход одного агента (сколько кода он читает): **тяжёлые** — `docs`, `tests`, `schemas`, `web`; **средние** — `ui`, `api`, `core`, `tooling`; **лёгкие** — `db`, `bot`, `worker`, `e2e` (пока e2e-тестов нет). Подписка пользователя — Pro с небольшим 5-часовым лимитом: полный прогон занимает большую его часть, поэтому агенты не запускаются «на всякий случай».
+`docs` — группа, а не отдельный агент: запускает `rules` и `skills` (два агента).
+
+Тяжесть — примерный расход одного агента (сколько кода он читает): **тяжёлые** — `tests`, `schemas`, `web`; **средние** — `rules`, `skills`, `ui`, `api`, `core`, `tooling`; **лёгкие** — `db`, `bot`, `worker`; `e2e` — между лёгкими и средними (растёт с каждым покрытым модулем). Подписка пользователя — Pro с небольшим 5-часовым лимитом: полный прогон занимает большую его часть, поэтому агенты не запускаются «на всякий случай».
 
 Разбор аргументов:
 
 - **Нет аргументов** — ничего не запускай. Покажи таблицу областей с тяжестью, предложи `changed` (если есть изменения — сколько файлов и каких областей) и спроси, что запустить.
-- `all` — все двенадцать (с подтверждением, см. ниже).
+- `all` — все тринадцать (с подтверждением, см. ниже).
+- `docs` — то же, что `rules skills`.
 - Перечислены области — только они. Неизвестное слово → покажи таблицу и попроси выбрать; сам не угадывай.
 - `changed` — только изменённые файлы: `git status --porcelain` и `git diff --name-only origin/main...HEAD`. Каждому агенту передай список тех, что попадают в его область (по разделу «Область» в его файле); агенту без изменённых файлов задание не давай. Если изменений нет — скажи об этом и остановись.
 

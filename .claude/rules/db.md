@@ -25,7 +25,7 @@ paths:
 - Пользовательская сущность: `userId String @db.Uuid` со связью `onDelete: Cascade` и обратной связью в `User`; индекс `@@index([userId, …])` под основной список.
 - Даты — `DateTime @db.Timestamptz(3)`: `createdAt @default(now())`, `updatedAt @updatedAt`. Храним в UTC.
 - Значения по умолчанию со смыслом предметной области (часовой пояс, лимиты, начальные значения) — константы в `packages/core/src/constants/` (`DEFAULT_TIMEZONE` в `constants/users.ts`); сервис подставляет их при создании, а в схеме `@default` для них нет. Схема Prisma не может сослаться на константу TS, а значение, записанное в двух местах, расходится. `@default` остаётся для технических значений: `uuid(7)`, `now()`, `false`, пустая строка.
-- Поле, которое Prisma не поддерживает (`tsvector`), — `Unsupported(...)`; выражение generated-колонки пишется в миграции вручную и повторяется в `@default(dbgenerated(...))` ровно в том виде, как его интроспектирует Prisma (пример — `Note.search`, CLAUDE.md), иначе `migrate dev` создаст лишнюю миграцию.
+- Поле, которое Prisma не поддерживает (`tsvector`), — `Unsupported(...)`; выражение generated-колонки пишется в миграции вручную и повторяется в `@default(dbgenerated(...))` ровно в том виде, как его интроспектирует Prisma (пример — `Note.search`: `@default(dbgenerated("to_tsvector('russian'::regconfig, title)"))`), иначе `migrate dev` создаст лишнюю миграцию `DROP DEFAULT`.
 
 ## Миграции
 
@@ -36,7 +36,7 @@ paths:
 ## Доступ к данным и SQL
 
 - Запросы к БД — только в сервисах `packages/core`; приложения получают клиент через `createPrismaClient` и передают его в фабрики сервисов.
-- Сырой SQL — только `db.$queryRaw` / `$executeRaw` с шаблонной строкой (tagged template) и фрагменты `Prisma.sql`: подставленные `${…}` уходят в БД параметрами, а не текстом. `$queryRawUnsafe`, `$executeRawUnsafe` и `Prisma.raw` с данными пользователя запрещены. Значение для `LIKE` экранируется (`escapeLike` в `notes/service.ts`), строка для `to_tsquery` строится из слов без спецсимволов (`buildPrefixTsQuery`).
+- Сырой SQL — только `db.$queryRaw` / `$executeRaw` с шаблонной строкой (tagged template) и фрагменты `Prisma.sql`: подставленные `${…}` уходят в БД параметрами, а не текстом. `$queryRawUnsafe`, `$executeRawUnsafe` и `Prisma.raw` с данными пользователя запрещены. Единственное исключение — `TestDatabase.reset` (`tests/helpers/test-database.ts`): текст блока `DO` собирается из константы модуля (`RESET_KEEP_TABLE_SETTING`), потому что внутри `DO $$ … $$` параметры не работают; данных извне в нём нет. Новое такое место — только с той же причиной и комментарием, иначе — tagged template. Значение для `LIKE` экранируется (`escapeLike` в `notes/service.ts`), строка для `to_tsquery` строится из слов без спецсимволов (`buildPrefixTsQuery`).
 - Оформление сырого SQL. Короткий запрос или фрагмент — в одну строку (`` Prisma.sql`FALSE` ``, `` db.$executeRaw`TRUNCATE …` ``). Многострочный запрос начинается с новой строки после открывающей `` ` ``; каждая строка SQL — с отступом **на один таб глубже** строки с `$queryRaw`, без дополнительных отступов для продолжений (`AND`, `OR` — на том же уровне, что `WHERE`); закрывающая `` `; `` — на отдельной строке с отступом строки с `$queryRaw`. Отступы — только табами: пробелы внутри шаблонной строки Biome не исправляет, а редактор подсвечивает их как ошибочный отступ. Ключевые слова SQL — заглавными, имена в camelCase — в двойных кавычках (`"userId"`, `"createdAt"`). Образец:
 
 ```ts

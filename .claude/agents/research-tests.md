@@ -12,7 +12,7 @@ model: sonnet
 - `tests/unit/**`, `tests/integration/**`
 - `tests/helpers/**`, `tests/schemas/**`, `tests/constants/**`
 - `tests/run-tests.ts`, `tests/package.json`, `tests/tsconfig.json`
-- Тестируемый код — только чтобы сверить покрытие: `packages/core/src/**`, `apps/bot/src/**`, `apps/web/src/lib/{http,utils}/**`, `apps/web/src/lib/errors.ts`
+- Тестируемый код — только чтобы сверить покрытие: `packages/core/src/**`, `apps/bot/src/**`, `apps/worker/src/{jobs,messages,keyboards}/**` и `apps/worker/src/schedulers.ts`, `apps/web/src/lib/{http,utils}/**`, `apps/web/src/lib/errors.ts`, `apps/web/src/lib/counters.ts`, `apps/web/src/lib/server/http.ts`
 
 ## Правила области
 

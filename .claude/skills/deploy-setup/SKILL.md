@@ -1,7 +1,7 @@
 ---
 name: deploy-setup
-description: Однократная подготовка продакшена tgAssistantBot на VPS — Dockerfile приложений, docker-compose.prod.yml (web, bot, worker, postgres, redis, разовый migrate), Caddy с HTTPS, сборка образов amd64 в GHCR через GitHub Actions, env на сервере, мониторинг доступности и бэкапы. Опирается на deploy/server-setup.sh и инструкцию на рабочем столе. Вызывается как /deploy-setup [шаг].
-argument-hint: "[images | compose | caddy | ci | server | monitoring | backups]"
+description: Однократная подготовка продакшена tgAssistantBot на VPS — Dockerfile приложений, docker-compose.prod.yml (web, bot, worker, postgres, redis, разовый migrate), Cloudflare Tunnel без открытых портов (HTTPS даёт Cloudflare), сборка образов amd64 в GHCR через GitHub Actions, env на сервере, мониторинг доступности и бэкапы. Опирается на deploy/server-setup.sh и инструкцию на рабочем столе. Вызывается как /deploy-setup [шаг].
+argument-hint: "[images | compose | tunnel | ci | server | monitoring | backups]"
 ---
 
 # deploy-setup

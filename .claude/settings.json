@@ -9,6 +9,12 @@
 			"Read(**/.env.*)",
 			"Bash(cat .env*)",
 			"Bash(cat */.env*)",
+			"Bash(* .env)",
+			"Bash(* .env *)",
+			"Bash(* .env.*)",
+			"Bash(* */.env)",
+			"Bash(* */.env *)",
+			"Bash(* */.env.*)",
 			"Read(**/*.pem)",
 			"Read(**/*.key)",
 			"Read(**/*.secrets)"

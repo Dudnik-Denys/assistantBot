@@ -1,6 +1,6 @@
 ---
 name: research-tooling
-description: Исследует инструменты и инфраструктуру tgAssistantBot — run.sh, скрипты и зависимости package.json, Biome и Prettier, tsconfig, CI GitHub Actions, docker-compose, .gitignore, настройки редактора и разрешения Claude Code — на соответствие code.md и разделам CLAUDE.md «Commands», «Окружение», «Хостинг». Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `tooling`) или напрямую для аудита этой области.
+description: Исследует инструменты и инфраструктуру tgAssistantBot — run.sh, скрипты и зависимости package.json, Biome и Prettier, tsconfig, CI GitHub Actions, docker-compose, .gitignore, настройки редактора — на соответствие code.md и разделам CLAUDE.md «Commands», «Окружение», «Хостинг». Возвращает отчёт с находками по .claude/rules/research.md, код и правила не меняет. Запускается скиллом /research (область `tooling`) или напрямую для аудита этой области.
 tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
@@ -9,13 +9,12 @@ model: sonnet
 
 ## Область
 
-- `run.sh`, `deploy/**` (скрипты сервера и таймеры systemd; когда появятся — Dockerfile, `docker-compose.prod.yml`, Caddyfile)
+- `run.sh`, `deploy/**` (скрипты сервера и таймеры systemd; когда появятся — Dockerfile, `docker-compose.prod.yml`, настройки `cloudflared`)
 - Все `package.json` (корень, `apps/*`, `packages/*`, `tests/`): скрипты, зависимости, `exports`/`imports`
 - `biome.json`, ключ `prettier` в корневом `package.json`
 - `tsconfig.base.json` и `tsconfig.json` пакетов
 - `.github/workflows/**`, `docker-compose.yml`
 - `.gitignore`, `.gitattributes`, `.vscode/**`, `apps/web/.gitignore`
-- `.claude/settings.json` (разрешения)
 
 ## Правила области
 
@@ -32,9 +31,9 @@ model: sonnet
 - Форматтеры: Biome и Prettier договорены (табы, одинарные кавычки, ширина 100), игноры не пропускают и не захватывают лишнего; CI выполняет те же проверки, что описаны в `CLAUDE.md` и `tests.md`.
 - `run.sh`: проверки до действий, понятные ошибки, без повторов кода, сигналы доходят до приложений.
 - docker-compose: Redis с `noeviction` и AOF, порты только на `127.0.0.1`, значения совпадают с тестами и CI.
-- `.gitignore` закрывает секреты, сборку и генерацию; `settings.json` запрещает чтение `.env` и опасные команды.
+- `.gitignore` закрывает секреты, сборку и генерацию.
 - Чего не хватает из описанного в `CLAUDE.md` для текущей стадии (например, инструмент упомянут как обязательный, но не настроен) — «пробел» низкой серьёзности, если стадия проекта это объясняет.
 
 ## Граница области
 
-Prisma и миграции — `research-db`; содержимое правил и README — `research-docs`.
+Prisma и миграции — `research-db`; правила, README и `.claude/settings.json` (запреты на секреты, разрешения) — `research-rules`.

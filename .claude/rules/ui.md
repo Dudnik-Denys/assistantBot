@@ -31,7 +31,7 @@ paths:
 `app.css` устроен в два слоя, и DRY действует внутри него тоже:
 
 1. **Базовые значения в `:root`** — единственное место с литералами, каждый литерал ровно один раз. Палитра `--palette-*` (`--palette-white`, `--palette-blue`…), размеры `--size-*` (`--size-none: 0px`, `--size-page-gutter: 1rem`…). Утилит Tailwind не порождают, в разметке не используются.
-2. **Токены по ролям в `@theme inline`** — то, что используется в разметке: цвета `--color-*` (`--color-surface` → `bg-surface`, `--color-elevation` → `shadow-elevation`), отступы `--spacing-*` (`--spacing-page-t` → `pt-page-t`). Ссылаются на `--tg-theme-*`, `--tg-*-safe-area-inset-*` и базовые значения; литералов не содержат. Оттенки и прозрачность — через `color-mix()` от палитры, производные размеры — через `calc()` от `--size-*`.
+2. **Токены по ролям в `@theme inline`** — то, что используется в разметке: цвета `--color-*` (`--color-surface` → `bg-surface`, `--color-elevation` → `shadow-elevation`), отступы `--spacing-*` (`--spacing-page-t` → `pt-page-t`, `--spacing-floating-clearance` → `pb-floating-clearance` — место под плавающей кнопкой в конце списка; новый токен отступа — и в `extendTailwindMerge` в `lib/utils/classes.ts`). Ссылаются на `--tg-theme-*`, `--tg-*-safe-area-inset-*` и базовые значения; литералов не содержат. Оттенки и прозрачность — через `color-mix()` от палитры, производные размеры — через `calc()` от `--size-*`.
 
 Правила использования:
 

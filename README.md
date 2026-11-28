@@ -42,7 +42,7 @@ tests          # тесты всех пакетов: unit/, integration/, e2e/
    ```
 
 4. Напишите боту `/id`, впишите полученный ID в `ADMIN_TELEGRAM_ID` (и `DEV_TELEGRAM_ID`) и перезапустите `./run.sh`.
-5. Mini App: `http://localhost:5173` в браузере (при заданном `DEV_TELEGRAM_ID`) или в Telegram через HTTPS-туннель (например, `ngrok http 5173`), адрес которого указан в `MINI_APP_URL`.
+5. Mini App: `http://localhost:5173` в браузере (при заданном `DEV_TELEGRAM_ID`) или в Telegram через HTTPS-туннель разработки — **ngrok** (`ngrok http 5173`), адрес которого указан в `MINI_APP_URL`. В продакшене Mini App открывается через **Cloudflare Tunnel** на своём домене (CLAUDE.md, «Хостинг»); ngrok — только для разработки.
 
 ## Переменные окружения
 
@@ -50,7 +50,7 @@ tests          # тесты всех пакетов: unit/, integration/, e2e/
 
 | Переменная | Обязательна | Пример / значение по умолчанию | Описание |
 |---|---|---|---|
-| `BOT_TOKEN` | да | — | Токен бота от BotFather. Нужен боту, web-серверу (проверка подписи `initData` Mini App) и воркеру (отправка уведомлений). **Секрет.** |
+| `BOT_TOKEN` | да | — | Токен бота от BotFather. Нужен боту, web-серверу (проверка подписи `initData` Mini App) и воркеру (отправка уведомлений). Бот и воркер без него не стартуют; web стартует (так работают e2e и вход от `DEV_TELEGRAM_ID`), но запросы из Telegram без него не пройдут проверку. **Секрет.** |
 | `DATABASE_URL` | да | `postgresql://tgab:tgab@localhost:5432/tgab` | Подключение к Postgres из `docker-compose.yml`. |
 | `ADMIN_TELEGRAM_ID` | желательно | — | Ваш Telegram ID (узнать — `/id` у бота). Только цифры. При первом входе создаётся пользователь-админ. Без него доступа не будет ни у кого. |
 | `MINI_APP_URL` | нет | — | HTTPS-адрес Mini App (в разработке — адрес туннеля). Если задан, `/start` показывает кнопку «Открыть приложение», а сообщения воркера об окончании цикла счётчика — кнопку «Открыть уведомление». Адрес с `http://` бот не примет и не запустится: Telegram открывает Mini App только по HTTPS. |
@@ -71,6 +71,13 @@ DEV_TELEGRAM_ID=
 MINI_APP_URL=
 ```
 
+Служебные переменные — в `.env` их не задают:
+
+| Переменная | Кто задаёт | Описание |
+|---|---|---|
+| `CI` | GitHub Actions | Тесты в CI: тестовую БД даёт CI, а не контейнер `postgres-test`; Playwright запрещает забытый `test.only`. |
+| `TGAB_ENV_DIR` | `test:e2e` | Каталог `.env` для web-сервера (по умолчанию — корень). e2e указывают папку без `.env`, чтобы тесты не читали рабочие переменные и секреты. |
+
 Новые пользователи добавляются в allowlist командой `bun run user:allow <telegramId>`.
 
 ## Команды
@@ -79,6 +86,8 @@ MINI_APP_URL=
 ./run.sh                # всё сразу: Docker, БД, зависимости, миграции, web + bot + worker
 bun run dev             # все приложения apps/* (web + bot + worker) без подготовки БД
 bun run db:deploy       # применить миграции
+bun run db:generate     # пересобрать клиент Prisma (делает и bun install)
+bun run db:studio       # Prisma Studio — просмотр и правка данных в браузере
 bun run check           # проверка типов
 bun run test:unit [модуль]         # unit-тесты (без БД)
 bun run test:integration [модуль]  # интеграционные тесты (нужен Docker: поднимут временный Postgres)
