@@ -151,7 +151,7 @@ test.describe('Счётчики: таймер', () => {
 		counter,
 	}) => {
 		// «Сегодня» — в часовом поясе пользователя: в нём форма проверяет и сохраняет дату.
-		const today = Temporal.Now.plainDateISO(user.timeZone);
+		const today = Temporal.Now.plainDateISO(user.timezone);
 		const targetDate = today.add({ days: TARGET_DAYS_AHEAD }).toString();
 
 		await step('Открытие формы в режиме «До даты»', async () => {

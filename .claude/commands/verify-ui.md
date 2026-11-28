@@ -8,8 +8,8 @@ allowed-tools: Bash(bun run *), Bash(bun --filter *), Bash(bunx biome *), Bash(b
 Выполни по очереди, не останавливаясь на первой ошибке — нужен полный список проблем:
 
 1. Формат и порядок импортов в компонентах: `bunx prettier --check "apps/web/src/**/*.svelte"`
-2. Линтер и формат TS/CSS: `bunx biome check apps/web/src`
-3. Типы и предупреждения компилятора Svelte (включая доступность): `bun --filter @tgab/web check`
+2. Линтер и формат TS/CSS: `bunx biome check apps/web/src tests/e2e`
+3. Типы и предупреждения компилятора Svelte (включая доступность): `bun --filter @tgab/web check`; типы тестов (e2e импортируют код Mini App — `#web/…`): `bun --filter @tgab/tests check`
 4. Unit-тесты: `bun run test:unit` (тесты web — в `tests/unit/<модуль>/`, см. `.claude/rules/tests.md`)
 5. Продакшен-сборка (ошибки Vite, Tailwind, импортов): `bun run build:web`
 
